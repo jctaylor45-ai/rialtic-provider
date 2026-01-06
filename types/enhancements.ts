@@ -46,6 +46,22 @@ export interface PatternImprovement {
   trigger?: string  // What caused improvement (e.g., "practice-session", "insight-dismissed")
 }
 
+export type ActionType =
+  | 'resubmission'           // Updated claims in RCM for resubmission
+  | 'workflow-update'        // Created/updated SOP or workflow
+  | 'staff-training'         // Conducted staff training or meeting
+  | 'system-config'          // Updated system configuration
+  | 'practice-change'        // Changed clinical/billing practice
+  | 'other'                  // Other action
+
+export interface PatternAction {
+  id: string
+  timestamp: string
+  actionType: ActionType
+  notes?: string
+  userId?: string  // For future multi-user support
+}
+
 export interface Pattern {
   id: string
   title: string
@@ -73,6 +89,9 @@ export interface Pattern {
   // Improvement tracking
   improvements: PatternImprovement[]
 
+  // Action tracking
+  actions: PatternAction[]
+
   // Actionable insights
   suggestedAction: string
   relatedPolicies: string[]
@@ -99,6 +118,7 @@ export type EventType =
   | 'code-lookup'
   | 'policy-viewed'
   | 'dashboard-viewed'
+  | 'action-recorded'  // User marked action taken on a pattern
 
 export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
 
@@ -135,6 +155,10 @@ export interface EventMetadata {
   // User interaction
   action?: string
   value?: string | number
+
+  // Action recording
+  actionType?: ActionType
+  actionNotes?: string
 }
 
 export interface LearningEvent {

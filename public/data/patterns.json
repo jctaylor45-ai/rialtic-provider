@@ -137,10 +137,20 @@
         }
       ],
       "suggestedAction": "Always add modifier 25 to E&M codes (99213-99215) when performed with same-day procedures. Use the Claim Lab to practice identifying these scenarios.",
-      "relatedPolicies": ["POL-001", "POL-002"],
-      "relatedCodes": ["99213", "99214", "99215", "36415", "93000"],
+      "relatedPolicies": [
+        "POL-001",
+        "POL-002"
+      ],
+      "relatedCodes": [
+        "99213",
+        "99214",
+        "99215",
+        "36415",
+        "93000"
+      ],
       "detectionConfidence": 92,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-002",
@@ -153,7 +163,7 @@
         "frequency": 18,
         "impact": 24650,
         "trend": "stable",
-        "velocity": 3.0,
+        "velocity": 3,
         "confidence": 88,
         "recency": 8
       },
@@ -233,10 +243,18 @@
         }
       ],
       "suggestedAction": "Implement a pre-service authorization checklist for all procedures with codes 45378, 20610, and other high-value services. Verify auth status before scheduling.",
-      "relatedPolicies": ["POL-001", "POL-003"],
-      "relatedCodes": ["45378", "20610", "93306"],
+      "relatedPolicies": [
+        "POL-001",
+        "POL-003"
+      ],
+      "relatedCodes": [
+        "45378",
+        "20610",
+        "93306"
+      ],
       "detectionConfidence": 88,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-003",
@@ -334,10 +352,18 @@
         }
       ],
       "suggestedAction": "Ensure all claims include detailed clinical notes, diagnosis rationale, and treatment plan. Use documentation templates to capture required elements.",
-      "relatedPolicies": ["POL-005", "POL-008"],
-      "relatedCodes": ["99213", "99214", "99215"],
+      "relatedPolicies": [
+        "POL-005",
+        "POL-008"
+      ],
+      "relatedCodes": [
+        "99213",
+        "99214",
+        "99215"
+      ],
       "detectionConfidence": 75,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-004",
@@ -424,10 +450,18 @@
         }
       ],
       "suggestedAction": "Review CCI edits before billing. Use coding software to identify bundled procedures. Focus on common bundles like venipuncture with office visits.",
-      "relatedPolicies": ["POL-004", "POL-006"],
-      "relatedCodes": ["36415", "93000", "99000"],
+      "relatedPolicies": [
+        "POL-004",
+        "POL-006"
+      ],
+      "relatedCodes": [
+        "36415",
+        "93000",
+        "99000"
+      ],
       "detectionConfidence": 68,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-005",
@@ -487,10 +521,13 @@
         }
       ],
       "suggestedAction": "Implement automated claim submission alerts. Review all claims older than 60 days weekly. Set up aging reports in practice management system.",
-      "relatedPolicies": ["POL-007"],
+      "relatedPolicies": [
+        "POL-007"
+      ],
       "relatedCodes": [],
       "detectionConfidence": 82,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-006",
@@ -543,10 +580,14 @@
       "correctionsApplied": 2,
       "improvements": [],
       "suggestedAction": "Verify insurance coverage before service. Obtain advance beneficiary notices (ABNs) for non-covered services. Update patient responsibility estimates.",
-      "relatedPolicies": ["POL-009", "POL-010"],
+      "relatedPolicies": [
+        "POL-009",
+        "POL-010"
+      ],
       "relatedCodes": [],
       "detectionConfidence": 71,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     },
     {
       "id": "PTN-007",
@@ -559,7 +600,7 @@
         "frequency": 12,
         "impact": 3960,
         "trend": "down",
-        "velocity": 2.0,
+        "velocity": 2,
         "confidence": 79,
         "recency": 20
       },
@@ -629,10 +670,13 @@
         }
       ],
       "suggestedAction": "Use the most specific ICD-10 code available. Avoid .9 unspecified codes when laterality or additional detail is known. Review diagnosis code guidelines quarterly.",
-      "relatedPolicies": ["POL-011"],
+      "relatedPolicies": [
+        "POL-011"
+      ],
       "relatedCodes": [],
       "detectionConfidence": 79,
-      "lastUpdated": "2025-01-06"
+      "lastUpdated": "2025-01-06",
+      "actions": []
     }
   ]
 }

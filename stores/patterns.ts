@@ -108,8 +108,14 @@ export const usePatternsStore = defineStore('patterns', {
       this.isLoading = true
       this.error = null
       try {
-        const data = await $fetch<{ patterns: Pattern[] }>('/data/patterns.json')
-        this.patterns = data.patterns
+        // First, try to load from localStorage
+        this.loadSavedPatterns()
+
+        // If no saved patterns, load from JSON
+        if (this.patterns.length === 0) {
+          const data = await $fetch<{ patterns: Pattern[] }>('/data/patterns.json')
+          this.patterns = data.patterns
+        }
       } catch (error) {
         console.error('Failed to load patterns:', error)
         this.error = 'Failed to load pattern data'
@@ -181,6 +187,48 @@ export const usePatternsStore = defineStore('patterns', {
 
       pattern.correctionsApplied++
       pattern.lastUpdated = new Date().toISOString()
+    },
+
+    recordAction(patternId: string, actionType: import('~/types/enhancements').ActionType, notes?: string) {
+      const pattern = this.getPatternById(patternId)
+      if (!pattern) return
+
+      const action: import('~/types/enhancements').PatternAction = {
+        id: `ACT-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actionType,
+        notes,
+      }
+
+      pattern.actions.push(action)
+      pattern.lastUpdated = new Date().toISOString()
+
+      // Mark pattern as "improving" if it was "active"
+      if (pattern.status === 'active') {
+        pattern.status = 'improving'
+      }
+
+      // Save patterns to localStorage
+      this.savePatterns()
+    },
+
+    savePatterns() {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('patterns', JSON.stringify(this.patterns))
+      }
+    },
+
+    loadSavedPatterns() {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('patterns')
+        if (saved) {
+          try {
+            this.patterns = JSON.parse(saved)
+          } catch (e) {
+            console.error('Failed to load saved patterns:', e)
+          }
+        }
+      }
     },
   },
 })
