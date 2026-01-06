@@ -1,204 +1,256 @@
 <template>
   <div class="flex-1 overflow-hidden p-8">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">AI Insights Hub</h1>
-
-    <!-- Summary Header -->
-    <div class="grid grid-cols-3 gap-6 mb-6">
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="text-sm text-gray-600 mb-2">Total Insights</div>
-        <div class="text-3xl font-semibold text-gray-900">{{ appStore.insights.length }}</div>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Pattern Detection & Insights</h1>
+        <p class="text-sm text-gray-600 mt-1">
+          AI-powered analysis of denial patterns and opportunities for improvement
+        </p>
       </div>
 
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="text-sm text-gray-600 mb-2">High Priority</div>
-        <div class="text-3xl font-semibold text-red-600">{{ appStore.highSeverityInsights.length }}</div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="text-sm text-gray-600 mb-2">Potential Impact</div>
-        <div class="text-3xl font-semibold text-gray-900">{{ formatCurrency(totalImpact) }}</div>
-      </div>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-      <div class="flex items-center gap-4">
-        <select
-          v-model="filters.severity"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          <option value="all">All Severities</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-
-        <select
-          v-model="filters.category"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          <option value="all">All Categories</option>
-          <option value="Coding Error">Coding Error</option>
-          <option value="Policy Violation">Policy Violation</option>
-          <option value="Documentation">Documentation</option>
-        </select>
-
-        <div class="flex-1"></div>
-
-        <button
-          v-if="filters.severity !== 'all' || filters.category !== 'all'"
-          @click="clearFilters"
-          class="text-sm text-gray-600 hover:text-gray-900"
-        >
-          Clear filters
-        </button>
-      </div>
-    </div>
-
-    <!-- Insights Grid -->
-    <div class="grid grid-cols-2 gap-6">
-      <div
-        v-for="insight in filteredInsights"
-        :key="insight.id"
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-        @click="selectedInsight = insight"
+      <button
+        @click="refreshPatterns"
+        :disabled="patternsStore.isLoading"
+        class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
       >
-        <div class="flex items-start justify-between mb-4">
+        <Icon
+          name="heroicons:arrow-path"
+          class="w-4 h-4"
+          :class="{ 'animate-spin': patternsStore.isLoading }"
+        />
+        <span class="text-sm font-medium">Refresh</span>
+      </button>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-4 gap-6 mb-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Total Patterns</div>
+          <Icon name="heroicons:chart-bar" class="w-5 h-5 text-gray-400" />
+        </div>
+        <div class="text-3xl font-semibold text-gray-900">
+          {{ patternsStore.totalPatternsDetected }}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          {{ patternsStore.activePatterns.length }} active,
+          {{ patternsStore.improvingPatterns.length }} improving
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Total at Risk</div>
+          <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-gray-400" />
+        </div>
+        <div class="text-3xl font-semibold text-red-600">
+          {{ formatCurrency(patternsStore.totalAtRisk, true) }}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          Potential savings identified
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Critical Patterns</div>
+          <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-gray-400" />
+        </div>
+        <div class="text-3xl font-semibold text-orange-600">
+          {{ patternsStore.criticalPatterns.length }}
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          Require immediate attention
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Avg Progress</div>
+          <Icon name="heroicons:academic-cap" class="w-5 h-5 text-gray-400" />
+        </div>
+        <div class="text-3xl font-semibold text-green-600">
+          {{ patternsStore.avgLearningProgress }}%
+        </div>
+        <div class="text-xs text-gray-500 mt-1">
+          Overall learning progress
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="grid grid-cols-12 gap-6">
+      <!-- Sidebar Filters -->
+      <div class="col-span-3">
+        <PatternFilters
+          :filters="patternsStore.filters"
+          :patterns="patternsStore.patterns"
+          @update:filters="patternsStore.updateFilters"
+        />
+      </div>
+
+      <!-- Patterns Grid -->
+      <div class="col-span-9">
+        <!-- Sort & View Options -->
+        <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600" />
-            <span
-              class="px-2 py-1 text-xs font-medium rounded"
-              :class="{
-                'bg-red-100 text-red-700': insight.severity === 'high',
-                'bg-yellow-100 text-yellow-700': insight.severity === 'medium',
-                'bg-blue-100 text-blue-700': insight.severity === 'low',
-              }"
-            >
-              {{ insight.severity.toUpperCase() }}
+            <span class="text-sm text-gray-600">
+              Showing {{ patternsStore.filteredPatterns.length }} of {{ patternsStore.totalPatternsDetected }} patterns
             </span>
           </div>
-          <span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">{{ insight.category }}</span>
-        </div>
 
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ insight.title }}</h3>
-        <p class="text-sm text-gray-600 mb-4">{{ insight.description }}</p>
-
-        <div class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span class="text-gray-600">Affected Claims:</span>
-            <span class="font-semibold text-gray-900 ml-1">{{ insight.affectedClaims }}</span>
-          </div>
-          <div>
-            <span class="text-gray-600">Avg Denial:</span>
-            <span class="font-semibold text-gray-900 ml-1">{{ formatCurrency(insight.avgDenialAmount) }}</span>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">Sort by:</label>
+            <select
+              v-model="sortBy"
+              class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="impact">Impact</option>
+              <option value="frequency">Frequency</option>
+              <option value="progress">Learning Progress</option>
+              <option value="recent">Recently Updated</option>
+            </select>
           </div>
         </div>
 
-        <div class="mt-4 pt-4 border-t border-gray-200">
-          <div class="text-xs text-gray-600 mb-1">Learning Progress</div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div
-              class="bg-primary-600 h-2 rounded-full"
-              :style="{ width: `${insight.learningProgress}%` }"
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Insight Detail Modal -->
-    <div
-      v-if="selectedInsight"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click.self="selectedInsight = null"
-    >
-      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 p-6">
-          <div class="flex items-start justify-between">
-            <h2 class="text-2xl font-semibold text-gray-900">{{ selectedInsight.title }}</h2>
-            <button @click="selectedInsight = null" class="text-gray-400 hover:text-gray-600">
-              <Icon name="heroicons:x-mark" class="w-6 h-6" />
-            </button>
-          </div>
+        <!-- Patterns Display -->
+        <div v-if="patternsStore.isLoading" class="text-center py-12">
+          <Icon name="heroicons:arrow-path" class="w-8 h-8 text-gray-400 animate-spin mx-auto mb-2" />
+          <p class="text-sm text-gray-600">Loading patterns...</p>
         </div>
 
-        <div class="p-6 space-y-6">
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Description</h3>
-            <p class="text-sm text-gray-700">{{ selectedInsight.description }}</p>
-          </div>
+        <div v-else-if="sortedPatterns.length === 0" class="text-center py-12">
+          <Icon name="heroicons:magnifying-glass" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+          <h3 class="text-lg font-medium text-gray-900 mb-1">No patterns found</h3>
+          <p class="text-sm text-gray-600 mb-4">Try adjusting your filters</p>
+          <button
+            @click="patternsStore.clearFilters()"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+          >
+            Clear Filters
+          </button>
+        </div>
 
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Suggested Action</h3>
-            <p class="text-sm text-gray-700">{{ selectedInsight.suggestedAction }}</p>
-          </div>
+        <div v-else class="space-y-4">
+          <PatternCard
+            v-for="pattern in sortedPatterns"
+            :key="pattern.id"
+            :pattern="pattern"
+            @click="openPatternDetail(pattern)"
+            @practice="startPractice(pattern)"
+            @view-claims="viewClaims(pattern)"
+            @view-details="openPatternDetail(pattern)"
+          />
+        </div>
 
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Example Case</h3>
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-sm"><strong>Claim:</strong> {{ selectedInsight.example.claimId }}</div>
-              <div class="text-sm"><strong>Patient:</strong> {{ selectedInsight.example.patient }}</div>
-              <div class="text-sm"><strong>Issue:</strong> {{ selectedInsight.example.issue }}</div>
+        <!-- Recently Improved Banner -->
+        <div
+          v-if="patternsStore.recentlyImprovedPatterns.length > 0 && !patternsStore.filters.search"
+          class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg"
+        >
+          <div class="flex items-start gap-3">
+            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-600 mt-0.5" />
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold text-green-900 mb-1">Recent Improvements</h3>
+              <p class="text-xs text-green-700 mb-2">
+                {{ patternsStore.recentlyImprovedPatterns.length }} pattern(s) have shown improvement in the last 30 days
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="pattern in patternsStore.recentlyImprovedPatterns.slice(0, 3)"
+                  :key="pattern.id"
+                  @click="openPatternDetail(pattern)"
+                  class="px-3 py-1 bg-white border border-green-300 rounded-lg text-xs font-medium text-green-800 hover:bg-green-50 transition-colors"
+                >
+                  {{ pattern.title }}
+                </button>
+              </div>
             </div>
           </div>
-
-          <div class="flex gap-3">
-            <NuxtLink
-              :to="`/claim-lab?insight=${selectedInsight.id}`"
-              class="flex-1 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-center no-underline"
-            >
-              Practice in Claim Lab
-            </NuxtLink>
-            <button
-              @click="dismissInsight(selectedInsight.id)"
-              class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Dismiss
-            </button>
-          </div>
         </div>
       </div>
     </div>
+
+    <!-- Pattern Detail Modal -->
+    <PatternDetailModal
+      :pattern="selectedPattern"
+      :is-open="isModalOpen"
+      @close="closeModal"
+      @practice="startPractice"
+      @view-claims="viewClaims"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Insight } from '~/types'
+import type { Pattern } from '~/types/enhancements'
 
-const appStore = useAppStore()
+// Stores
+const patternsStore = usePatternsStore()
 
-const filters = reactive({
-  severity: 'all',
-  category: 'all',
+// Composables
+const { formatCurrency } = useAnalytics()
+const { startPracticeSession } = usePatterns()
+const { trackInsightView } = useTracking()
+
+// State
+const sortBy = ref<'impact' | 'frequency' | 'progress' | 'recent'>('impact')
+const selectedPattern = ref<Pattern | null>(null)
+const isModalOpen = ref(false)
+
+// Load patterns on mount
+onMounted(async () => {
+  await patternsStore.loadPatterns()
 })
 
-const selectedInsight = ref<Insight | null>(null)
+// Sorted patterns based on selection
+const sortedPatterns = computed(() => {
+  const patterns = [...patternsStore.filteredPatterns]
 
-const totalImpact = computed(() => {
-  return appStore.insights.reduce((sum, i) => sum + i.impact, 0)
-})
-
-const filteredInsights = computed(() => {
-  let result = appStore.insights.filter(i => !i.dismissed)
-
-  if (filters.severity !== 'all') {
-    result = result.filter(i => i.severity === filters.severity)
+  switch (sortBy.value) {
+    case 'impact':
+      return patterns.sort((a, b) => b.score.impact - a.score.impact)
+    case 'frequency':
+      return patterns.sort((a, b) => b.score.frequency - a.score.frequency)
+    case 'progress':
+      return patterns.sort((a, b) => a.learningProgress - b.learningProgress) // Lowest first
+    case 'recent':
+      return patterns.sort((a, b) =>
+        new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+      )
+    default:
+      return patterns
   }
-
-  if (filters.category !== 'all') {
-    result = result.filter(i => i.category === filters.category)
-  }
-
-  return result
 })
 
-function clearFilters() {
-  filters.severity = 'all'
-  filters.category = 'all'
+// Methods
+const openPatternDetail = (pattern: Pattern) => {
+  selectedPattern.value = pattern
+  isModalOpen.value = true
+
+  // Track insight view
+  trackInsightView(pattern.id, pattern.category)
 }
 
-function dismissInsight(id: string) {
-  appStore.dismissInsight(id)
-  selectedInsight.value = null
+const closeModal = () => {
+  isModalOpen.value = false
+  selectedPattern.value = null
+}
+
+const startPractice = async (pattern: Pattern) => {
+  closeModal()
+  await startPracticeSession(pattern)
+}
+
+const viewClaims = (pattern: Pattern) => {
+  closeModal()
+
+  // Navigate to claims page with filter for this pattern's affected claims
+  const claimIds = pattern.affectedClaims.join(',')
+  navigateTo(`/claims?ids=${claimIds}`)
+}
+
+const refreshPatterns = async () => {
+  await patternsStore.loadPatterns()
 }
 </script>

@@ -8,10 +8,22 @@
 </template>
 
 <script setup lang="ts">
-// Initialize the app store and load data
+// Initialize all stores and load data
 const appStore = useAppStore()
+const patternsStore = usePatternsStore()
+const eventsStore = useEventsStore()
+const analyticsStore = useAnalyticsStore()
 
 onMounted(async () => {
-  await appStore.initialize()
+  // Initialize all stores in parallel
+  await Promise.all([
+    appStore.initialize(),
+    patternsStore.loadPatterns(),
+    eventsStore.loadEvents(),
+    analyticsStore.initialize(),
+  ])
+
+  // Load user events from localStorage
+  eventsStore.loadUserEvents()
 })
 </script>
