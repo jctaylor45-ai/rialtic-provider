@@ -119,6 +119,7 @@ export type EventType =
   | 'policy-viewed'
   | 'dashboard-viewed'
   | 'action-recorded'  // User marked action taken on a pattern
+  | 'code-intel-viewed'  // User viewed code intelligence modal
 
 export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
 

@@ -170,13 +170,15 @@
 
     <!-- Related Codes (if any) -->
     <div v-if="pattern.relatedCodes && pattern.relatedCodes.length > 0" class="mt-3 flex flex-wrap gap-2">
-      <span
+      <button
         v-for="code in pattern.relatedCodes.slice(0, 3)"
         :key="code"
-        class="px-2 py-1 text-xs font-mono bg-gray-100 text-gray-700 rounded border border-gray-200"
+        @click.stop="viewCodeIntelligence(code)"
+        class="px-2 py-1 text-xs font-mono bg-gray-100 text-gray-700 rounded border border-gray-200 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700 transition-colors cursor-pointer"
+        :title="`Click to view intelligence for ${code}`"
       >
         {{ code }}
-      </span>
+      </button>
       <span
         v-if="pattern.relatedCodes.length > 3"
         class="px-2 py-1 text-xs text-gray-500"
@@ -213,6 +215,7 @@ const {
 
 const { formatCurrency } = useAnalytics()
 const { getActionTypeLabel } = useActions()
+const { openCodeIntelligence } = useCodeIntelligence()
 
 // Computed properties
 const tierColor = computed(() => getPatternTierColor(props.pattern.tier))
@@ -261,5 +264,9 @@ const latestImprovement = computed(() => {
 
 const formatDate = (dateString: string) => {
   return format(new Date(dateString), 'MMM d, yyyy')
+}
+
+const viewCodeIntelligence = (code: string) => {
+  openCodeIntelligence(code)
 }
 </script>

@@ -188,6 +188,14 @@
       @close="closeRecordActionModal"
       @record="handleRecordAction"
     />
+
+    <!-- Code Intelligence Modal -->
+    <CodeIntelligenceModal
+      :code="selectedCode"
+      :is-open="isCodeIntelModalOpen"
+      @close="closeCodeIntelligence"
+      @navigate-to-code="navigateToCode"
+    />
   </div>
 </template>
 
@@ -202,6 +210,12 @@ const { formatCurrency } = useAnalytics()
 const { startPracticeSession } = usePatterns()
 const { trackInsightView } = useTracking()
 const { recordAction } = useActions()
+const {
+  isModalOpen: isCodeIntelModalOpen,
+  selectedCode,
+  closeCodeIntelligence,
+  navigateToCode,
+} = useCodeIntelligence()
 
 // State
 const sortBy = ref<'impact' | 'frequency' | 'progress' | 'recent'>('impact')

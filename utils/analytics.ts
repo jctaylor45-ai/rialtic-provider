@@ -452,7 +452,9 @@ export function calculateEngagementScore(events: LearningEvent[]): number {
     'correction-applied': 10,
     'code-lookup': 3,
     'policy-viewed': 2,
-    'dashboard-viewed': 1
+    'dashboard-viewed': 1,
+    'action-recorded': 6,
+    'code-intel-viewed': 3
   }
 
   const score = events.reduce((sum, event) => {

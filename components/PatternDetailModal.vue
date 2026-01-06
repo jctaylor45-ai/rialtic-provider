@@ -199,7 +199,16 @@
                     </div>
                     <p class="text-xs text-gray-600 mb-2">{{ evidence.denialReason }}</p>
                     <div class="flex items-center gap-4 text-xs text-gray-600">
-                      <span v-if="evidence.procedureCode">Code: {{ evidence.procedureCode }}</span>
+                      <span v-if="evidence.procedureCode" class="flex items-center gap-1">
+                        Code:
+                        <button
+                          @click.stop="viewCodeIntelligence(evidence.procedureCode)"
+                          class="font-mono hover:text-primary-600 hover:underline cursor-pointer"
+                          :title="`Click to view intelligence for ${evidence.procedureCode}`"
+                        >
+                          {{ evidence.procedureCode }}
+                        </button>
+                      </span>
                       <span v-if="evidence.modifier">Modifier: {{ evidence.modifier }}</span>
                       <span class="font-medium">{{ formatCurrency(evidence.billedAmount) }}</span>
                     </div>
@@ -241,13 +250,15 @@
               <section v-if="pattern.relatedCodes && pattern.relatedCodes.length > 0" class="mb-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Related Procedure Codes</h3>
                 <div class="flex flex-wrap gap-2">
-                  <span
+                  <button
                     v-for="code in pattern.relatedCodes"
                     :key="code"
-                    class="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-sm font-mono text-gray-800"
+                    @click="viewCodeIntelligence(code)"
+                    class="px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg text-sm font-mono text-gray-800 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700 transition-colors cursor-pointer"
+                    :title="`Click to view intelligence for ${code}`"
                   >
                     {{ code }}
-                  </span>
+                  </button>
                 </div>
               </section>
             </div>
@@ -300,7 +311,6 @@ const emit = defineEmits<{
 // Composables
 const { getActionTypeLabel, getActionTypeIcon } = useActions()
 
-// Composables
 const {
   getPatternTierColor,
   getPatternTierBadgeClass,
@@ -309,6 +319,7 @@ const {
 } = usePatterns()
 
 const { formatCurrency } = useAnalytics()
+const { openCodeIntelligence } = useCodeIntelligence()
 
 // Computed properties
 const tierColor = computed(() => props.pattern ? getPatternTierColor(props.pattern.tier) : 'gray')
@@ -377,6 +388,10 @@ const viewAffectedClaims = () => {
 
 const viewAllClaims = () => {
   viewAffectedClaims()
+}
+
+const viewCodeIntelligence = (code: string) => {
+  openCodeIntelligence(code)
 }
 
 // Close on Escape key

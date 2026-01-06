@@ -340,6 +340,14 @@
         </button>
       </div>
     </div>
+
+    <!-- Code Intelligence Modal -->
+    <CodeIntelligenceModal
+      :code="selectedCode"
+      :is-open="isCodeIntelModalOpen"
+      @close="closeCodeIntelligence"
+      @navigate-to-code="navigateToCode"
+    />
   </div>
 </template>
 
@@ -355,6 +363,13 @@ const analyticsStore = useAnalyticsStore()
 const { getPatternCategoryIcon, getPatternTierBadgeClass, startPracticeSession } = usePatterns()
 const { formatCurrency } = useAnalytics()
 const { trackClaimReview } = useTracking()
+const {
+  isModalOpen: isCodeIntelModalOpen,
+  selectedCode,
+  openCodeIntelligence,
+  closeCodeIntelligence,
+  navigateToCode,
+} = useCodeIntelligence()
 
 const claimId = route.params.id as string
 
@@ -394,8 +409,7 @@ const practicePattern = async (pattern: Pattern) => {
 }
 
 const showCodeIntelligence = (code: string) => {
-  // TODO: Implement code intelligence modal
-  console.log('Show code intelligence for:', code)
+  openCodeIntelligence(code)
 }
 
 // Track claim view
