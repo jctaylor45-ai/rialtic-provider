@@ -74,6 +74,7 @@
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Date of Service</th>
               <th class="text-right px-6 py-3 text-xs font-semibold text-gray-700">Amount</th>
               <th class="text-center px-6 py-3 text-xs font-semibold text-gray-700">Status</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Patterns</th>
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Reason</th>
             </tr>
           </thead>
@@ -110,12 +111,35 @@
                   {{ claim.status.charAt(0).toUpperCase() + claim.status.slice(1) }}
                 </span>
               </td>
+              <td class="px-6 py-4" @click.stop>
+                <div v-if="getClaimPatterns(claim.id).length > 0" class="flex flex-wrap gap-1">
+                  <button
+                    v-for="pattern in getClaimPatterns(claim.id).slice(0, 2)"
+                    :key="pattern.id"
+                    @click="viewPattern(pattern)"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors"
+                    :class="getPatternBadgeClass(pattern.tier)"
+                    :title="pattern.title"
+                  >
+                    <Icon :name="getPatternIcon(pattern.category)" class="w-3 h-3" />
+                    <span>{{ pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1) }}</span>
+                  </button>
+                  <span
+                    v-if="getClaimPatterns(claim.id).length > 2"
+                    class="inline-flex items-center px-2 py-0.5 text-xs text-gray-600"
+                    :title="`+${getClaimPatterns(claim.id).length - 2} more pattern(s)`"
+                  >
+                    +{{ getClaimPatterns(claim.id).length - 2 }}
+                  </span>
+                </div>
+                <div v-else class="text-xs text-gray-400">—</div>
+              </td>
               <td class="px-6 py-4">
                 <div v-if="claim.denialReason" class="text-sm text-gray-700">{{ claim.denialReason }}</div>
               </td>
             </tr>
             <tr v-if="filteredClaims.length === 0">
-              <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                 No claims found matching your criteria
               </td>
             </tr>
@@ -127,7 +151,14 @@
 </template>
 
 <script setup lang="ts">
+import type { Pattern } from '~/types/enhancements'
+
 const appStore = useAppStore()
+const patternsStore = usePatternsStore()
+const router = useRouter()
+
+// Composables
+const { getPatternCategoryIcon } = usePatterns()
 
 const searchParams = reactive({
   claimId: '',
@@ -177,4 +208,34 @@ const filteredClaims = computed(() => {
 
   return result.sort((a, b) => new Date(b.dateOfService).getTime() - new Date(a.dateOfService).getTime())
 })
+
+// Get patterns matching a claim
+const getClaimPatterns = (claimId: string): Pattern[] => {
+  return patternsStore.getPatternsByClaim(claimId)
+}
+
+// Get pattern tier badge class
+const getPatternBadgeClass = (tier: string) => {
+  const classes = {
+    critical: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
+    high: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200',
+    medium: 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200',
+    low: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200',
+  }
+  return classes[tier as keyof typeof classes] || 'bg-gray-100 text-gray-700 border-gray-300'
+}
+
+// Get pattern category icon
+const getPatternIcon = (category: string) => {
+  return getPatternCategoryIcon(category)
+}
+
+// Navigate to pattern details in insights page
+const viewPattern = (pattern: Pattern) => {
+  // Store the pattern ID in session storage so insights page can open it
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('openPatternId', pattern.id)
+  }
+  router.push('/insights')
+}
 </script>

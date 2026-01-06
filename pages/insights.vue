@@ -227,6 +227,21 @@ const selectedPatternForAction = ref<Pattern | null>(null)
 // Load patterns on mount
 onMounted(async () => {
   await patternsStore.loadPatterns()
+
+  // Check if we should auto-open a pattern from session storage
+  if (typeof window !== 'undefined') {
+    const patternId = sessionStorage.getItem('openPatternId')
+    if (patternId) {
+      sessionStorage.removeItem('openPatternId')
+      const pattern = patternsStore.getPatternById(patternId)
+      if (pattern) {
+        // Small delay to ensure patterns are loaded
+        setTimeout(() => {
+          openPatternDetail(pattern)
+        }, 100)
+      }
+    }
+  }
 })
 
 // Sorted patterns based on selection
