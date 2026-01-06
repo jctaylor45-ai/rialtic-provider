@@ -18,9 +18,18 @@
     <div class="flex-1 overflow-auto">
       <!-- Header -->
       <div class="bg-white border-b border-gray-200 p-6">
-        <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center gap-2 mb-2">
+          <button
+            @click="navigateTo('/claims')"
+            class="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <Icon name="heroicons:arrow-left" class="w-5 h-5 text-gray-600" />
+          </button>
+          <h1 class="text-2xl font-semibold text-gray-900">{{ claim.id }}</h1>
+        </div>
+
+        <div class="flex items-start justify-between">
           <div>
-            <h1 class="text-2xl font-semibold text-gray-900 mb-2">{{ claim.id }}</h1>
             <div class="text-sm text-gray-600">
               Patient: {{ claim.patientName }} • DOB: {{ claim.patientDOB || 'N/A' }}
             </div>
@@ -32,7 +41,7 @@
             <span
               class="px-3 py-1 text-sm font-medium rounded"
               :class="{
-                'bg-green-100 text-green-700': claim.status === 'approved',
+                'bg-green-100 text-green-700': claim.status === 'approved' || claim.status === 'paid',
                 'bg-red-100 text-red-700': claim.status === 'denied',
                 'bg-yellow-100 text-yellow-700': claim.status === 'pending',
                 'bg-blue-100 text-blue-700': claim.status === 'appealed',
@@ -46,6 +55,74 @@
             <div class="text-sm text-gray-600">
               Paid: <span class="font-semibold">{{ formatCurrency(claim.paidAmount || 0) }}</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pattern Matches (if denied) -->
+      <div v-if="matchingPatterns.length > 0" class="p-6">
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-6">
+          <div class="flex items-start gap-3 mb-4">
+            <Icon name="heroicons:exclamation-triangle" class="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-orange-900 mb-1">
+                {{ matchingPatterns.length }} Matching Pattern{{ matchingPatterns.length > 1 ? 's' : '' }} Detected
+              </h3>
+              <p class="text-sm text-orange-800">
+                This claim matches known denial patterns. Review the patterns below for guidance on how to avoid similar denials.
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div
+              v-for="pattern in matchingPatterns"
+              :key="pattern.id"
+              class="bg-white border border-orange-200 rounded-lg p-4 hover:border-orange-400 cursor-pointer transition-colors"
+              @click="navigateTo(`/insights`)"
+            >
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex items-center gap-3">
+                  <Icon :name="getPatternCategoryIcon(pattern.category)" class="w-5 h-5 text-orange-600" />
+                  <div>
+                    <h4 class="font-medium text-gray-900">{{ pattern.title }}</h4>
+                    <p class="text-xs text-gray-600 mt-0.5">{{ pattern.category }}</p>
+                  </div>
+                </div>
+                <span
+                  class="px-2 py-1 text-xs font-medium rounded border"
+                  :class="getPatternTierBadgeClass(pattern.tier)"
+                >
+                  {{ pattern.tier.toUpperCase() }}
+                </span>
+              </div>
+
+              <p class="text-sm text-gray-700 mb-3">{{ pattern.description }}</p>
+
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4 text-xs text-gray-600">
+                  <span>{{ pattern.score.frequency }} occurrences</span>
+                  <span>{{ formatCurrency(pattern.avgDenialAmount) }} avg denial</span>
+                  <span>{{ pattern.learningProgress }}% learned</span>
+                </div>
+                <button
+                  class="px-3 py-1 bg-primary-600 text-white text-xs font-medium rounded hover:bg-primary-700 transition-colors"
+                  @click.stop="practicePattern(pattern)"
+                >
+                  Practice
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center gap-2">
+            <NuxtLink
+              to="/insights"
+              class="text-sm font-medium text-orange-700 hover:text-orange-800 no-underline flex items-center gap-1"
+            >
+              View all patterns
+              <Icon name="heroicons:arrow-right" class="w-4 h-4" />
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -74,7 +151,17 @@
               >
                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.lineNumber }}</td>
                 <td class="px-4 py-3">
-                  <span class="font-mono text-sm text-gray-900">{{ item.procedureCode }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-sm text-gray-900">{{ item.procedureCode }}</span>
+                    <button
+                      v-if="codeIntelligence.has(item.procedureCode)"
+                      @click="showCodeIntelligence(item.procedureCode)"
+                      class="p-1 hover:bg-gray-100 rounded transition-colors"
+                      title="View code intelligence"
+                    >
+                      <Icon name="heroicons:information-circle" class="w-4 h-4 text-primary-600" />
+                    </button>
+                  </div>
                 </td>
                 <td class="px-4 py-3 text-sm text-gray-700">
                   {{ item.modifiers?.join(', ') || '-' }}
@@ -90,7 +177,7 @@
                   <span
                     class="px-2 py-1 text-xs font-medium rounded"
                     :class="{
-                      'bg-green-100 text-green-700': (item.status || claim.status) === 'approved',
+                      'bg-green-100 text-green-700': (item.status || claim.status) === 'approved' || (item.status || claim.status) === 'paid',
                       'bg-red-100 text-red-700': (item.status || claim.status) === 'denied',
                       'bg-yellow-100 text-yellow-700': (item.status || claim.status) === 'pending',
                     }"
@@ -114,7 +201,35 @@
             <div class="text-base font-semibold text-red-900">{{ claim.denialReason }}</div>
           </div>
 
-          <div v-if="claim.aiInsight" class="bg-white border border-gray-200 rounded-lg p-4">
+          <!-- Pattern-Based Guidance -->
+          <div v-if="primaryPattern" class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div class="flex items-start gap-3">
+              <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+              <div class="flex-1">
+                <h4 class="text-sm font-semibold text-gray-900 mb-2">Pattern-Based Guidance</h4>
+                <p class="text-sm text-gray-700 mb-3">
+                  {{ primaryPattern.suggestedAction }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="practicePattern(primaryPattern)"
+                    class="px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 transition-colors"
+                  >
+                    Practice This Pattern
+                  </button>
+                  <button
+                    @click="navigateTo(`/insights`)"
+                    class="px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 transition-colors"
+                  >
+                    View Pattern Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legacy AI Insight -->
+          <div v-else-if="claim.aiInsight" class="bg-white border border-gray-200 rounded-lg p-4">
             <div class="flex items-start gap-3">
               <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
               <div>
@@ -126,6 +241,36 @@
                   <div class="text-xs font-semibold text-gray-900 mb-1">To fix this:</div>
                   <p class="text-sm text-gray-700">{{ claim.aiInsight.guidance }}</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission Timeline -->
+      <div class="px-6 pb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Submission Timeline</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
+              <div class="flex-1">
+                <div class="text-sm font-medium text-gray-900">Submitted</div>
+                <div class="text-xs text-gray-600">{{ formatDate(claim.submissionDate) }}</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-2 h-2 bg-gray-400 rounded-full mt-1.5"></div>
+              <div class="flex-1">
+                <div class="text-sm font-medium text-gray-900">Processed</div>
+                <div class="text-xs text-gray-600">{{ formatDate(claim.processingDate) }}</div>
+              </div>
+            </div>
+            <div v-if="claim.status === 'denied'" class="flex items-start gap-3">
+              <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
+              <div class="flex-1">
+                <div class="text-sm font-medium text-gray-900">Denied</div>
+                <div class="text-xs text-gray-600">{{ claim.denialReason }}</div>
               </div>
             </div>
           </div>
@@ -144,28 +289,119 @@
         Test in Claim Lab
       </NuxtLink>
 
-      <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-        <div class="flex items-center justify-center gap-2">
-          <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
-          Download EOB
+      <!-- Quick Stats -->
+      <div v-if="matchingPatterns.length > 0" class="border-t border-gray-200 pt-4">
+        <h4 class="text-sm font-semibold text-gray-900 mb-3">Pattern Insights</h4>
+        <div class="space-y-3">
+          <div class="bg-orange-50 rounded-lg p-3">
+            <div class="text-xs text-orange-700 mb-1">Matching Patterns</div>
+            <div class="text-2xl font-semibold text-orange-900">{{ matchingPatterns.length }}</div>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-3">
+            <div class="text-xs text-blue-700 mb-1">Total At Risk</div>
+            <div class="text-lg font-semibold text-blue-900">
+              {{ formatCurrency(totalPatternRisk) }}
+            </div>
+          </div>
         </div>
-      </button>
+      </div>
 
-      <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-        Export Details
-      </button>
+      <!-- Procedure Code Intelligence -->
+      <div v-if="claim.procedureCodes.length > 0" class="border-t border-gray-200 pt-4">
+        <h4 class="text-sm font-semibold text-gray-900 mb-3">Procedure Codes</h4>
+        <div class="space-y-2">
+          <div
+            v-for="code in claim.procedureCodes"
+            :key="code"
+            class="flex items-center justify-between p-2 bg-gray-50 rounded"
+          >
+            <span class="font-mono text-sm text-gray-900">{{ code }}</span>
+            <button
+              v-if="codeIntelligence.has(code)"
+              @click="showCodeIntelligence(code)"
+              class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+            >
+              Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-200 pt-4 space-y-2">
+        <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <div class="flex items-center justify-center gap-2">
+            <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
+            Download EOB
+          </div>
+        </button>
+
+        <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          Export Details
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Pattern } from '~/types/enhancements'
+
 const route = useRoute()
 const appStore = useAppStore()
+const patternsStore = usePatternsStore()
+const analyticsStore = useAnalyticsStore()
+
+// Composables
+const { getPatternCategoryIcon, getPatternTierBadgeClass, startPracticeSession } = usePatterns()
+const { formatCurrency } = useAnalytics()
+const { trackClaimReview } = useTracking()
 
 const claimId = route.params.id as string
 
 const claim = computed(() => {
   const foundClaim = appStore.getClaimById(claimId)
   return foundClaim ? ensureLineItems(foundClaim) : null
+})
+
+// Get patterns that match this claim
+const matchingPatterns = computed(() => {
+  if (!claim.value) return []
+  return patternsStore.getPatternsByClaim(claim.value.id)
+})
+
+// Primary pattern (highest tier)
+const primaryPattern = computed(() => {
+  if (matchingPatterns.value.length === 0) return null
+
+  // Sort by tier priority: critical > high > medium > low
+  const tierPriority = { critical: 4, high: 3, medium: 2, low: 1 }
+  return matchingPatterns.value.sort((a, b) =>
+    tierPriority[b.tier] - tierPriority[a.tier]
+  )[0]
+})
+
+// Total risk from all matching patterns
+const totalPatternRisk = computed(() => {
+  return matchingPatterns.value.reduce((sum, p) => sum + p.avgDenialAmount, 0)
+})
+
+// Code intelligence access
+const codeIntelligence = computed(() => analyticsStore.codeIntelligence)
+
+// Methods
+const practicePattern = async (pattern: Pattern) => {
+  await startPracticeSession(pattern)
+}
+
+const showCodeIntelligence = (code: string) => {
+  // TODO: Implement code intelligence modal
+  console.log('Show code intelligence for:', code)
+}
+
+// Track claim view
+onMounted(() => {
+  if (claim.value) {
+    trackClaimReview(claim.value.id, 0)
+  }
 })
 </script>
