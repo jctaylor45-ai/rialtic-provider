@@ -107,8 +107,34 @@
       </p>
     </div>
 
+    <!-- Recent Actions -->
+    <div v-if="pattern.actions && pattern.actions.length > 0" class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+      <div class="flex items-center gap-2 mb-2">
+        <Icon name="heroicons:check-badge" class="w-4 h-4 text-blue-600" />
+        <span class="text-sm font-medium text-blue-800">Actions Recorded</span>
+      </div>
+      <div class="space-y-1">
+        <div
+          v-for="action in pattern.actions.slice(-2)"
+          :key="action.id"
+          class="text-xs text-blue-700"
+        >
+          <span class="font-medium">{{ formatDate(action.timestamp) }}:</span>
+          {{ getActionTypeLabel(action.actionType) }}
+          <span v-if="action.notes" class="text-blue-600">- {{ action.notes }}</span>
+        </div>
+        <button
+          v-if="pattern.actions.length > 2"
+          @click.stop="$emit('view-details', pattern)"
+          class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+        >
+          View all {{ pattern.actions.length }} actions →
+        </button>
+      </div>
+    </div>
+
     <!-- Action Buttons -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 mb-3">
       <button
         @click.stop="$emit('practice', pattern)"
         class="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
@@ -132,6 +158,15 @@
         <Icon name="heroicons:arrow-right" class="w-4 h-4" />
       </button>
     </div>
+
+    <!-- Mark Action Taken Button -->
+    <button
+      @click.stop="$emit('record-action', pattern)"
+      class="w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center justify-center gap-2"
+    >
+      <Icon name="heroicons:check-circle" class="w-4 h-4" />
+      Mark Action Taken
+    </button>
 
     <!-- Related Codes (if any) -->
     <div v-if="pattern.relatedCodes && pattern.relatedCodes.length > 0" class="mt-3 flex flex-wrap gap-2">
@@ -165,6 +200,7 @@ defineEmits<{
   practice: [pattern: Pattern]
   viewClaims: [pattern: Pattern]
   viewDetails: [pattern: Pattern]
+  recordAction: [pattern: Pattern]
 }>()
 
 // Composables
@@ -176,6 +212,7 @@ const {
 } = usePatterns()
 
 const { formatCurrency } = useAnalytics()
+const { getActionTypeLabel } = useActions()
 
 // Computed properties
 const tierColor = computed(() => getPatternTierColor(props.pattern.tier))

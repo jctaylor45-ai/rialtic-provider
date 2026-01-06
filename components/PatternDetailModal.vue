@@ -121,6 +121,33 @@
                 </div>
               </section>
 
+              <!-- Actions Recorded -->
+              <section v-if="pattern.actions && pattern.actions.length > 0" class="mb-6">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Actions Recorded</h3>
+                <div class="space-y-3">
+                  <div
+                    v-for="action in pattern.actions"
+                    :key="action.id"
+                    class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                  >
+                    <Icon :name="getActionTypeIcon(action.actionType)" class="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-sm font-medium text-blue-900">
+                          {{ getActionTypeLabel(action.actionType) }}
+                        </span>
+                        <span class="text-xs text-blue-600">
+                          {{ formatDate(action.timestamp) }}
+                        </span>
+                      </div>
+                      <div v-if="action.notes" class="text-xs text-blue-700">
+                        {{ action.notes }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               <!-- Improvements Timeline -->
               <section v-if="pattern.improvements.length > 0" class="mb-6">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Improvement History</h3>
@@ -269,6 +296,9 @@ const emit = defineEmits<{
   practice: [pattern: Pattern]
   viewClaims: [pattern: Pattern]
 }>()
+
+// Composables
+const { getActionTypeLabel, getActionTypeIcon } = useActions()
 
 // Composables
 const {

@@ -140,6 +140,7 @@
             @practice="startPractice(pattern)"
             @view-claims="viewClaims(pattern)"
             @view-details="openPatternDetail(pattern)"
+            @record-action="openRecordActionModal(pattern)"
           />
         </div>
 
@@ -179,11 +180,19 @@
       @practice="startPractice"
       @view-claims="viewClaims"
     />
+
+    <!-- Record Action Modal -->
+    <RecordActionModal
+      :is-open="isRecordActionModalOpen"
+      :pattern="selectedPatternForAction"
+      @close="closeRecordActionModal"
+      @record="handleRecordAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Pattern } from '~/types/enhancements'
+import type { Pattern, ActionType } from '~/types/enhancements'
 
 // Stores
 const patternsStore = usePatternsStore()
@@ -192,11 +201,14 @@ const patternsStore = usePatternsStore()
 const { formatCurrency } = useAnalytics()
 const { startPracticeSession } = usePatterns()
 const { trackInsightView } = useTracking()
+const { recordAction } = useActions()
 
 // State
 const sortBy = ref<'impact' | 'frequency' | 'progress' | 'recent'>('impact')
 const selectedPattern = ref<Pattern | null>(null)
 const isModalOpen = ref(false)
+const isRecordActionModalOpen = ref(false)
+const selectedPatternForAction = ref<Pattern | null>(null)
 
 // Load patterns on mount
 onMounted(async () => {
@@ -252,5 +264,25 @@ const viewClaims = (pattern: Pattern) => {
 
 const refreshPatterns = async () => {
   await patternsStore.loadPatterns()
+}
+
+const openRecordActionModal = (pattern: Pattern) => {
+  selectedPatternForAction.value = pattern
+  isRecordActionModalOpen.value = true
+}
+
+const closeRecordActionModal = () => {
+  isRecordActionModalOpen.value = false
+  selectedPatternForAction.value = null
+}
+
+const handleRecordAction = async (actionType: ActionType, notes: string) => {
+  if (!selectedPatternForAction.value) return
+
+  // Record the action
+  await recordAction(selectedPatternForAction.value.id, actionType, notes)
+
+  // Close the modal
+  closeRecordActionModal()
 }
 </script>
