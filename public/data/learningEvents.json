@@ -1,0 +1,1335 @@
+{
+  "learningEvents": [
+    {
+      "id": "EVT-00001",
+      "timestamp": "2024-07-05T08:30:00Z",
+      "type": "claim-submitted",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2001",
+        "claimStatus": "denied",
+        "billedAmount": 285
+      },
+      "sessionId": "SESSION-001",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00002",
+      "timestamp": "2024-07-05T14:15:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 45000
+      },
+      "sessionId": "SESSION-001",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00003",
+      "timestamp": "2024-07-06T09:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2001",
+        "duration": 180000
+      },
+      "sessionId": "SESSION-002",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00004",
+      "timestamp": "2024-07-06T09:45:00Z",
+      "type": "pattern-identified",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-002",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00005",
+      "timestamp": "2024-07-08T10:20:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-003",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00006",
+      "timestamp": "2024-07-10T11:00:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "99213",
+        "codeCategory": "E&M"
+      },
+      "sessionId": "SESSION-004",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00007",
+      "timestamp": "2024-07-12T13:30:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-001",
+        "policyMode": "active",
+        "duration": 240000
+      },
+      "sessionId": "SESSION-005",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00008",
+      "timestamp": "2024-07-15T09:15:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 62000
+      },
+      "sessionId": "SESSION-006",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00009",
+      "timestamp": "2024-07-18T14:00:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-007",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00010",
+      "timestamp": "2024-07-20T10:45:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2014",
+        "duration": 165000
+      },
+      "sessionId": "SESSION-008",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00011",
+      "timestamp": "2024-07-22T15:20:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "patternCategory": "authorization"
+      },
+      "sessionId": "SESSION-009",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00012",
+      "timestamp": "2024-07-25T11:00:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "45378",
+        "codeCategory": "Procedure"
+      },
+      "sessionId": "SESSION-010",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00013",
+      "timestamp": "2024-07-28T09:30:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 71000
+      },
+      "sessionId": "SESSION-011",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00014",
+      "timestamp": "2024-08-01T10:00:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-002",
+        "policyMode": "active",
+        "duration": 195000
+      },
+      "sessionId": "SESSION-012",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00015",
+      "timestamp": "2024-08-05T13:45:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "patternCategory": "documentation"
+      },
+      "sessionId": "SESSION-013",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00016",
+      "timestamp": "2024-08-08T14:20:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2026",
+        "duration": 210000
+      },
+      "sessionId": "SESSION-014",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00017",
+      "timestamp": "2024-08-10T08:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-015",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00018",
+      "timestamp": "2024-08-10T09:45:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 420000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-015",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00019",
+      "timestamp": "2024-08-12T11:00:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2024-2028",
+        "patternId": "PTN-001",
+        "action": "added-modifier"
+      },
+      "sessionId": "SESSION-016",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00020",
+      "timestamp": "2024-08-15T10:15:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-017",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00021",
+      "timestamp": "2024-08-15T11:30:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 380000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-017",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00022",
+      "timestamp": "2024-08-18T14:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2031",
+        "duration": 195000
+      },
+      "sessionId": "SESSION-018",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00023",
+      "timestamp": "2024-08-20T09:45:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-019",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00024",
+      "timestamp": "2024-08-22T13:20:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-004",
+        "policyMode": "active",
+        "duration": 158000
+      },
+      "sessionId": "SESSION-020",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00025",
+      "timestamp": "2024-08-25T10:30:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "99214",
+        "codeCategory": "E&M"
+      },
+      "sessionId": "SESSION-021",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00026",
+      "timestamp": "2024-08-28T15:00:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 84000
+      },
+      "sessionId": "SESSION-022",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00027",
+      "timestamp": "2024-08-30T11:15:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-023",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00028",
+      "timestamp": "2024-08-30T12:45:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "duration": 520000,
+        "success": true,
+        "correctionsCount": 4
+      },
+      "sessionId": "SESSION-023",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00029",
+      "timestamp": "2024-09-02T09:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2039",
+        "duration": 185000
+      },
+      "sessionId": "SESSION-024",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00030",
+      "timestamp": "2024-09-05T14:30:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "patternCategory": "code-mismatch"
+      },
+      "sessionId": "SESSION-025",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00031",
+      "timestamp": "2024-09-08T10:00:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-026",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00032",
+      "timestamp": "2024-09-08T11:40:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "duration": 480000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-026",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00033",
+      "timestamp": "2024-09-10T13:45:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2024-2043",
+        "patternId": "PTN-001",
+        "action": "added-modifier"
+      },
+      "sessionId": "SESSION-027",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00034",
+      "timestamp": "2024-09-12T09:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-028",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00035",
+      "timestamp": "2024-09-12T11:10:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "duration": 460000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-028",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00036",
+      "timestamp": "2024-09-15T11:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2045",
+        "duration": 172000
+      },
+      "sessionId": "SESSION-029",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00037",
+      "timestamp": "2024-09-18T14:15:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "patternCategory": "code-mismatch"
+      },
+      "sessionId": "SESSION-030",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00038",
+      "timestamp": "2024-09-20T10:00:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-031",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00039",
+      "timestamp": "2024-09-20T11:35:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 410000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-031",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00040",
+      "timestamp": "2024-09-22T13:30:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "20610",
+        "codeCategory": "Procedure"
+      },
+      "sessionId": "SESSION-032",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00041",
+      "timestamp": "2024-09-25T09:00:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 95000
+      },
+      "sessionId": "SESSION-033",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00042",
+      "timestamp": "2024-09-28T14:45:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-001",
+        "policyMode": "active",
+        "duration": 218000
+      },
+      "sessionId": "SESSION-034",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00043",
+      "timestamp": "2024-10-02T10:15:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2054",
+        "duration": 198000
+      },
+      "sessionId": "SESSION-035",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00044",
+      "timestamp": "2024-10-05T13:00:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-036",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00045",
+      "timestamp": "2024-10-08T11:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-037",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00046",
+      "timestamp": "2024-10-08T13:20:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "duration": 540000,
+        "success": true,
+        "correctionsCount": 4
+      },
+      "sessionId": "SESSION-037",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00047",
+      "timestamp": "2024-10-10T14:00:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2024-2058",
+        "patternId": "PTN-001",
+        "action": "added-modifier"
+      },
+      "sessionId": "SESSION-038",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00048",
+      "timestamp": "2024-10-15T09:45:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-039",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00049",
+      "timestamp": "2024-10-15T11:25:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "duration": 500000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-039",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00050",
+      "timestamp": "2024-10-18T10:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-040",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00051",
+      "timestamp": "2024-10-18T12:15:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "duration": 490000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-040",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00052",
+      "timestamp": "2024-10-20T13:45:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2063",
+        "duration": 187000
+      },
+      "sessionId": "SESSION-041",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00053",
+      "timestamp": "2024-10-22T11:00:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "patternCategory": "code-mismatch"
+      },
+      "sessionId": "SESSION-042",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00054",
+      "timestamp": "2024-10-25T09:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-043",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00055",
+      "timestamp": "2024-10-25T11:10:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 430000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-043",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00056",
+      "timestamp": "2024-10-28T14:20:00Z",
+      "type": "insight-dismissed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001"
+      },
+      "sessionId": "SESSION-044",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00057",
+      "timestamp": "2024-10-30T10:45:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 112000
+      },
+      "sessionId": "SESSION-045",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00058",
+      "timestamp": "2024-11-02T13:15:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-003",
+        "policyMode": "active",
+        "duration": 245000
+      },
+      "sessionId": "SESSION-046",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00059",
+      "timestamp": "2024-11-05T09:00:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "93000",
+        "codeCategory": "Cardiology"
+      },
+      "sessionId": "SESSION-047",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00060",
+      "timestamp": "2024-11-08T14:30:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2072",
+        "duration": 204000
+      },
+      "sessionId": "SESSION-048",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00061",
+      "timestamp": "2024-11-10T11:00:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-049",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00062",
+      "timestamp": "2024-11-10T13:00:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "duration": 560000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-049",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00063",
+      "timestamp": "2024-11-12T15:45:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2024-2074",
+        "patternId": "PTN-004",
+        "action": "improved-documentation"
+      },
+      "sessionId": "SESSION-050",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00064",
+      "timestamp": "2024-11-15T10:15:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "patternCategory": "coding-specificity"
+      },
+      "sessionId": "SESSION-051",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00065",
+      "timestamp": "2024-11-18T09:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-052",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00066",
+      "timestamp": "2024-11-18T11:05:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 450000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-052",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00067",
+      "timestamp": "2024-11-20T12:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-053",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00068",
+      "timestamp": "2024-11-20T14:05:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "duration": 520000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-053",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00069",
+      "timestamp": "2024-11-22T10:45:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-054",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00070",
+      "timestamp": "2024-11-22T12:35:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "duration": 510000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-054",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00071",
+      "timestamp": "2024-11-24T14:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2080",
+        "duration": 216000
+      },
+      "sessionId": "SESSION-055",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00072",
+      "timestamp": "2024-11-26T11:30:00Z",
+      "type": "insight-dismissed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003"
+      },
+      "sessionId": "SESSION-056",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00073",
+      "timestamp": "2024-11-28T09:00:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 128000
+      },
+      "sessionId": "SESSION-057",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00074",
+      "timestamp": "2024-11-30T13:45:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-005",
+        "policyMode": "active",
+        "duration": 267000
+      },
+      "sessionId": "SESSION-058",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00075",
+      "timestamp": "2024-12-02T10:20:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "36415",
+        "codeCategory": "Procedure"
+      },
+      "sessionId": "SESSION-059",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00076",
+      "timestamp": "2024-12-05T14:15:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-060",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00077",
+      "timestamp": "2024-12-05T16:00:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "duration": 530000,
+        "success": true,
+        "correctionsCount": 4
+      },
+      "sessionId": "SESSION-060",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00078",
+      "timestamp": "2024-12-08T11:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2087",
+        "duration": 209000
+      },
+      "sessionId": "SESSION-061",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00079",
+      "timestamp": "2024-12-10T15:30:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "patternCategory": "authorization"
+      },
+      "sessionId": "SESSION-062",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00080",
+      "timestamp": "2024-12-12T09:45:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-063",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00081",
+      "timestamp": "2024-12-12T11:30:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 470000,
+        "success": true,
+        "correctionsCount": 1
+      },
+      "sessionId": "SESSION-063",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00082",
+      "timestamp": "2024-12-14T13:00:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2024-2090",
+        "patternId": "PTN-001",
+        "action": "added-modifier"
+      },
+      "sessionId": "SESSION-064",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00083",
+      "timestamp": "2024-12-16T10:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-065",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00084",
+      "timestamp": "2024-12-16T12:20:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "duration": 535000,
+        "success": true,
+        "correctionsCount": 1
+      },
+      "sessionId": "SESSION-065",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00085",
+      "timestamp": "2024-12-18T14:45:00Z",
+      "type": "insight-dismissed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004"
+      },
+      "sessionId": "SESSION-066",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00086",
+      "timestamp": "2024-12-20T09:00:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-067",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00087",
+      "timestamp": "2024-12-20T10:35:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 460000,
+        "success": true,
+        "correctionsCount": 1
+      },
+      "sessionId": "SESSION-067",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00088",
+      "timestamp": "2024-12-22T11:15:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 145000
+      },
+      "sessionId": "SESSION-068",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00089",
+      "timestamp": "2024-12-24T13:30:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-007",
+        "policyMode": "active",
+        "duration": 289000
+      },
+      "sessionId": "SESSION-069",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00090",
+      "timestamp": "2024-12-26T10:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2024-2096",
+        "duration": 198000
+      },
+      "sessionId": "SESSION-070",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00091",
+      "timestamp": "2024-12-28T14:20:00Z",
+      "type": "code-lookup",
+      "context": "learning",
+      "metadata": {
+        "procedureCode": "99215",
+        "codeCategory": "E&M"
+      },
+      "sessionId": "SESSION-071",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00092",
+      "timestamp": "2024-12-30T09:45:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "patternCategory": "modifier-missing"
+      },
+      "sessionId": "SESSION-072",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00093",
+      "timestamp": "2025-01-02T13:00:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-073",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00094",
+      "timestamp": "2025-01-02T14:50:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-002",
+        "duration": 580000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-073",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00095",
+      "timestamp": "2025-01-05T10:30:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2025-2100",
+        "patternId": "PTN-001",
+        "action": "added-modifier"
+      },
+      "sessionId": "SESSION-074",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00096",
+      "timestamp": "2025-01-07T14:15:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-075",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00097",
+      "timestamp": "2025-01-07T16:00:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007",
+        "duration": 545000,
+        "success": true,
+        "correctionsCount": 2
+      },
+      "sessionId": "SESSION-075",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00098",
+      "timestamp": "2025-01-09T11:00:00Z",
+      "type": "claim-reviewed",
+      "context": "claims",
+      "metadata": {
+        "claimId": "CLM-2025-2103",
+        "duration": 215000
+      },
+      "sessionId": "SESSION-076",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00099",
+      "timestamp": "2025-01-10T15:45:00Z",
+      "type": "dashboard-viewed",
+      "context": "learning",
+      "metadata": {
+        "duration": 158000
+      },
+      "sessionId": "SESSION-077",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00100",
+      "timestamp": "2025-01-12T10:15:00Z",
+      "type": "insight-viewed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-003",
+        "patternCategory": "documentation"
+      },
+      "sessionId": "SESSION-078",
+      "deviceType": "mobile"
+    },
+    {
+      "id": "EVT-00101",
+      "timestamp": "2025-01-14T09:30:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "practiceType": "free-form"
+      },
+      "sessionId": "SESSION-079",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00102",
+      "timestamp": "2025-01-14T11:20:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-004",
+        "duration": 555000,
+        "success": true,
+        "correctionsCount": 3
+      },
+      "sessionId": "SESSION-079",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00103",
+      "timestamp": "2025-01-16T13:40:00Z",
+      "type": "correction-applied",
+      "context": "learning",
+      "metadata": {
+        "claimId": "CLM-2025-2107",
+        "patternId": "PTN-002",
+        "action": "updated-auth"
+      },
+      "sessionId": "SESSION-080",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00104",
+      "timestamp": "2025-01-18T10:00:00Z",
+      "type": "insight-dismissed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-007"
+      },
+      "sessionId": "SESSION-081",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00105",
+      "timestamp": "2025-01-20T14:30:00Z",
+      "type": "policy-viewed",
+      "context": "learning",
+      "metadata": {
+        "policyId": "POL-012",
+        "policyMode": "active",
+        "duration": 301000
+      },
+      "sessionId": "SESSION-082",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00106",
+      "timestamp": "2025-01-22T11:45:00Z",
+      "type": "practice-started",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "practiceType": "guided"
+      },
+      "sessionId": "SESSION-083",
+      "deviceType": "desktop"
+    },
+    {
+      "id": "EVT-00107",
+      "timestamp": "2025-01-22T13:15:00Z",
+      "type": "practice-completed",
+      "context": "learning",
+      "metadata": {
+        "patternId": "PTN-001",
+        "duration": 480000,
+        "success": true,
+        "correctionsCount": 1
+      },
+      "sessionId": "SESSION-083",
+      "deviceType": "desktop"
+    }
+  ]
+}

@@ -1,0 +1,841 @@
+{
+  "codeIntelligence": [
+    {
+      "code": "99213",
+      "description": "Office/outpatient visit, est patient, low-moderate complexity",
+      "category": "Evaluation & Management",
+      "typicalDiagnosisCodes": ["I10", "E11.9", "J06.9", "M25.511", "R51.9"],
+      "requiredModifiers": [],
+      "optionalModifiers": [
+        {
+          "code": "25",
+          "description": "Significant, separately identifiable E&M service",
+          "usage": "Required when E&M performed same day as procedure",
+          "required": true,
+          "billable": true
+        }
+      ],
+      "documentationRequirements": [
+        "Chief complaint",
+        "History of present illness (brief HPI - 1-3 elements)",
+        "Review of systems (problem pertinent - 1 system)",
+        "Examination (expanded problem focused)",
+        "Medical decision making (low complexity)",
+        "Time: 20-29 minutes of total time spent"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Modifier 25 required when performed with same-day procedure",
+          "effectiveDate": "2024-01-01",
+          "modifierRequirements": ["25"]
+        },
+        {
+          "payerId": "PAY-002",
+          "payerName": "Blue Cross",
+          "rule": "Documentation must support medical necessity for same-day visit",
+          "effectiveDate": "2024-01-01"
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 32,
+          "approvals": 24,
+          "denials": 8,
+          "avgReimbursement": 75.50,
+          "commonDenialReasons": ["Missing Modifier 25", "Insufficient Documentation"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 28,
+          "approvals": 22,
+          "denials": 6,
+          "avgReimbursement": 76.25,
+          "commonDenialReasons": ["Missing Modifier 25"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 30,
+          "approvals": 25,
+          "denials": 5,
+          "avgReimbursement": 77.10,
+          "commonDenialReasons": ["Missing Modifier 25", "Medical Necessity"]
+        },
+        {
+          "month": "2024-10",
+          "submissions": 29,
+          "approvals": 26,
+          "denials": 3,
+          "avgReimbursement": 77.80,
+          "commonDenialReasons": ["Insufficient Documentation"]
+        },
+        {
+          "month": "2024-11",
+          "submissions": 31,
+          "approvals": 29,
+          "denials": 2,
+          "avgReimbursement": 78.50,
+          "commonDenialReasons": ["Bundling Violation"]
+        },
+        {
+          "month": "2024-12",
+          "submissions": 27,
+          "approvals": 26,
+          "denials": 1,
+          "avgReimbursement": 79.25,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 89.5,
+      "nationalApprovalRate": 94.2,
+      "avgReimbursement": 77.50,
+      "commonDenialReasons": [
+        "Missing Modifier 25 when performed with same-day procedure",
+        "Insufficient documentation of medical necessity",
+        "Time-based billing without documented time"
+      ],
+      "bestPractices": [
+        "Always use modifier 25 when performed same day as a procedure",
+        "Document all elements of E&M service separately from procedure note",
+        "Include time documentation when billing based on total time",
+        "Ensure diagnosis codes support medical necessity for visit"
+      ],
+      "relatedCodes": [
+        {
+          "code": "99214",
+          "description": "Office visit, est, moderate complexity",
+          "relationship": "alternative",
+          "note": "Use for higher complexity visits"
+        },
+        {
+          "code": "99212",
+          "description": "Office visit, est, straightforward",
+          "relationship": "alternative",
+          "note": "Use for lower complexity visits"
+        }
+      ],
+      "recentPolicyChanges": [
+        "2024-01-01: Medicare updated modifier 25 requirements for clarity"
+      ],
+      "warnings": [],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "99214",
+      "description": "Office/outpatient visit, est patient, moderate complexity",
+      "category": "Evaluation & Management",
+      "typicalDiagnosisCodes": ["I48.91", "E11.65", "I50.9", "J44.1", "N18.3"],
+      "requiredModifiers": [],
+      "optionalModifiers": [
+        {
+          "code": "25",
+          "description": "Significant, separately identifiable E&M service",
+          "usage": "Required when E&M performed same day as procedure",
+          "required": true,
+          "billable": true
+        }
+      ],
+      "documentationRequirements": [
+        "Chief complaint",
+        "History of present illness (extended HPI - 4+ elements)",
+        "Review of systems (extended - 2-9 systems)",
+        "Examination (detailed)",
+        "Medical decision making (moderate complexity)",
+        "Time: 30-39 minutes of total time spent"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Requires moderate complexity MDM or appropriate time documentation",
+          "effectiveDate": "2024-01-01"
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 18,
+          "approvals": 14,
+          "denials": 4,
+          "avgReimbursement": 125.75,
+          "commonDenialReasons": ["Insufficient Documentation", "Missing Modifier 25"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 20,
+          "approvals": 16,
+          "denials": 4,
+          "avgReimbursement": 126.50,
+          "commonDenialReasons": ["Missing Modifier 25"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 19,
+          "approvals": 17,
+          "denials": 2,
+          "avgReimbursement": 127.25,
+          "commonDenialReasons": ["Insufficient Documentation"]
+        },
+        {
+          "month": "2024-10",
+          "submissions": 21,
+          "approvals": 19,
+          "denials": 2,
+          "avgReimbursement": 128.10,
+          "commonDenialReasons": ["Medical Necessity"]
+        },
+        {
+          "month": "2024-11",
+          "submissions": 17,
+          "approvals": 16,
+          "denials": 1,
+          "avgReimbursement": 129.00,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 19,
+          "approvals": 19,
+          "denials": 0,
+          "avgReimbursement": 130.25,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 92.7,
+      "nationalApprovalRate": 95.8,
+      "avgReimbursement": 127.80,
+      "commonDenialReasons": [
+        "Documentation does not support moderate complexity",
+        "Missing modifier 25 for same-day procedures",
+        "Insufficient review of systems or exam documentation"
+      ],
+      "bestPractices": [
+        "Document moderate complexity medical decision making clearly",
+        "Include problem list review, data review, and risk assessment",
+        "Use time-based billing when appropriate and document total time",
+        "Ensure diagnosis supports level of service"
+      ],
+      "relatedCodes": [
+        {
+          "code": "99213",
+          "description": "Office visit, est, low-moderate complexity",
+          "relationship": "alternative",
+          "note": "Use for lower complexity visits"
+        },
+        {
+          "code": "99215",
+          "description": "Office visit, est, high complexity",
+          "relationship": "alternative",
+          "note": "Use for higher complexity visits"
+        }
+      ],
+      "recentPolicyChanges": [],
+      "warnings": [],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "99215",
+      "description": "Office/outpatient visit, est patient, high complexity",
+      "category": "Evaluation & Management",
+      "typicalDiagnosisCodes": ["I21.09", "I50.23", "N18.5", "J96.01", "E11.22"],
+      "requiredModifiers": [],
+      "optionalModifiers": [
+        {
+          "code": "25",
+          "description": "Significant, separately identifiable E&M service",
+          "usage": "Required when E&M performed same day as procedure",
+          "required": true,
+          "billable": true
+        }
+      ],
+      "documentationRequirements": [
+        "Chief complaint",
+        "History of present illness (extended HPI - 4+ elements)",
+        "Review of systems (complete - 10+ systems)",
+        "Examination (comprehensive)",
+        "Medical decision making (high complexity)",
+        "Time: 40-54 minutes of total time spent"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Requires high complexity MDM with extensive data review and high risk",
+          "effectiveDate": "2024-01-01"
+        },
+        {
+          "payerId": "PAY-003",
+          "payerName": "Aetna",
+          "rule": "May require additional documentation for medical necessity review",
+          "effectiveDate": "2024-01-01"
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 8,
+          "approvals": 6,
+          "denials": 2,
+          "avgReimbursement": 175.50,
+          "commonDenialReasons": ["Insufficient Documentation"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 9,
+          "approvals": 7,
+          "denials": 2,
+          "avgReimbursement": 176.25,
+          "commonDenialReasons": ["Medical Necessity Not Supported"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 7,
+          "approvals": 6,
+          "denials": 1,
+          "avgReimbursement": 177.10,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-10",
+          "submissions": 8,
+          "approvals": 8,
+          "denials": 0,
+          "avgReimbursement": 178.50,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-11",
+          "submissions": 6,
+          "approvals": 6,
+          "denials": 0,
+          "avgReimbursement": 179.75,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 7,
+          "approvals": 7,
+          "denials": 0,
+          "avgReimbursement": 181.00,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 88.9,
+      "nationalApprovalRate": 92.5,
+      "avgReimbursement": 178.00,
+      "commonDenialReasons": [
+        "Documentation does not support high complexity",
+        "Diagnosis codes do not support level of service",
+        "Insufficient data review or risk documentation"
+      ],
+      "bestPractices": [
+        "Document high complexity MDM with extensive data review",
+        "Include discussion of multiple diagnoses, tests, or treatments",
+        "Document risk of complications or morbidity",
+        "Ensure comprehensive examination is documented"
+      ],
+      "relatedCodes": [
+        {
+          "code": "99214",
+          "description": "Office visit, est, moderate complexity",
+          "relationship": "alternative",
+          "note": "Use for moderate complexity visits"
+        }
+      ],
+      "recentPolicyChanges": [],
+      "warnings": ["High scrutiny code - ensure documentation supports complexity level"],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "36415",
+      "description": "Routine venipuncture for collection of specimen",
+      "category": "Diagnostic Procedure",
+      "typicalDiagnosisCodes": ["I10", "E11.9", "Z00.00", "R53.83"],
+      "requiredModifiers": [],
+      "optionalModifiers": [],
+      "documentationRequirements": [
+        "Order for lab test",
+        "Specimen collection site",
+        "Specimen type collected",
+        "Patient tolerates procedure"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Often bundled with E&M service - verify unbundling rules",
+          "effectiveDate": "2024-01-01"
+        },
+        {
+          "payerId": "PAY-002",
+          "payerName": "Blue Cross",
+          "rule": "May be included in office visit payment",
+          "effectiveDate": "2024-01-01"
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 45,
+          "approvals": 32,
+          "denials": 13,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": ["Bundling Violation", "Included in Office Visit"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 42,
+          "approvals": 33,
+          "denials": 9,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": ["Bundling Violation"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 38,
+          "approvals": 32,
+          "denials": 6,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": ["Bundling Violation"]
+        },
+        {
+          "month": "2024-10",
+          "submissions": 41,
+          "approvals": 37,
+          "denials": 4,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-11",
+          "submissions": 39,
+          "approvals": 37,
+          "denials": 2,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 44,
+          "approvals": 43,
+          "denials": 1,
+          "avgReimbursement": 3.50,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 86.5,
+      "nationalApprovalRate": 91.0,
+      "avgReimbursement": 3.50,
+      "commonDenialReasons": [
+        "Bundled with office visit or E&M service",
+        "Medicare typically does not pay separately",
+        "Included in global payment for other services"
+      ],
+      "bestPractices": [
+        "Check payer-specific bundling rules before billing",
+        "Many payers bundle venipuncture with office visits",
+        "Consider not billing separately for Medicare patients",
+        "Verify if standalone visit for blood draw only"
+      ],
+      "relatedCodes": [
+        {
+          "code": "36416",
+          "description": "Capillary blood collection",
+          "relationship": "alternative",
+          "note": "Use for capillary collection (finger stick)"
+        }
+      ],
+      "recentPolicyChanges": [],
+      "warnings": ["Frequently bundled - check CCI edits before billing"],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "93000",
+      "description": "Electrocardiogram, complete",
+      "category": "Diagnostic Procedure",
+      "typicalDiagnosisCodes": ["I48.91", "I10", "I50.9", "R00.0", "R07.9"],
+      "requiredModifiers": [],
+      "optionalModifiers": [
+        {
+          "code": "26",
+          "description": "Professional component",
+          "usage": "When only interpretation provided",
+          "required": false,
+          "billable": true
+        },
+        {
+          "code": "TC",
+          "description": "Technical component",
+          "usage": "When only equipment/tech provided",
+          "required": false,
+          "billable": true
+        }
+      ],
+      "documentationRequirements": [
+        "Indication for EKG",
+        "EKG tracing in medical record",
+        "Physician interpretation and signature",
+        "Date and time of procedure"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Requires medical necessity documentation",
+          "effectiveDate": "2024-01-01"
+        },
+        {
+          "payerId": "PAY-002",
+          "payerName": "Blue Cross",
+          "rule": "May require prior authorization for routine screening",
+          "effectiveDate": "2024-06-01",
+          "authRequired": true
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 15,
+          "approvals": 13,
+          "denials": 2,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": ["Medical Necessity"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 14,
+          "approvals": 12,
+          "denials": 2,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": ["Missing Modifier 25 on E&M"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 16,
+          "approvals": 15,
+          "denials": 1,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-10",
+          "submissions": 13,
+          "approvals": 13,
+          "denials": 0,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-11",
+          "submissions": 15,
+          "approvals": 15,
+          "denials": 0,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 12,
+          "approvals": 12,
+          "denials": 0,
+          "avgReimbursement": 18.75,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 94.1,
+      "nationalApprovalRate": 96.5,
+      "avgReimbursement": 18.75,
+      "commonDenialReasons": [
+        "Medical necessity not documented",
+        "Duplicate service within same timeframe",
+        "E&M service on same day missing modifier 25"
+      ],
+      "bestPractices": [
+        "Document clear medical necessity (symptoms, risk factors)",
+        "Include physician interpretation in medical record",
+        "Use modifier 25 on same-day E&M service",
+        "Verify frequency limitations for routine screening"
+      ],
+      "relatedCodes": [
+        {
+          "code": "93005",
+          "description": "EKG, tracing only",
+          "relationship": "bundle",
+          "note": "Technical component only"
+        },
+        {
+          "code": "93010",
+          "description": "EKG, interpretation only",
+          "relationship": "bundle",
+          "note": "Professional component only"
+        }
+      ],
+      "recentPolicyChanges": [],
+      "warnings": [],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "45378",
+      "description": "Colonoscopy, diagnostic",
+      "category": "Surgical Procedure",
+      "typicalDiagnosisCodes": ["Z12.11", "K63.5", "K50.90", "K51.90", "R19.5"],
+      "requiredModifiers": [],
+      "optionalModifiers": [
+        {
+          "code": "53",
+          "description": "Discontinued procedure",
+          "usage": "When procedure is discontinued due to patient condition",
+          "required": false,
+          "billable": true
+        },
+        {
+          "code": "PT",
+          "description": "Colorectal cancer screening test",
+          "usage": "For Medicare screening colonoscopy",
+          "required": false,
+          "billable": true
+        }
+      ],
+      "documentationRequirements": [
+        "Informed consent",
+        "Indication for procedure",
+        "Prep quality documentation",
+        "Findings and extent of exam",
+        "Pathology report (if biopsies taken)",
+        "Post-procedure instructions"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "Prior authorization required for non-screening colonoscopy",
+          "effectiveDate": "2024-01-01",
+          "authRequired": true
+        },
+        {
+          "payerId": "PAY-002",
+          "payerName": "Blue Cross",
+          "rule": "Prior authorization required for all colonoscopies",
+          "effectiveDate": "2024-01-01",
+          "authRequired": true
+        },
+        {
+          "payerId": "PAY-003",
+          "payerName": "Aetna",
+          "rule": "Screening covered at 100%, diagnostic may require cost-sharing",
+          "effectiveDate": "2024-01-01",
+          "authRequired": true
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 6,
+          "approvals": 3,
+          "denials": 3,
+          "avgReimbursement": 485.00,
+          "commonDenialReasons": ["Prior Authorization Missing"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 5,
+          "approvals": 3,
+          "denials": 2,
+          "avgReimbursement": 487.50,
+          "commonDenialReasons": ["Prior Authorization Missing"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 7,
+          "approvals": 5,
+          "denials": 2,
+          "avgReimbursement": 490.00,
+          "commonDenialReasons": ["Prior Authorization Missing"]
+        },
+        {
+          "month": "2024-10",
+          "submissions": 6,
+          "approvals": 5,
+          "denials": 1,
+          "avgReimbursement": 492.50,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-11",
+          "submissions": 5,
+          "approvals": 5,
+          "denials": 0,
+          "avgReimbursement": 495.00,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 6,
+          "approvals": 6,
+          "denials": 0,
+          "avgReimbursement": 497.50,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 77.1,
+      "nationalApprovalRate": 95.0,
+      "avgReimbursement": 491.25,
+      "commonDenialReasons": [
+        "Prior authorization not obtained",
+        "Frequency limitation exceeded (Medicare: every 10 years for screening)",
+        "Medical necessity not documented for diagnostic procedure"
+      ],
+      "bestPractices": [
+        "ALWAYS obtain prior authorization before scheduling",
+        "Verify last colonoscopy date for screening vs diagnostic",
+        "Document indication clearly (screening vs diagnostic)",
+        "Include prep quality in procedure note",
+        "Use PT modifier for Medicare screening"
+      ],
+      "relatedCodes": [
+        {
+          "code": "45380",
+          "description": "Colonoscopy with biopsy",
+          "relationship": "add-on",
+          "note": "Use when biopsies are performed"
+        },
+        {
+          "code": "45385",
+          "description": "Colonoscopy with removal of polyp",
+          "relationship": "alternative",
+          "note": "Use when polyps are removed"
+        }
+      ],
+      "recentPolicyChanges": [
+        "2024-07-01: Most payers now covering screening colonoscopy at 100%"
+      ],
+      "warnings": ["HIGH VALUE - Always verify prior authorization before scheduling"],
+      "lastUpdated": "2025-01-06"
+    },
+    {
+      "code": "20610",
+      "description": "Arthrocentesis, major joint or bursa",
+      "category": "Surgical Procedure",
+      "typicalDiagnosisCodes": ["M25.511", "M25.561", "M17.11", "M19.011", "M75.51"],
+      "requiredModifiers": [
+        {
+          "code": "LT/RT",
+          "description": "Left/Right side",
+          "usage": "Required to specify laterality",
+          "required": true,
+          "billable": true
+        }
+      ],
+      "optionalModifiers": [],
+      "documentationRequirements": [
+        "Indication for injection",
+        "Joint/bursa injected (with laterality)",
+        "Medication and dosage administered",
+        "Aspiration volume (if applicable)",
+        "Patient tolerance and post-procedure instructions"
+      ],
+      "payerRules": [
+        {
+          "payerId": "PAY-001",
+          "payerName": "Medicare",
+          "rule": "May require prior authorization depending on frequency",
+          "effectiveDate": "2024-01-01",
+          "frequencyLimit": "3 per joint per year"
+        },
+        {
+          "payerId": "PAY-002",
+          "payerName": "Blue Cross",
+          "rule": "Prior authorization required for more than 2 per year",
+          "effectiveDate": "2024-01-01",
+          "authRequired": true,
+          "frequencyLimit": "2 per joint per year without auth"
+        }
+      ],
+      "usageHistory": [
+        {
+          "month": "2024-07",
+          "submissions": 12,
+          "approvals": 9,
+          "denials": 3,
+          "avgReimbursement": 95.50,
+          "commonDenialReasons": ["Prior Authorization Missing", "Frequency Limit Exceeded"]
+        },
+        {
+          "month": "2024-08",
+          "submissions": 10,
+          "approvals": 8,
+          "denials": 2,
+          "avgReimbursement": 96.00,
+          "commonDenialReasons": ["Prior Authorization Missing"]
+        },
+        {
+          "month": "2024-09",
+          "submissions": 11,
+          "approvals": 9,
+          "denials": 2,
+          "avgReimbursement": 96.50,
+          "commonDenialReasons": ["Prior Authorization Missing"]
+        },
+        {
+          "month": "2024-10",
+          "submissions": 9,
+          "approvals": 8,
+          "denials": 1,
+          "avgReimbursement": 97.00,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-11",
+          "submissions": 10,
+          "approvals": 10,
+          "denials": 0,
+          "avgReimbursement": 97.50,
+          "commonDenialReasons": []
+        },
+        {
+          "month": "2024-12",
+          "submissions": 8,
+          "approvals": 8,
+          "denials": 0,
+          "avgReimbursement": 98.00,
+          "commonDenialReasons": []
+        }
+      ],
+      "yourApprovalRate": 86.7,
+      "nationalApprovalRate": 93.5,
+      "avgReimbursement": 96.75,
+      "commonDenialReasons": [
+        "Prior authorization not obtained",
+        "Frequency limitation exceeded",
+        "Missing laterality modifier (LT/RT)",
+        "Medical necessity not documented"
+      ],
+      "bestPractices": [
+        "Always include LT or RT modifier for laterality",
+        "Check prior injection history to avoid frequency issues",
+        "Obtain prior auth when approaching frequency limits",
+        "Document failed conservative treatment",
+        "Include detailed procedure note with medication dosages"
+      ],
+      "relatedCodes": [
+        {
+          "code": "20605",
+          "description": "Arthrocentesis, intermediate joint",
+          "relationship": "alternative",
+          "note": "Use for smaller joints"
+        },
+        {
+          "code": "20600",
+          "description": "Arthrocentesis, small joint",
+          "relationship": "alternative",
+          "note": "Use for small joints like fingers"
+        }
+      ],
+      "recentPolicyChanges": [],
+      "warnings": ["Verify frequency limits and prior authorization requirements"],
+      "lastUpdated": "2025-01-06"
+    }
+  ]
+}

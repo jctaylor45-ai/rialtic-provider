@@ -40,12 +40,12 @@ export const useAppStore = defineStore('app', {
       try {
         // Load data from JSON files
         const [claimsData, policiesData, insightsData] = await Promise.all([
-          $fetch<Claim[]>('/data/claims.json'),
+          $fetch<{ claims: Claim[] }>('/data/claims.json'),
           $fetch<Policy[]>('/data/policies.json'),
           $fetch<Insight[]>('/data/insights.json'),
         ])
 
-        this.claims = claimsData
+        this.claims = claimsData.claims
         this.policies = policiesData
         this.insights = insightsData
 
