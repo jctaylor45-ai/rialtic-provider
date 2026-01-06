@@ -1,0 +1,62 @@
+[
+  {
+    "id": "INS-001",
+    "pattern": "E&M visits missing modifier 25",
+    "description": "Multiple E&M services are being billed on the same day as procedures without modifier 25, resulting in denials.",
+    "impact": 12400,
+    "claimIds": ["CLM-2024-1001", "CLM-2024-1003", "CLM-2024-1011", "CLM-2024-1016", "CLM-2024-1023", "CLM-2024-1039", "CLM-2024-1046", "CLM-2024-1061", "CLM-2024-1070", "CLM-2024-1079"],
+    "providerIds": ["PRV-001", "PRV-002"],
+    "category": "Coding",
+    "priority": "high",
+    "learningMarkersCount": 5,
+    "createdDate": "2024-12-01"
+  },
+  {
+    "id": "INS-002",
+    "pattern": "Bilateral procedures missing modifier 50",
+    "description": "Bilateral surgical procedures are being submitted without the required bilateral modifier, causing underpayment or denials.",
+    "impact": 8650,
+    "claimIds": ["CLM-2024-1013", "CLM-2024-1027", "CLM-2024-1053", "CLM-2024-1085"],
+    "providerIds": ["PRV-004"],
+    "category": "Coding",
+    "priority": "high",
+    "learningMarkersCount": 3,
+    "createdDate": "2024-12-05"
+  },
+  {
+    "id": "INS-003",
+    "pattern": "Duplicate lab claims",
+    "description": "Laboratory tests are being submitted multiple times for the same date of service without proper modifiers or justification.",
+    "impact": 279,
+    "claimIds": ["CLM-2024-1005", "CLM-2024-1030", "CLM-2024-1065", "CLM-2024-1089"],
+    "providerIds": ["PRV-001"],
+    "category": "Practice Pattern",
+    "priority": "medium",
+    "learningMarkersCount": 2,
+    "createdDate": "2024-12-08"
+  },
+  {
+    "id": "INS-004",
+    "pattern": "Exceeding frequency limits for routine screening",
+    "description": "Routine screening tests are being ordered more frequently than policy allows without proper medical necessity documentation.",
+    "impact": 166,
+    "claimIds": ["CLM-2024-1009", "CLM-2024-1037", "CLM-2024-1051", "CLM-2024-1077"],
+    "providerIds": ["PRV-001"],
+    "category": "Practice Pattern",
+    "priority": "medium",
+    "learningMarkersCount": 1,
+    "createdDate": "2024-12-10"
+  },
+  {
+    "id": "INS-005",
+    "pattern": "Place of service coding errors",
+    "description": "Claims are being submitted with incorrect place of service codes that don't match where the service was actually performed.",
+    "impact": 72,
+    "claimIds": ["CLM-2024-1021"],
+    "providerIds": ["PRV-001"],
+    "category": "Coding",
+    "priority": "low",
+    "learningMarkersCount": 0,
+    "createdDate": "2024-12-12"
+  }
+]

@@ -1,0 +1,44 @@
+{
+  "name": "provider-portal",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck",
+    "lint": "oxlint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@iconify-json/fluent": "^1.2.3",
+    "@iconify-json/heroicons": "^1.2.1",
+    "@iconify-json/ph": "^1.2.1",
+    "@pinia/nuxt": "^0.5.5",
+    "@vueuse/core": "^11.2.0",
+    "@vueuse/nuxt": "^11.2.0",
+    "chart.js": "^4.4.6",
+    "date-fns": "^4.1.0",
+    "numeral": "^2.0.6",
+    "nuxt": "^3.16.0",
+    "ofetch": "^1.4.1",
+    "pinia": "^2.2.8",
+    "valibot": "^0.42.1",
+    "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.2"
+  },
+  "devDependencies": {
+    "@iconify/vue": "^4.1.2",
+    "@nuxt/icon": "^1.9.3",
+    "@types/numeral": "^2.0.5",
+    "@unocss/nuxt": "^0.64.1",
+    "@unocss/preset-wind": "^0.64.1",
+    "oxlint": "^0.13.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "unocss": "^0.64.1",
+    "vue-tsc": "^2.2.0"
+  }
+}

@@ -1,0 +1,107 @@
+[
+  {
+    "id": "INS-001",
+    "type": "pattern",
+    "severity": "high",
+    "title": "E&M visits missing modifier 25",
+    "description": "Multiple E&M services are being billed on the same day as procedures without modifier 25, resulting in denials.",
+    "category": "Coding Error",
+    "frequency": 10,
+    "impact": 12400,
+    "trend": "up",
+    "affectedClaims": 10,
+    "avgDenialAmount": 1240,
+    "learningProgress": 45,
+    "example": {
+      "claimId": "CLM-2025-1001",
+      "patient": "John Doe",
+      "issue": "99213 billed with 36415 on same day without modifier 25"
+    },
+    "suggestedAction": "Add modifier 25 to the E&M code when billing with a procedure on the same day. Ensure documentation supports the separately identifiable service.",
+    "relatedPolicies": ["POL-001"]
+  },
+  {
+    "id": "INS-002",
+    "type": "pattern",
+    "severity": "high",
+    "title": "Bilateral procedures missing modifier 50",
+    "description": "Bilateral surgical procedures are being submitted without the required bilateral modifier, causing underpayment or denials.",
+    "category": "Coding Error",
+    "frequency": 4,
+    "impact": 8650,
+    "trend": "stable",
+    "affectedClaims": 4,
+    "avgDenialAmount": 2162,
+    "learningProgress": 60,
+    "example": {
+      "claimId": "CLM-2025-1013",
+      "patient": "Daniel Thomas",
+      "issue": "27447 (knee replacement) billed without modifier 50 for bilateral procedure"
+    },
+    "suggestedAction": "Add modifier 50 for bilateral procedures or use RT/LT modifiers for unilateral procedures. Verify operative report confirms bilateral surgery.",
+    "relatedPolicies": ["POL-004"]
+  },
+  {
+    "id": "INS-003",
+    "type": "pattern",
+    "severity": "medium",
+    "title": "Duplicate lab claims",
+    "description": "Laboratory tests are being submitted multiple times for the same date of service without proper modifiers or justification.",
+    "category": "Policy Violation",
+    "frequency": 4,
+    "impact": 279,
+    "trend": "down",
+    "affectedClaims": 4,
+    "avgDenialAmount": 70,
+    "learningProgress": 75,
+    "example": {
+      "claimId": "CLM-2025-1005",
+      "patient": "David Lee",
+      "issue": "85025 and 80053 billed on same day appear to be duplicates"
+    },
+    "suggestedAction": "Review lab orders to ensure tests are medically necessary and not duplicative. Use modifier 91 if repeat testing is required on the same day.",
+    "relatedPolicies": ["POL-002"]
+  },
+  {
+    "id": "INS-004",
+    "type": "pattern",
+    "severity": "medium",
+    "title": "Frequency limit violations",
+    "description": "Routine screening tests are being ordered more frequently than policy allows without proper medical necessity documentation.",
+    "category": "Policy Violation",
+    "frequency": 4,
+    "impact": 166,
+    "trend": "stable",
+    "affectedClaims": 4,
+    "avgDenialAmount": 42,
+    "learningProgress": 30,
+    "example": {
+      "claimId": "CLM-2025-1009",
+      "patient": "James Wilson",
+      "issue": "81001 (urinalysis) exceeds frequency limit of once per 30 days"
+    },
+    "suggestedAction": "Check policy frequency limits before ordering routine tests. Document medical necessity if more frequent testing is required.",
+    "relatedPolicies": ["POL-003"]
+  },
+  {
+    "id": "INS-005",
+    "type": "pattern",
+    "severity": "low",
+    "title": "Place of service coding errors",
+    "description": "Claims are being submitted with incorrect place of service codes that don't match where the service was actually performed.",
+    "category": "Coding Error",
+    "frequency": 1,
+    "impact": 72,
+    "trend": "stable",
+    "affectedClaims": 1,
+    "avgDenialAmount": 72,
+    "learningProgress": 0,
+    "example": {
+      "claimId": "CLM-2025-1021",
+      "patient": "Kenneth Young",
+      "issue": "Office visit billed with incorrect place of service code"
+    },
+    "suggestedAction": "Verify place of service code matches the actual location where the service was performed. Common codes: 11 (Office), 21 (Inpatient), 22 (Outpatient).",
+    "relatedPolicies": ["POL-005"]
+  }
+]

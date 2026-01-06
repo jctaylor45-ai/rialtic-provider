@@ -1,0 +1,26 @@
+[
+  {
+    "id": "PRV-001",
+    "name": "Dr. Sarah Smith",
+    "specialty": "Family Medicine",
+    "npi": "1234567890"
+  },
+  {
+    "id": "PRV-002",
+    "name": "Dr. Michael Chen",
+    "specialty": "Internal Medicine",
+    "npi": "2345678901"
+  },
+  {
+    "id": "PRV-003",
+    "name": "Dr. Jennifer Martinez",
+    "specialty": "Cardiology",
+    "npi": "3456789012"
+  },
+  {
+    "id": "PRV-004",
+    "name": "Dr. Robert Johnson",
+    "specialty": "Orthopedic Surgery",
+    "npi": "4567890123"
+  }
+]
