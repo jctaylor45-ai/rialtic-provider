@@ -1,7 +1,7 @@
 # Provider Portal UI/UX Style Guide
 
-**Version**: 1.0.0
-**Last Updated**: January 7, 2026 at 16:00 UTC
+**Version**: 1.1.0
+**Last Updated**: January 7, 2026 at 16:30 UTC
 **Status**: Active
 
 ---
@@ -357,6 +357,78 @@ When updating existing code:
 2. Use typography shortcuts where possible
 3. Use component shortcuts (btn, card, form-input)
 4. Ensure hover/focus states use matching color families
+
+---
+
+---
+
+## Component Library
+
+The Provider Portal includes reusable components aligned with console-ui patterns.
+
+### UI Components (`components/ui/`)
+
+| Component | Usage |
+|-----------|-------|
+| `UiButton` | Buttons with variants (filled, outlined, text) and loading state |
+| `UiLoading` | Loading spinner with size options |
+| `UiChip` | Tags and labels with variant colors |
+| `UiStatusBadge` | Pre-configured status indicators |
+| `UiCard` | Standard card container |
+| `UiTooltip` | Hover tooltips |
+
+### Button Examples
+
+```html
+<UiButton>Primary Action</UiButton>
+<UiButton variant="outlined">Secondary</UiButton>
+<UiButton variant="text">Text Link</UiButton>
+<UiButton :loading="true">Loading...</UiButton>
+<UiButton size="sm">Small</UiButton>
+```
+
+### Status Badge Examples
+
+```html
+<UiStatusBadge status="paid" />
+<UiStatusBadge status="denied" />
+<UiStatusBadge status="pending" />
+```
+
+### Chip Examples
+
+```html
+<UiChip label="Active" variant="success" />
+<UiChip label="Warning" variant="warning" />
+<UiChip label="Tag" removable @remove="handleRemove" />
+```
+
+### Transition Components (`components/transition/`)
+
+| Component | Usage |
+|-----------|-------|
+| `TransitionFade` | Fade in/out |
+| `TransitionExpand` | Height expand/collapse |
+| `TransitionSlideDown` | Slide down from above |
+
+```html
+<TransitionFade>
+  <div v-if="show">Content</div>
+</TransitionFade>
+```
+
+### Skeleton Components (`components/skeleton/`)
+
+| Component | Usage |
+|-----------|-------|
+| `SkeletonStat` | Loading state for metric cards |
+| `SkeletonTable` | Loading state for tables |
+| `SkeletonCard` | Loading state for generic cards |
+
+```html
+<SkeletonStat v-if="loading" />
+<div v-else>Actual content</div>
+```
 
 ---
 
