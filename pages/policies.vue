@@ -15,24 +15,18 @@
         v-model="searchQuery"
         type="text"
         placeholder="Search policies..."
-        class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 mb-4"
+        class="form-input w-full mb-4"
       />
 
       <div class="flex items-center gap-4">
-        <select
-          v-model="filters.mode"
-          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
+        <select v-model="filters.mode" class="form-input">
           <option value="all">All Modes</option>
           <option value="Edit">Edit</option>
           <option value="Informational">Informational</option>
           <option value="Pay & Advise">Pay & Advise</option>
         </select>
 
-        <select
-          v-model="filters.topic"
-          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
+        <select v-model="filters.topic" class="form-input">
           <option value="all">All Topics</option>
           <option value="Modifiers">Modifiers</option>
           <option value="Bundling">Bundling</option>
@@ -40,30 +34,12 @@
           <option value="Frequency">Frequency</option>
         </select>
 
-        <select
-          v-model="filters.source"
-          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
+        <select v-model="filters.source" class="form-input">
           <option value="all">All Sources</option>
           <option value="CMS">CMS</option>
           <option value="Payer">Payer</option>
           <option value="State">State</option>
         </select>
-
-        <div class="ml-auto flex items-center gap-2">
-          <label class="text-sm text-neutral-600">Sort by:</label>
-          <select
-            v-model="sortBy"
-            class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="impact-desc">Impact (High to Low)</option>
-            <option value="impact-asc">Impact (Low to High)</option>
-            <option value="denial-rate-desc">Denial Rate (High to Low)</option>
-            <option value="denial-rate-asc">Denial Rate (Low to High)</option>
-            <option value="hit-rate-desc">Hit Rate (High to Low)</option>
-            <option value="name">Name (A-Z)</option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -72,102 +48,67 @@
       {{ filteredPolicies.length }} policies found
     </div>
 
-    <!-- Policies Table -->
+    <!-- Policies Table using TanStack -->
     <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="bg-neutral-50">
-            <tr>
+            <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
               <th
-                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('name')"
+                v-for="header in headerGroup.headers"
+                :key="header.id"
+                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 uppercase tracking-wider select-none"
+                :class="{
+                  'cursor-pointer hover:bg-neutral-100': header.column.getCanSort(),
+                  'text-right': ['hitRate', 'denialRate', 'impact'].includes(header.column.id),
+                  'text-center': header.column.id === 'patterns',
+                }"
+                @click="header.column.getToggleSortingHandler()?.($event)"
               >
-                <div class="flex items-center gap-1">
-                  Policy Name
-                  <Icon :name="getSortIcon('name')" class="w-4 h-4" :class="isSortActive('name') ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Mode</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Topic</th>
-              <th class="text-center px-6 py-3 text-xs font-semibold text-neutral-700">Related Patterns</th>
-              <th
-                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('hitRate')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Hit Rate
-                  <Icon :name="getSortIcon('hitRate')" class="w-4 h-4" :class="isSortActive('hitRate') ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('denialRate')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Denial Rate
-                  <Icon :name="getSortIcon('denialRate')" class="w-4 h-4" :class="isSortActive('denialRate') ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('impact')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Impact
-                  <Icon :name="getSortIcon('impact')" class="w-4 h-4" :class="isSortActive('impact') ? 'text-primary-600' : 'text-neutral-400'" />
+                <div
+                  class="flex items-center gap-1"
+                  :class="{
+                    'justify-end': ['hitRate', 'denialRate', 'impact'].includes(header.column.id),
+                    'justify-center': header.column.id === 'patterns',
+                  }"
+                >
+                  <FlexRender
+                    v-if="!header.isPlaceholder"
+                    :render="header.column.columnDef.header"
+                    :props="header.getContext()"
+                  />
+                  <Icon
+                    v-if="header.column.getCanSort()"
+                    :name="getSortIcon(header.column)"
+                    class="w-4 h-4"
+                    :class="header.column.getIsSorted() ? 'text-primary-600' : 'text-neutral-400'"
+                  />
                 </div>
               </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200">
             <tr
-              v-for="policy in filteredPolicies"
-              :key="policy.id"
+              v-for="row in table.getRowModel().rows"
+              :key="row.id"
               class="hover:bg-primary-50 cursor-pointer transition-colors"
-              @click="selectedPolicy = policy"
+              @click="selectedPolicy = row.original"
             >
-              <td class="px-6 py-4">
-                <div class="font-medium text-sm text-neutral-900">{{ policy.name }}</div>
-                <div class="text-xs text-neutral-500">{{ policy.id }}</div>
+              <td
+                v-for="cell in row.getVisibleCells()"
+                :key="cell.id"
+                class="px-6 py-4"
+                :class="{
+                  'text-right': ['hitRate', 'denialRate', 'impact'].includes(cell.column.id),
+                  'text-center': cell.column.id === 'patterns',
+                }"
+                @click="cell.column.id === 'patterns' ? $event.stopPropagation() : null"
+              >
+                <FlexRender
+                  :render="cell.column.columnDef.cell"
+                  :props="cell.getContext()"
+                />
               </td>
-              <td class="px-6 py-4">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded"
-                  :class="{
-                    'bg-error-100 text-error-700': policy.mode === 'Edit',
-                    'bg-secondary-100 text-secondary-700': policy.mode === 'Informational',
-                    'bg-warning-100 text-warning-700': policy.mode === 'Pay & Advise',
-                  }"
-                >
-                  {{ policy.mode }}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-neutral-700">{{ policy.topic }}</td>
-              <td class="px-6 py-4 text-center" @click.stop>
-                <div v-if="getPolicyPatterns(policy.id).length > 0" class="flex justify-center gap-1">
-                  <button
-                    v-for="pattern in getPolicyPatterns(policy.id).slice(0, 2)"
-                    :key="pattern.id"
-                    @click="viewPattern(pattern)"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="getPatternBadgeClass(pattern.tier)"
-                    :title="pattern.title"
-                  >
-                    <Icon :name="getPatternIcon(pattern.category)" class="w-3 h-3" />
-                  </button>
-                  <span
-                    v-if="getPolicyPatterns(policy.id).length > 2"
-                    class="inline-flex items-center px-2 py-0.5 text-xs text-neutral-600"
-                    :title="`+${getPolicyPatterns(policy.id).length - 2} more pattern(s)`"
-                  >
-                    +{{ getPolicyPatterns(policy.id).length - 2 }}
-                  </span>
-                </div>
-                <div v-else class="text-xs text-neutral-400">—</div>
-              </td>
-              <td class="px-6 py-4 text-right text-sm text-neutral-900">{{ formatPercentage(policy.hitRate) }}</td>
-              <td class="px-6 py-4 text-right text-sm text-neutral-900">{{ formatPercentage(policy.denialRate) }}</td>
-              <td class="px-6 py-4 text-right text-sm font-semibold text-neutral-900">{{ formatCurrency(policy.impact) }}</td>
             </tr>
           </tbody>
         </table>
@@ -286,6 +227,15 @@
 </template>
 
 <script setup lang="ts">
+import {
+  FlexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useVueTable,
+  type ColumnDef,
+  type SortingState,
+  type Column,
+} from '@tanstack/vue-table'
 import type { Policy } from '~/types'
 import type { Pattern } from '~/types/enhancements'
 
@@ -297,7 +247,6 @@ const router = useRouter()
 const { getPatternCategoryIcon } = usePatterns()
 
 const searchQuery = ref('')
-const sortBy = ref('impact-desc')
 const filters = reactive({
   mode: 'all',
   topic: 'all',
@@ -306,48 +255,10 @@ const filters = reactive({
 
 const selectedPolicy = ref<Policy | null>(null)
 
-// Column click sorting
-const toggleSort = (column: string) => {
-  const columnMap: Record<string, { asc: string; desc: string }> = {
-    name: { asc: 'name', desc: 'name' },
-    hitRate: { asc: 'hit-rate-desc', desc: 'hit-rate-desc' },
-    denialRate: { asc: 'denial-rate-asc', desc: 'denial-rate-desc' },
-    impact: { asc: 'impact-asc', desc: 'impact-desc' },
-  }
-  const current = sortBy.value
-  const mapping = columnMap[column]
-  if (!mapping) return
+// TanStack Table sorting state - default to impact descending
+const sorting = ref<SortingState>([{ id: 'impact', desc: true }])
 
-  // Toggle between asc and desc for the same column
-  if (current === mapping.desc) {
-    sortBy.value = mapping.asc
-  } else {
-    sortBy.value = mapping.desc
-  }
-}
-
-const getSortIcon = (column: string) => {
-  const current = sortBy.value
-  if (column === 'name' && current === 'name') return 'heroicons:chevron-up'
-  if (column === 'hitRate' && current === 'hit-rate-desc') return 'heroicons:chevron-down'
-  if (column === 'denialRate' && current.startsWith('denial-rate')) {
-    return current === 'denial-rate-desc' ? 'heroicons:chevron-down' : 'heroicons:chevron-up'
-  }
-  if (column === 'impact' && current.startsWith('impact')) {
-    return current === 'impact-desc' ? 'heroicons:chevron-down' : 'heroicons:chevron-up'
-  }
-  return 'heroicons:chevron-up-down'
-}
-
-const isSortActive = (column: string) => {
-  const current = sortBy.value
-  if (column === 'name') return current === 'name'
-  if (column === 'hitRate') return current === 'hit-rate-desc'
-  if (column === 'denialRate') return current.startsWith('denial-rate')
-  if (column === 'impact') return current.startsWith('impact')
-  return false
-}
-
+// Filter policies based on search and filters
 const filteredPolicies = computed(() => {
   let result = appStore.policies
 
@@ -370,28 +281,6 @@ const filteredPolicies = computed(() => {
 
   if (filters.source !== 'all') {
     result = result.filter(p => p.source === filters.source)
-  }
-
-  // Apply sorting
-  switch (sortBy.value) {
-    case 'impact-desc':
-      result = result.sort((a, b) => b.impact - a.impact)
-      break
-    case 'impact-asc':
-      result = result.sort((a, b) => a.impact - b.impact)
-      break
-    case 'denial-rate-desc':
-      result = result.sort((a, b) => b.denialRate - a.denialRate)
-      break
-    case 'denial-rate-asc':
-      result = result.sort((a, b) => a.denialRate - b.denialRate)
-      break
-    case 'hit-rate-desc':
-      result = result.sort((a, b) => b.hitRate - a.hitRate)
-      break
-    case 'name':
-      result = result.sort((a, b) => a.name.localeCompare(b.name))
-      break
   }
 
   return result
@@ -422,11 +311,132 @@ const getPatternIcon = (category: string) => {
 
 // Navigate to pattern details in insights page
 const viewPattern = (pattern: Pattern) => {
-  // Store the pattern ID in session storage so insights page can open it
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPatternId', pattern.id)
   }
   router.push('/insights')
+}
+
+// Mode badge styles
+const getModeClass = (mode: string) => {
+  const classes = {
+    'Edit': 'bg-error-100 text-error-700',
+    'Informational': 'bg-secondary-100 text-secondary-700',
+    'Pay & Advise': 'bg-warning-100 text-warning-700',
+  }
+  return classes[mode as keyof typeof classes] || 'bg-neutral-100 text-neutral-700'
+}
+
+// Column definitions for TanStack Table
+const columns: ColumnDef<Policy>[] = [
+  {
+    id: 'name',
+    accessorKey: 'name',
+    header: 'Policy Name',
+    size: 250,
+    cell: ({ row }) => h('div', {}, [
+      h('div', { class: 'font-medium text-sm text-neutral-900' }, row.original.name),
+      h('div', { class: 'text-xs text-neutral-500' }, row.original.id),
+    ]),
+  },
+  {
+    id: 'mode',
+    accessorKey: 'mode',
+    header: 'Mode',
+    size: 120,
+    enableSorting: false,
+    cell: ({ row }) => h('span', {
+      class: `px-2 py-1 text-xs font-medium rounded ${getModeClass(row.original.mode)}`,
+    }, row.original.mode),
+  },
+  {
+    id: 'topic',
+    accessorKey: 'topic',
+    header: 'Topic',
+    size: 140,
+    enableSorting: false,
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, row.original.topic),
+  },
+  {
+    id: 'patterns',
+    header: 'Related Patterns',
+    size: 130,
+    enableSorting: false,
+    cell: ({ row }) => {
+      const patterns = getPolicyPatterns(row.original.id)
+      if (patterns.length === 0) {
+        return h('div', { class: 'text-xs text-neutral-400' }, '—')
+      }
+      return h('div', { class: 'flex justify-center gap-1' }, [
+        ...patterns.slice(0, 2).map(pattern =>
+          h('button', {
+            class: `inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${getPatternBadgeClass(pattern.tier)}`,
+            title: pattern.title,
+            onClick: (e: Event) => {
+              e.stopPropagation()
+              viewPattern(pattern)
+            },
+          }, [
+            h(resolveComponent('Icon'), { name: getPatternIcon(pattern.category), class: 'w-3 h-3' }),
+          ])
+        ),
+        patterns.length > 2
+          ? h('span', {
+              class: 'inline-flex items-center px-2 py-0.5 text-xs text-neutral-600',
+              title: `+${patterns.length - 2} more pattern(s)`,
+            }, `+${patterns.length - 2}`)
+          : null,
+      ])
+    },
+  },
+  {
+    id: 'hitRate',
+    accessorKey: 'hitRate',
+    header: 'Hit Rate',
+    size: 100,
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(row.original.hitRate)),
+  },
+  {
+    id: 'denialRate',
+    accessorKey: 'denialRate',
+    header: 'Denial Rate',
+    size: 100,
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(row.original.denialRate)),
+  },
+  {
+    id: 'impact',
+    accessorKey: 'impact',
+    header: 'Impact',
+    size: 110,
+    cell: ({ row }) => h('span', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(row.original.impact)),
+  },
+]
+
+// Create TanStack Table instance
+const table = useVueTable({
+  get data() {
+    return filteredPolicies.value
+  },
+  columns,
+  state: {
+    get sorting() {
+      return sorting.value
+    },
+  },
+  onSortingChange: (updaterOrValue) => {
+    sorting.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(sorting.value)
+      : updaterOrValue
+  },
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+})
+
+// Get sort icon for column
+const getSortIcon = (column: Column<Policy, unknown>) => {
+  const sortDir = column.getIsSorted()
+  if (!sortDir) return 'heroicons:chevron-up-down'
+  return sortDir === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
 }
 
 // Check for policy to open from session storage

@@ -1,0 +1,103 @@
+/**
+ * Custom toast styles aligned with Rialtic theme
+ */
+
+/* Base toast styling */
+.Vue-Toastification__toast {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Success toast - matches success colors */
+.Vue-Toastification__toast--success {
+  background-color: #F0F9F7;
+  border: 1px solid #00A788;
+  color: #2B695B;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__icon {
+  color: #00A788;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__progress-bar {
+  background-color: #00A788;
+}
+
+/* Error toast - matches error colors */
+.Vue-Toastification__toast--error {
+  background-color: #FCF1F3;
+  border: 1px solid #E45D7B;
+  color: #BD2949;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__icon {
+  color: #E45D7B;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__progress-bar {
+  background-color: #E45D7B;
+}
+
+/* Warning toast - matches warning colors */
+.Vue-Toastification__toast--warning {
+  background-color: #FEF9F1;
+  border: 1px solid #F6BD60;
+  color: #935E09;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__icon {
+  color: #CD830C;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__progress-bar {
+  background-color: #F6BD60;
+}
+
+/* Info toast - matches secondary/primary colors */
+.Vue-Toastification__toast--info {
+  background-color: #E8EAF7;
+  border: 1px solid #3F52BC;
+  color: #1C214B;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__icon {
+  color: #3F52BC;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__progress-bar {
+  background-color: #3F52BC;
+}
+
+/* Default toast */
+.Vue-Toastification__toast--default {
+  background-color: #F5F6F8;
+  border: 1px solid #CDD4E1;
+  color: #293446;
+}
+
+.Vue-Toastification__toast--default .Vue-Toastification__progress-bar {
+  background-color: #9BAAC4;
+}
+
+/* Close button */
+.Vue-Toastification__close-button {
+  color: inherit;
+  opacity: 0.6;
+}
+
+.Vue-Toastification__close-button:hover {
+  opacity: 1;
+}
+
+/* Progress bar */
+.Vue-Toastification__progress-bar {
+  height: 3px;
+  border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Container positioning */
+.Vue-Toastification__container {
+  padding: 1rem;
+}

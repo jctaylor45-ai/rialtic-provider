@@ -10,194 +10,158 @@
 
     <!-- Content -->
     <div v-else>
-    <!-- Search Bar -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="flex-1">
-          <label class="text-sm text-neutral-600 mb-1 block">Claim ID</label>
-          <input
-            v-model="searchParams.claimId"
-            type="text"
-            placeholder="CLM-2025-XXXX"
-            class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
+      <!-- Search Bar -->
+      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex-1">
+            <label class="text-sm text-neutral-600 mb-1 block">Claim ID</label>
+            <input
+              v-model="searchParams.claimId"
+              type="text"
+              placeholder="CLM-2025-XXXX"
+              class="form-input w-full"
+            />
+          </div>
+
+          <div class="flex-1">
+            <label class="text-sm text-neutral-600 mb-1 block">Patient</label>
+            <input
+              v-model="searchParams.patient"
+              type="text"
+              placeholder="Search by patient..."
+              class="form-input w-full"
+            />
+          </div>
+
+          <div class="flex-1">
+            <label class="text-sm text-neutral-600 mb-1 block">Procedure Code</label>
+            <input
+              v-model="searchParams.procedureCode"
+              type="text"
+              placeholder="CPT/HCPCS code"
+              class="form-input w-full"
+            />
+          </div>
         </div>
 
-        <div class="flex-1">
-          <label class="text-sm text-neutral-600 mb-1 block">Patient</label>
-          <input
-            v-model="searchParams.patient"
-            type="text"
-            placeholder="Search by patient..."
-            class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-        </div>
+        <div class="flex items-center gap-4">
+          <select v-model="filters.status" class="form-input">
+            <option value="all">All Statuses</option>
+            <option value="paid">Paid/Approved</option>
+            <option value="denied">Denied</option>
+            <option value="pending">Pending</option>
+            <option value="appealed">Appealed</option>
+          </select>
 
-        <div class="flex-1">
-          <label class="text-sm text-neutral-600 mb-1 block">Procedure Code</label>
-          <input
-            v-model="searchParams.procedureCode"
-            type="text"
-            placeholder="CPT/HCPCS code"
-            class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
+          <select v-model="filters.dateRange" class="form-input">
+            <option value="7">Last 7 Days</option>
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="all">All Time</option>
+          </select>
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
-        <select
-          v-model="filters.status"
-          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          <option value="all">All Statuses</option>
-          <option value="paid">Paid/Approved</option>
-          <option value="denied">Denied</option>
-          <option value="pending">Pending</option>
-          <option value="appealed">Appealed</option>
-        </select>
-
-        <select
-          v-model="filters.dateRange"
-          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        >
-          <option value="7">Last 7 Days</option>
-          <option value="30">Last 30 Days</option>
-          <option value="90">Last 90 Days</option>
-          <option value="all">All Time</option>
-        </select>
+      <!-- Results Count -->
+      <div class="text-sm text-neutral-600 mb-4">
+        {{ filteredClaims.length }} claims found
       </div>
-    </div>
 
-    <!-- Results Count -->
-    <div class="text-sm text-neutral-600 mb-4">
-      {{ filteredClaims.length }} claims found
-    </div>
-
-    <!-- Results Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-neutral-50">
-            <tr>
-              <th
-                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('id')"
-              >
-                <div class="flex items-center gap-1">
-                  Claim ID
-                  <Icon :name="getSortIcon('id')" class="w-4 h-4" :class="sortColumn === 'id' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('patient')"
-              >
-                <div class="flex items-center gap-1">
-                  Patient
-                  <Icon :name="getSortIcon('patient')" class="w-4 h-4" :class="sortColumn === 'patient' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('dateOfService')"
-              >
-                <div class="flex items-center gap-1">
-                  Date of Service
-                  <Icon :name="getSortIcon('dateOfService')" class="w-4 h-4" :class="sortColumn === 'dateOfService' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('amount')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Amount
-                  <Icon :name="getSortIcon('amount')" class="w-4 h-4" :class="sortColumn === 'amount' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-center px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
-                @click="toggleSort('status')"
-              >
-                <div class="flex items-center justify-center gap-1">
-                  Status
-                  <Icon :name="getSortIcon('status')" class="w-4 h-4" :class="sortColumn === 'status' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Patterns</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Reason</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200">
-            <tr
-              v-for="claim in filteredClaims"
-              :key="claim.id"
-              class="hover:bg-primary-50 cursor-pointer transition-colors"
-              @click="navigateTo(`/claims/${claim.id}`)"
-            >
-              <td class="px-6 py-4">
-                <div class="font-mono text-sm text-primary-600 font-medium">{{ claim.id }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-neutral-900">{{ claim.patientName }}</div>
-                <div v-if="claim.memberId" class="text-xs text-neutral-500">ID: {{ claim.memberId }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="text-sm text-neutral-900">{{ formatDate(claim.dateOfService) }}</div>
-              </td>
-              <td class="px-6 py-4 text-right">
-                <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(claim.billedAmount) }}</div>
-              </td>
-              <td class="px-6 py-4 text-center">
-                <UiStatusBadge :status="claim.status" />
-              </td>
-              <td class="px-6 py-4" @click.stop>
-                <div v-if="getClaimPatterns(claim.id).length > 0" class="flex flex-wrap gap-1">
-                  <button
-                    v-for="pattern in getClaimPatterns(claim.id).slice(0, 2)"
-                    :key="pattern.id"
-                    @click="viewPattern(pattern)"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="getPatternBadgeClass(pattern.tier)"
-                    :title="pattern.title"
+      <!-- Results Table using TanStack -->
+      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-neutral-50">
+              <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+                <th
+                  v-for="header in headerGroup.headers"
+                  :key="header.id"
+                  class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 uppercase tracking-wider select-none"
+                  :class="{
+                    'cursor-pointer hover:bg-neutral-100': header.column.getCanSort(),
+                    'text-right': header.column.id === 'billedAmount',
+                    'text-center': header.column.id === 'status',
+                  }"
+                  @click="header.column.getToggleSortingHandler()?.($event)"
+                >
+                  <div
+                    class="flex items-center gap-1"
+                    :class="{
+                      'justify-end': header.column.id === 'billedAmount',
+                      'justify-center': header.column.id === 'status',
+                    }"
                   >
-                    <Icon :name="getPatternIcon(pattern.category)" class="w-3 h-3" />
-                    <span>{{ pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1) }}</span>
-                  </button>
-                  <span
-                    v-if="getClaimPatterns(claim.id).length > 2"
-                    class="inline-flex items-center px-2 py-0.5 text-xs text-neutral-600"
-                    :title="`+${getClaimPatterns(claim.id).length - 2} more pattern(s)`"
-                  >
-                    +{{ getClaimPatterns(claim.id).length - 2 }}
-                  </span>
-                </div>
-                <div v-else class="text-xs text-neutral-400">—</div>
-              </td>
-              <td class="px-6 py-4">
-                <div v-if="claim.denialReason" class="text-sm text-neutral-700">{{ claim.denialReason }}</div>
-              </td>
-            </tr>
-            <tr v-if="filteredClaims.length === 0">
-              <td colspan="7" class="px-6 py-12 text-center text-neutral-500">
-                No claims found matching your criteria
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <FlexRender
+                      v-if="!header.isPlaceholder"
+                      :render="header.column.columnDef.header"
+                      :props="header.getContext()"
+                    />
+                    <Icon
+                      v-if="header.column.getCanSort()"
+                      :name="getSortIcon(header.column)"
+                      class="w-4 h-4"
+                      :class="header.column.getIsSorted() ? 'text-primary-600' : 'text-neutral-400'"
+                    />
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200">
+              <tr
+                v-for="row in table.getRowModel().rows"
+                :key="row.id"
+                class="hover:bg-primary-50 cursor-pointer transition-colors"
+                @click="navigateTo(`/claims/${row.original.id}`)"
+              >
+                <td
+                  v-for="cell in row.getVisibleCells()"
+                  :key="cell.id"
+                  class="px-6 py-4"
+                  :class="{
+                    'text-right': cell.column.id === 'billedAmount',
+                    'text-center': cell.column.id === 'status',
+                  }"
+                  @click="cell.column.id === 'patterns' ? $event.stopPropagation() : null"
+                >
+                  <FlexRender
+                    :render="cell.column.columnDef.cell"
+                    :props="cell.getContext()"
+                  />
+                </td>
+              </tr>
+              <tr v-if="filteredClaims.length === 0">
+                <td colspan="7" class="px-6 py-12 text-center text-neutral-500">
+                  No claims found matching your criteria
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import {
+  FlexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useVueTable,
+  type ColumnDef,
+  type SortingState,
+  type Column,
+} from '@tanstack/vue-table'
+import type { Claim } from '~/types'
 import type { Pattern } from '~/types/enhancements'
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const router = useRouter()
 const route = useRoute()
+
+// Composables
+const { getPatternCategoryIcon } = usePatterns()
 
 // Ensure data is loaded and apply query params
 onMounted(async () => {
@@ -217,9 +181,6 @@ onMounted(async () => {
   }
 })
 
-// Composables
-const { getPatternCategoryIcon } = usePatterns()
-
 const searchParams = reactive({
   claimId: '',
   patient: '',
@@ -231,24 +192,10 @@ const filters = reactive({
   dateRange: 'all',
 })
 
-// Sorting
-const sortColumn = ref<'id' | 'patient' | 'dateOfService' | 'amount' | 'status'>('dateOfService')
-const sortDirection = ref<'asc' | 'desc'>('desc')
+// TanStack Table sorting state
+const sorting = ref<SortingState>([{ id: 'dateOfService', desc: true }])
 
-const toggleSort = (column: typeof sortColumn.value) => {
-  if (sortColumn.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortColumn.value = column
-    sortDirection.value = column === 'dateOfService' || column === 'amount' ? 'desc' : 'asc'
-  }
-}
-
-const getSortIcon = (column: string) => {
-  if (sortColumn.value !== column) return 'heroicons:chevron-up-down'
-  return sortDirection.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
-}
-
+// Filter claims based on search params and filters
 const filteredClaims = computed(() => {
   let result = [...appStore.claims]
 
@@ -284,25 +231,6 @@ const filteredClaims = computed(() => {
     result = result.filter(c => new Date(c.dateOfService) >= cutoffDate)
   }
 
-  // Apply sorting
-  const dir = sortDirection.value === 'asc' ? 1 : -1
-  result.sort((a, b) => {
-    switch (sortColumn.value) {
-      case 'id':
-        return dir * a.id.localeCompare(b.id)
-      case 'patient':
-        return dir * a.patientName.localeCompare(b.patientName)
-      case 'dateOfService':
-        return dir * (new Date(a.dateOfService).getTime() - new Date(b.dateOfService).getTime())
-      case 'amount':
-        return dir * (a.billedAmount - b.billedAmount)
-      case 'status':
-        return dir * a.status.localeCompare(b.status)
-      default:
-        return 0
-    }
-  })
-
   return result
 })
 
@@ -322,17 +250,125 @@ const getPatternBadgeClass = (tier: string) => {
   return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
 }
 
-// Get pattern category icon
-const getPatternIcon = (category: string) => {
-  return getPatternCategoryIcon(category)
-}
-
 // Navigate to pattern details in insights page
 const viewPattern = (pattern: Pattern) => {
-  // Store the pattern ID in session storage so insights page can open it
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPatternId', pattern.id)
   }
   router.push('/insights')
+}
+
+// Column definitions for TanStack Table
+const columns: ColumnDef<Claim>[] = [
+  {
+    id: 'id',
+    accessorKey: 'id',
+    header: 'Claim ID',
+    size: 140,
+    cell: ({ row }) => h('div', { class: 'font-mono text-sm text-primary-600 font-medium' }, row.original.id),
+  },
+  {
+    id: 'patient',
+    accessorFn: (row) => row.patientName,
+    header: 'Patient',
+    size: 180,
+    cell: ({ row }) => h('div', {}, [
+      h('div', { class: 'text-sm text-neutral-900' }, row.original.patientName),
+      row.original.memberId
+        ? h('div', { class: 'text-xs text-neutral-500' }, `ID: ${row.original.memberId}`)
+        : null,
+    ]),
+  },
+  {
+    id: 'dateOfService',
+    accessorKey: 'dateOfService',
+    header: 'Date of Service',
+    size: 130,
+    cell: ({ row }) => h('div', { class: 'text-sm text-neutral-900' }, formatDate(row.original.dateOfService)),
+  },
+  {
+    id: 'billedAmount',
+    accessorKey: 'billedAmount',
+    header: 'Amount',
+    size: 110,
+    cell: ({ row }) => h('div', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(row.original.billedAmount)),
+  },
+  {
+    id: 'status',
+    accessorKey: 'status',
+    header: 'Status',
+    size: 100,
+    cell: ({ row }) => h(resolveComponent('UiStatusBadge'), { status: row.original.status }),
+  },
+  {
+    id: 'patterns',
+    header: 'Patterns',
+    size: 150,
+    enableSorting: false,
+    cell: ({ row }) => {
+      const patterns = getClaimPatterns(row.original.id)
+      if (patterns.length === 0) {
+        return h('div', { class: 'text-xs text-neutral-400' }, '—')
+      }
+      return h('div', { class: 'flex flex-wrap gap-1' }, [
+        ...patterns.slice(0, 2).map(pattern =>
+          h('button', {
+            class: `inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${getPatternBadgeClass(pattern.tier)}`,
+            title: pattern.title,
+            onClick: (e: Event) => {
+              e.stopPropagation()
+              viewPattern(pattern)
+            },
+          }, [
+            h(resolveComponent('Icon'), { name: getPatternCategoryIcon(pattern.category), class: 'w-3 h-3' }),
+            h('span', {}, pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1)),
+          ])
+        ),
+        patterns.length > 2
+          ? h('span', {
+              class: 'inline-flex items-center px-2 py-0.5 text-xs text-neutral-600',
+              title: `+${patterns.length - 2} more pattern(s)`,
+            }, `+${patterns.length - 2}`)
+          : null,
+      ])
+    },
+  },
+  {
+    id: 'denialReason',
+    accessorKey: 'denialReason',
+    header: 'Reason',
+    size: 200,
+    enableSorting: false,
+    cell: ({ row }) => row.original.denialReason
+      ? h('div', { class: 'text-sm text-neutral-700' }, row.original.denialReason)
+      : null,
+  },
+]
+
+// Create TanStack Table instance
+const table = useVueTable({
+  get data() {
+    return filteredClaims.value
+  },
+  columns,
+  state: {
+    get sorting() {
+      return sorting.value
+    },
+  },
+  onSortingChange: (updaterOrValue) => {
+    sorting.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(sorting.value)
+      : updaterOrValue
+  },
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+})
+
+// Get sort icon for column
+const getSortIcon = (column: Column<Claim, unknown>) => {
+  const sortDir = column.getIsSorted()
+  if (!sortDir) return 'heroicons:chevron-up-down'
+  return sortDir === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
 }
 </script>
