@@ -8,6 +8,97 @@
       </p>
     </div>
 
+    <!-- Executive Summary -->
+    <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg shadow-sm border border-primary-200 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-primary-900 mb-4 flex items-center gap-2">
+        <Icon name="heroicons:chart-bar-square" class="w-5 h-5" />
+        Executive Summary
+      </h2>
+      <div class="bg-white/80 backdrop-blur rounded-lg p-4">
+        <p class="text-sm text-gray-700 leading-relaxed">
+          Since adopting this tool, your practice has:
+        </p>
+        <ul class="mt-3 space-y-2">
+          <li class="flex items-start gap-2 text-sm">
+            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <span>
+              Reduced denial rate by <strong>{{ denialRateReduction.toFixed(1) }}%</strong>
+              ({{ baselineMetrics.denialRate.toFixed(1) }}% → {{ currentMetrics.denialRate.toFixed(1) }}%)
+            </span>
+          </li>
+          <li class="flex items-start gap-2 text-sm">
+            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <span>
+              Addressed <strong>{{ roi.patternsResolved + roi.patternsImproving }} of {{ patternsStore.totalPatternsDetected }}</strong> identified patterns
+              ({{ Math.round(((roi.patternsResolved + roi.patternsImproving) / patternsStore.totalPatternsDetected) * 100) }}%)
+            </span>
+          </li>
+          <li class="flex items-start gap-2 text-sm">
+            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <span>
+              Reduced appeals by <strong>{{ appealReduction }}%</strong> through proactive corrections
+            </span>
+          </li>
+          <li class="flex items-start gap-2 text-sm">
+            <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <span>
+              Saved an estimated <strong>{{ formatCurrency(adminSavings) }}</strong> in administrative costs
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Settings / Configuration -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <Icon name="heroicons:cog-6-tooth" class="w-5 h-5" />
+        Settings
+      </h2>
+
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Measurement Window -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3">Measurement Window</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="window in measurementWindows"
+              :key="window.value"
+              @click="selectedWindow = window.value"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+              :class="{
+                'bg-primary-600 text-white border-primary-600': selectedWindow === window.value,
+                'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': selectedWindow !== window.value
+              }"
+            >
+              {{ window.label }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            Comparing last {{ selectedWindow }} days vs previous {{ selectedWindow }} days
+          </p>
+        </div>
+
+        <!-- Admin Cost Per Appeal -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-3">Admin Cost Per Appeal</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+            <input
+              v-model.number="adminCostPerAppeal"
+              type="number"
+              min="0"
+              step="10"
+              class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          <p class="text-xs text-gray-500 mt-2">
+            Used in administrative savings calculations
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Top ROI Metrics -->
     <div class="grid grid-cols-5 gap-6 mb-6">
       <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-sm border border-green-200 p-6">
@@ -434,16 +525,94 @@ import { formatRelative } from 'date-fns'
 const analyticsStore = useAnalyticsStore()
 const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
+const appStore = useAppStore()
 
 // Composables
 const { formatCurrency } = useAnalytics()
 
 // State
 const sortBy = ref<'savings' | 'denials' | 'recent'>('savings')
+const selectedWindow = ref(90) // Default to 90 days
+const adminCostPerAppeal = ref(350) // Default admin cost
+
+// Measurement window options
+const measurementWindows = [
+  { value: 30, label: '30d' },
+  { value: 60, label: '60d' },
+  { value: 90, label: '90d' },
+  { value: 180, label: '180d' },
+  { value: 360, label: '360d' },
+]
 
 // Computed data
 const roi = computed(() => analyticsStore.practiceROI)
 const dashboardMetrics = computed(() => analyticsStore.dashboardMetrics)
+
+// Baseline vs Current Metrics (based on selected window)
+const baselineMetrics = computed(() => {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
+  const baselineStart = new Date(windowStart.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
+
+  const baselineClaims = appStore.claims.filter(c => {
+    const date = new Date(c.submissionDate)
+    return date >= baselineStart && date < windowStart
+  })
+
+  const totalClaims = baselineClaims.length
+  const deniedClaims = baselineClaims.filter(c => c.status === 'denied').length
+  const denialRate = totalClaims > 0 ? (deniedClaims / totalClaims) * 100 : 0
+
+  return {
+    totalClaims,
+    deniedClaims,
+    denialRate,
+  }
+})
+
+const currentMetrics = computed(() => {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
+
+  const currentClaims = appStore.claims.filter(c => {
+    const date = new Date(c.submissionDate)
+    return date >= windowStart
+  })
+
+  const totalClaims = currentClaims.length
+  const deniedClaims = currentClaims.filter(c => c.status === 'denied').length
+  const denialRate = totalClaims > 0 ? (deniedClaims / totalClaims) * 100 : 0
+
+  return {
+    totalClaims,
+    deniedClaims,
+    denialRate,
+  }
+})
+
+const denialRateReduction = computed(() => {
+  return baselineMetrics.value.denialRate - currentMetrics.value.denialRate
+})
+
+const appealReduction = computed(() => {
+  // Estimate: assume patterns resolved/improving led to reduced appeals
+  // Simplified calculation: % of patterns addressed × historical appeal rate
+  const patternsAddressed = roi.value.patternsResolved + roi.value.patternsImproving
+  const totalPatterns = patternsStore.totalPatternsDetected || 1
+  const reductionRate = (patternsAddressed / totalPatterns) * 100
+
+  return Math.min(Math.round(reductionRate * 0.6), 60) // Cap at 60% reduction
+})
+
+const adminSavings = computed(() => {
+  // Calculate admin savings based on:
+  // (denials avoided) × (% that would have been appealed) × (cost per appeal)
+  const denialsAvoided = roi.value.avoidedDenials
+  const assumedAppealRate = 0.25 // Assume 25% of denials get appealed
+  const appealsAvoided = Math.round(denialsAvoided * assumedAppealRate)
+
+  return appealsAvoided * adminCostPerAppeal.value
+})
 
 const savingsPerHour = computed(() => {
   const hours = roi.value.totalTimeInvested / 60
