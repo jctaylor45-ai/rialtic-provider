@@ -1,43 +1,71 @@
 <template>
   <div class="p-6 space-y-6 flex-1 overflow-auto">
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-semibold text-gray-900">
-        {{ greeting }}, Team.
-      </h1>
-      <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-        <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
-        Export
-      </button>
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">
+          {{ greeting }}, Team.
+        </h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Showing data for the last {{ selectedTimeRange }} days
+        </p>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Time Range Filter -->
+        <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            v-for="range in timeRanges"
+            :key="range.value"
+            @click="selectedTimeRange = range.value"
+            class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
+            :class="{
+              'bg-white text-gray-900 shadow-sm': selectedTimeRange === range.value,
+              'text-gray-600 hover:text-gray-900': selectedTimeRange !== range.value
+            }"
+          >
+            {{ range.label }}
+          </button>
+        </div>
+        <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
+          Export
+        </button>
+      </div>
     </div>
 
     <!-- Metrics Grid -->
     <div class="grid grid-cols-3 gap-6">
       <!-- Claims Submitted -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all"
+        @click="drillDown('claims', 'all')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-gray-600 mb-2">Claims Submitted</div>
-            <div class="text-3xl font-semibold text-gray-900">{{ formatNumber(appStore.claims.length) }}</div>
-            <div class="text-sm text-gray-500 mt-1">This period</div>
+            <div class="text-3xl font-semibold text-gray-900">{{ formatNumber(filteredClaims.length) }}</div>
+            <div class="text-sm text-gray-500 mt-1">Last {{ selectedTimeRange }} days</div>
           </div>
           <Icon name="heroicons:chart-bar" class="w-10 h-10 text-blue-500" />
         </div>
       </div>
 
       <!-- Approval Rate -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:border-green-300 hover:shadow-md transition-all"
+        @click="drillDown('claims', 'paid')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-gray-600 mb-2">Approval Rate</div>
-            <div class="text-3xl font-semibold text-green-600">{{ formatPercentage(100 - appStore.denialRate) }}%</div>
+            <div class="text-3xl font-semibold text-green-600">{{ formatPercentage(filteredApprovalRate) }}</div>
             <div class="flex items-center gap-1 text-sm mt-1">
               <Icon
-                :name="getTrendIcon(analyticsStore.dashboardMetrics.trends.approvalRate.trend)"
+                :name="getTrendIcon(filteredTrends.approvalRate.trend)"
                 class="w-3 h-3"
-                :class="getTrendColor(analyticsStore.dashboardMetrics.trends.approvalRate.trend, true)"
+                :class="getTrendColor(filteredTrends.approvalRate.trend, true)"
               />
-              <span :class="getTrendColor(analyticsStore.dashboardMetrics.trends.approvalRate.trend, true)">
-                {{ formatMetricTrend(analyticsStore.dashboardMetrics.trends.approvalRate) }}
+              <span :class="getTrendColor(filteredTrends.approvalRate.trend, true)">
+                {{ formatMetricTrend(filteredTrends.approvalRate) }}
               </span>
             </div>
           </div>
@@ -46,19 +74,22 @@
       </div>
 
       <!-- Denial Rate -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:border-red-300 hover:shadow-md transition-all"
+        @click="drillDown('claims', 'denied')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-gray-600 mb-2">Denial Rate</div>
-            <div class="text-3xl font-semibold text-gray-900">{{ formatPercentage(appStore.denialRate) }}%</div>
+            <div class="text-3xl font-semibold text-gray-900">{{ formatPercentage(filteredDenialRate) }}</div>
             <div class="flex items-center gap-1 text-sm mt-1">
               <Icon
-                :name="getTrendIcon(analyticsStore.dashboardMetrics.trends.denialRate.trend)"
+                :name="getTrendIcon(filteredTrends.denialRate.trend)"
                 class="w-3 h-3"
-                :class="getTrendColor(analyticsStore.dashboardMetrics.trends.denialRate.trend, false)"
+                :class="getTrendColor(filteredTrends.denialRate.trend, false)"
               />
-              <span :class="getTrendColor(analyticsStore.dashboardMetrics.trends.denialRate.trend, false)">
-                {{ formatMetricTrend(analyticsStore.dashboardMetrics.trends.denialRate) }}
+              <span :class="getTrendColor(filteredTrends.denialRate.trend, false)">
+                {{ formatMetricTrend(filteredTrends.denialRate) }}
               </span>
             </div>
           </div>
@@ -67,11 +98,14 @@
       </div>
 
       <!-- Denied Amount -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:border-yellow-300 hover:shadow-md transition-all"
+        @click="drillDown('claims', 'denied')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-gray-600 mb-2">Denied Amount</div>
-            <div class="text-3xl font-semibold text-gray-900">{{ formatCurrency(totalDeniedAmount) }}</div>
+            <div class="text-3xl font-semibold text-gray-900">{{ formatCurrency(filteredDeniedAmount) }}</div>
             <div class="text-sm text-gray-500 mt-1">Potential revenue</div>
           </div>
           <Icon name="heroicons:currency-dollar" class="w-10 h-10 text-yellow-500" />
@@ -79,7 +113,10 @@
       </div>
 
       <!-- Patterns Detected -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:border-orange-300 hover:shadow-md transition-all"
+        @click="drillDown('insights')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-gray-600 mb-2">Patterns Detected</div>
@@ -91,7 +128,10 @@
       </div>
 
       <!-- Savings Potential -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 ring-2 ring-green-500">
+      <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 ring-2 ring-green-500 cursor-pointer hover:shadow-md transition-all"
+        @click="drillDown('impact')"
+      >
         <div class="flex items-start justify-between">
           <div>
             <div class="flex items-center gap-2 mb-2">
@@ -114,7 +154,7 @@
         </div>
         <div>
           <h2 class="text-xl font-semibold text-gray-900">Your Improvement</h2>
-          <p class="text-sm text-gray-600">Progress since baseline (6 months ago)</p>
+          <p class="text-sm text-gray-600">Last {{ selectedTimeRange }} days vs previous {{ selectedTimeRange }} days</p>
         </div>
       </div>
 
@@ -123,14 +163,21 @@
         <div class="bg-white rounded-lg border border-blue-200 p-4">
           <div class="text-xs text-gray-600 mb-2">Denial Rate</div>
           <div class="text-2xl font-semibold text-gray-900 mb-1">
-            {{ formatPercentage(appStore.denialRate) }}%
+            {{ formatPercentage(filteredDenialRate) }}
           </div>
           <div class="flex items-center gap-1 text-sm">
-            <Icon name="heroicons:arrow-down" class="w-4 h-4 text-green-600" />
-            <span class="font-medium text-green-600">
-              {{ formatPercentage(baselineDenialRate - appStore.denialRate) }}pts
+            <Icon
+              :name="filteredTrends.denialRate.trend === 'down' ? 'heroicons:arrow-down' : filteredTrends.denialRate.trend === 'up' ? 'heroicons:arrow-up' : 'heroicons:minus'"
+              class="w-4 h-4"
+              :class="filteredTrends.denialRate.trend === 'down' ? 'text-green-600' : filteredTrends.denialRate.trend === 'up' ? 'text-red-600' : 'text-gray-400'"
+            />
+            <span
+              class="font-medium"
+              :class="filteredTrends.denialRate.trend === 'down' ? 'text-green-600' : filteredTrends.denialRate.trend === 'up' ? 'text-red-600' : 'text-gray-600'"
+            >
+              {{ Math.abs(filteredTrends.denialRate.change).toFixed(1) }}pts
             </span>
-            <span class="text-gray-500">from {{ formatPercentage(baselineDenialRate) }}%</span>
+            <span class="text-gray-500">from {{ filteredTrends.denialRate.previous.toFixed(1) }}%</span>
           </div>
         </div>
 
@@ -152,10 +199,10 @@
         <div class="bg-white rounded-lg border border-blue-200 p-4">
           <div class="text-xs text-gray-600 mb-2">Claim Lab Tests</div>
           <div class="text-2xl font-semibold text-gray-900 mb-1">
-            {{ eventsStore.totalPracticeSessions }}
+            {{ filteredPracticeSessions }}
           </div>
           <div class="flex items-center gap-1 text-sm">
-            <span class="text-gray-500">this quarter</span>
+            <span class="text-gray-500">last {{ selectedTimeRange }} days</span>
           </div>
         </div>
 
@@ -166,7 +213,7 @@
             {{ formatCurrency(estimatedAdminSavings, true) }}
           </div>
           <div class="flex items-center gap-1 text-sm">
-            <span class="text-gray-500">this quarter</span>
+            <span class="text-gray-500">last {{ selectedTimeRange }} days</span>
           </div>
         </div>
       </div>
@@ -371,8 +418,8 @@
 </template>
 
 <script setup lang="ts">
-import { formatDistanceToNow } from 'date-fns'
-import type { LearningEvent } from '~/types/enhancements'
+import { formatDistanceToNow, subDays } from 'date-fns'
+import type { LearningEvent, MetricTrend } from '~/types/enhancements'
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
@@ -385,6 +432,103 @@ const { formatCurrency, formatMetricTrend, getTrendIcon, getTrendColor } = useAn
 
 const greeting = computed(() => getGreeting())
 
+// Drill down navigation
+const drillDown = (page: string, status?: string) => {
+  if (page === 'claims') {
+    const query: Record<string, string> = {
+      dateRange: selectedTimeRange.value.toString()
+    }
+    if (status && status !== 'all') {
+      query.status = status
+    }
+    navigateTo({ path: '/claims', query })
+  } else if (page === 'insights') {
+    navigateTo('/insights')
+  } else if (page === 'impact') {
+    navigateTo('/impact')
+  }
+}
+
+// Time range filter
+const timeRanges = [
+  { value: 30, label: '30d' },
+  { value: 60, label: '60d' },
+  { value: 90, label: '90d' },
+]
+const selectedTimeRange = ref(30)
+
+// Filter claims by selected time range
+const filteredClaims = computed(() => {
+  const now = new Date()
+  const cutoffDate = subDays(now, selectedTimeRange.value)
+
+  return appStore.claims.filter(claim => {
+    if (!claim.submissionDate) return false
+    const claimDate = new Date(claim.submissionDate)
+    return claimDate >= cutoffDate
+  })
+})
+
+// Previous period claims for comparison
+const previousPeriodClaims = computed(() => {
+  const now = new Date()
+  const currentCutoff = subDays(now, selectedTimeRange.value)
+  const previousCutoff = subDays(now, selectedTimeRange.value * 2)
+
+  return appStore.claims.filter(claim => {
+    if (!claim.submissionDate) return false
+    const claimDate = new Date(claim.submissionDate)
+    return claimDate >= previousCutoff && claimDate < currentCutoff
+  })
+})
+
+// Filtered metrics
+const filteredDeniedClaims = computed(() => {
+  return filteredClaims.value.filter(c => c.status === 'denied')
+})
+
+const filteredDeniedAmount = computed(() => {
+  return filteredDeniedClaims.value.reduce((sum, claim) => sum + claim.billedAmount, 0)
+})
+
+const filteredDenialRate = computed(() => {
+  if (filteredClaims.value.length === 0) return 0
+  return (filteredDeniedClaims.value.length / filteredClaims.value.length) * 100
+})
+
+const filteredApprovalRate = computed(() => {
+  return 100 - filteredDenialRate.value
+})
+
+// Calculate trends vs previous period
+const filteredTrends = computed(() => {
+  const prevDenied = previousPeriodClaims.value.filter(c => c.status === 'denied')
+  const prevDenialRate = previousPeriodClaims.value.length > 0
+    ? (prevDenied.length / previousPeriodClaims.value.length) * 100
+    : 0
+  const prevApprovalRate = 100 - prevDenialRate
+
+  const denialChange = filteredDenialRate.value - prevDenialRate
+  const approvalChange = filteredApprovalRate.value - prevApprovalRate
+
+  return {
+    denialRate: {
+      current: filteredDenialRate.value,
+      previous: prevDenialRate,
+      change: denialChange,
+      percentChange: prevDenialRate > 0 ? (denialChange / prevDenialRate) * 100 : 0,
+      trend: denialChange < -0.5 ? 'down' : denialChange > 0.5 ? 'up' : 'stable',
+    } as MetricTrend,
+    approvalRate: {
+      current: filteredApprovalRate.value,
+      previous: prevApprovalRate,
+      change: approvalChange,
+      percentChange: prevApprovalRate > 0 ? (approvalChange / prevApprovalRate) * 100 : 0,
+      trend: approvalChange > 0.5 ? 'up' : approvalChange < -0.5 ? 'down' : 'stable',
+    } as MetricTrend,
+  }
+})
+
 // Baseline metrics (from 6 months ago)
 const baselineDenialRate = computed(() => {
   // Based on pattern data showing improvement from 18% to current rate
@@ -393,10 +537,10 @@ const baselineDenialRate = computed(() => {
 
 const estimatedAdminSavings = computed(() => {
   // Calculate savings based on denied claims prevented
-  const denialRateReduction = baselineDenialRate.value - appStore.denialRate
-  const totalClaims = appStore.claims.length
+  const denialRateReduction = baselineDenialRate.value - filteredDenialRate.value
+  const totalClaims = filteredClaims.value.length
   const claimsPrevented = Math.round(totalClaims * (denialRateReduction / 100))
-  const avgClaimAmount = totalDeniedAmount.value / Math.max(appStore.deniedClaims.length, 1)
+  const avgClaimAmount = filteredDeniedAmount.value / Math.max(filteredDeniedClaims.value.length, 1)
   const adminCostPerAppeal = 350 // Default admin cost
 
   // Savings = (claims prevented * avg claim amount) + (appeals avoided * admin cost)
@@ -407,8 +551,20 @@ const totalDeniedAmount = computed(() => {
   return appStore.deniedClaims.reduce((sum, claim) => sum + claim.billedAmount, 0)
 })
 
+// Filter practice sessions by time range
+const filteredPracticeSessions = computed(() => {
+  const now = new Date()
+  const cutoffDate = subDays(now, selectedTimeRange.value)
+
+  return eventsStore.events.filter(e => {
+    if (e.type !== 'practice-completed') return false
+    const eventDate = new Date(e.timestamp)
+    return eventDate >= cutoffDate
+  }).length
+})
+
 const recentDeniedClaims = computed(() => {
-  return appStore.deniedClaims
+  return filteredDeniedClaims.value
     .filter(c => c.submissionDate)
     .sort((a, b) => new Date(b.submissionDate!).getTime() - new Date(a.submissionDate!).getTime())
     .slice(0, 5)

@@ -1,1 +1,480 @@
-[]
+[
+  {
+    "id": "LM-001",
+    "claimId": "CLM-2024-2001",
+    "patternId": "PTN-001",
+    "providerId": "PRV-001",
+    "testDate": "2025-01-03T14:22:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 285
+    },
+    "notes": "Added modifier 25 to E&M code - simulation passed"
+  },
+  {
+    "id": "LM-002",
+    "claimId": "CLM-2024-2002",
+    "patternId": "PTN-001",
+    "providerId": "PRV-002",
+    "testDate": "2025-01-02T15:45:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 420
+    },
+    "notes": "Testing modifier 25 fix for E&M with EKG on same day"
+  },
+  {
+    "id": "LM-003",
+    "claimId": "CLM-2024-2006",
+    "patternId": "PTN-001",
+    "providerId": "PRV-001",
+    "testDate": "2024-12-28T10:30:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 245
+    },
+    "notes": "Practice session for modifier 25 pattern"
+  },
+  {
+    "id": "LM-004",
+    "claimId": "CLM-2024-2003",
+    "patternId": "PTN-002",
+    "providerId": "PRV-003",
+    "testDate": "2024-12-20T09:15:00Z",
+    "category": "Prior Authorization",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "authNumber",
+        "from": null,
+        "to": "AUTH-2024-8872"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Prior authorization verified"],
+      "editsFailed": [],
+      "estimatedPayment": 1250
+    },
+    "notes": "Added prior auth number for colonoscopy - demonstrates proper workflow"
+  },
+  {
+    "id": "LM-005",
+    "claimId": "CLM-2024-2005",
+    "patternId": "PTN-002",
+    "providerId": "PRV-001",
+    "testDate": "2024-12-15T14:00:00Z",
+    "category": "Prior Authorization",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "authNumber",
+        "from": null,
+        "to": "AUTH-2024-7764"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Prior authorization verified"],
+      "editsFailed": [],
+      "estimatedPayment": 380
+    },
+    "notes": "Joint injection with proper prior auth"
+  },
+  {
+    "id": "LM-006",
+    "claimId": "CLM-2024-2010",
+    "patternId": "PTN-003",
+    "providerId": "PRV-002",
+    "testDate": "2024-12-12T11:30:00Z",
+    "category": "Documentation",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "diagnosisCode",
+        "from": "J06.9",
+        "to": "J06.0"
+      },
+      {
+        "lineNumber": 1,
+        "field": "notes",
+        "from": null,
+        "to": "Patient presented with acute pharyngitis, documented exam findings and treatment plan"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Documentation sufficient", "Diagnosis code supports service"],
+      "editsFailed": [],
+      "estimatedPayment": 320
+    },
+    "notes": "Improved diagnosis specificity and added clinical notes"
+  },
+  {
+    "id": "LM-007",
+    "claimId": "CLM-2024-2014",
+    "patternId": "PTN-004",
+    "providerId": "PRV-001",
+    "testDate": "2024-12-08T16:45:00Z",
+    "category": "Bundling Issue",
+    "changes": [
+      {
+        "lineNumber": 2,
+        "field": "removed",
+        "from": "36415",
+        "to": null
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["CCI edit satisfied - bundled code removed"],
+      "editsFailed": [],
+      "estimatedPayment": 340
+    },
+    "notes": "Removed venipuncture code bundled with office visit"
+  },
+  {
+    "id": "LM-008",
+    "claimId": "CLM-2024-2034",
+    "patternId": "PTN-004",
+    "providerId": "PRV-003",
+    "testDate": "2024-12-05T10:20:00Z",
+    "category": "Bundling Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["59"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 59 allows separate reimbursement"],
+      "editsFailed": [],
+      "estimatedPayment": 310
+    },
+    "notes": "Added modifier 59 to indicate distinct procedural service"
+  },
+  {
+    "id": "LM-009",
+    "claimId": "CLM-2024-2009",
+    "patternId": "PTN-001",
+    "providerId": "PRV-002",
+    "testDate": "2024-11-28T13:15:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 290
+    },
+    "notes": "E&M with same-day procedure correction"
+  },
+  {
+    "id": "LM-010",
+    "claimId": "CLM-2024-2016",
+    "patternId": "PTN-007",
+    "providerId": "PRV-001",
+    "testDate": "2024-11-22T09:00:00Z",
+    "category": "Coding Specificity",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "diagnosisCode",
+        "from": "E11.9",
+        "to": "E11.65"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Diagnosis code specificity requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 340
+    },
+    "notes": "Updated diabetes code to include complication specificity"
+  },
+  {
+    "id": "LM-011",
+    "claimId": "CLM-2024-2036",
+    "patternId": "PTN-007",
+    "providerId": "PRV-003",
+    "testDate": "2024-11-18T15:30:00Z",
+    "category": "Coding Specificity",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "diagnosisCode",
+        "from": "M25.50",
+        "to": "M25.511"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Laterality specified", "Joint specificity met"],
+      "editsFailed": [],
+      "estimatedPayment": 325
+    },
+    "notes": "Added laterality to joint pain diagnosis"
+  },
+  {
+    "id": "LM-012",
+    "claimId": "CLM-2024-2012",
+    "patternId": "PTN-001",
+    "providerId": "PRV-001",
+    "testDate": "2024-11-15T11:00:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 275
+    },
+    "notes": "Successful modifier 25 practice"
+  },
+  {
+    "id": "LM-013",
+    "claimId": "CLM-2024-2023",
+    "patternId": "PTN-002",
+    "providerId": "PRV-002",
+    "testDate": "2024-11-10T14:45:00Z",
+    "category": "Prior Authorization",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "authNumber",
+        "from": null,
+        "to": "AUTH-2024-6612"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Prior authorization verified"],
+      "editsFailed": [],
+      "estimatedPayment": 1450
+    },
+    "notes": "Colonoscopy with documented prior auth"
+  },
+  {
+    "id": "LM-014",
+    "claimId": "CLM-2024-2017",
+    "patternId": "PTN-003",
+    "providerId": "PRV-001",
+    "testDate": "2024-11-05T10:30:00Z",
+    "category": "Documentation",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "procedureCode",
+        "from": "99215",
+        "to": "99214"
+      },
+      {
+        "lineNumber": 1,
+        "field": "notes",
+        "from": null,
+        "to": "Adjusted E&M level to match documentation"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["E&M level supported by documentation"],
+      "editsFailed": [],
+      "estimatedPayment": 128
+    },
+    "notes": "Downcoded to match clinical documentation"
+  },
+  {
+    "id": "LM-015",
+    "claimId": "CLM-2024-2054",
+    "patternId": "PTN-004",
+    "providerId": "PRV-003",
+    "testDate": "2024-10-28T09:15:00Z",
+    "category": "Bundling Issue",
+    "changes": [
+      {
+        "lineNumber": 2,
+        "field": "removed",
+        "from": "36415",
+        "to": null
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["CCI edit satisfied"],
+      "editsFailed": [],
+      "estimatedPayment": 325
+    },
+    "notes": "Identified and removed bundled venipuncture"
+  },
+  {
+    "id": "LM-016",
+    "claimId": "CLM-2024-2015",
+    "patternId": "PTN-001",
+    "providerId": "PRV-002",
+    "testDate": "2024-10-22T16:00:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 282
+    },
+    "notes": "Early practice session for modifier 25"
+  },
+  {
+    "id": "LM-017",
+    "claimId": "CLM-2024-2056",
+    "patternId": "PTN-007",
+    "providerId": "PRV-001",
+    "testDate": "2024-10-15T11:45:00Z",
+    "category": "Coding Specificity",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "diagnosisCode",
+        "from": "I10",
+        "to": "I10"
+      },
+      {
+        "lineNumber": 1,
+        "field": "secondaryDiagnosis",
+        "from": null,
+        "to": "E78.5"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Secondary diagnosis supports medical necessity"],
+      "editsFailed": [],
+      "estimatedPayment": 315
+    },
+    "notes": "Added secondary diagnosis for comprehensive visit"
+  },
+  {
+    "id": "LM-018",
+    "claimId": "CLM-2024-2021",
+    "patternId": "PTN-001",
+    "providerId": "PRV-003",
+    "testDate": "2024-10-08T14:30:00Z",
+    "category": "Modifier Issue",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "modifiers",
+        "from": [],
+        "to": ["25"]
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Modifier 25 requirement met"],
+      "editsFailed": [],
+      "estimatedPayment": 268
+    },
+    "notes": "First successful modifier 25 practice for this claim"
+  },
+  {
+    "id": "LM-019",
+    "claimId": "CLM-2024-2025",
+    "patternId": "PTN-002",
+    "providerId": "PRV-001",
+    "testDate": "2024-09-30T10:00:00Z",
+    "category": "Prior Authorization",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "authNumber",
+        "from": null,
+        "to": "AUTH-2024-5543"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Prior authorization verified"],
+      "editsFailed": [],
+      "estimatedPayment": 1320
+    },
+    "notes": "High-value procedure with proper authorization"
+  },
+  {
+    "id": "LM-020",
+    "claimId": "CLM-2024-2030",
+    "patternId": "PTN-003",
+    "providerId": "PRV-002",
+    "testDate": "2024-09-22T15:15:00Z",
+    "category": "Documentation",
+    "changes": [
+      {
+        "lineNumber": 1,
+        "field": "notes",
+        "from": null,
+        "to": "Comprehensive exam performed, vitals documented, assessment and plan created"
+      }
+    ],
+    "simulationResult": {
+      "outcome": "approved",
+      "editsPassed": ["Documentation supports E&M level"],
+      "editsFailed": [],
+      "estimatedPayment": 290
+    },
+    "notes": "Enhanced documentation to support medical necessity"
+  }
+]

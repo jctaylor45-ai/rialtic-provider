@@ -3,29 +3,62 @@
 export interface Claim {
   id: string
   providerId: string
+
+  // Claim type
+  claimType?: 'Professional' | 'Institutional' | 'Dental' | 'Pharmacy'
+
+  // Patient info
   patientName: string
   patientDOB?: string
+  patientSex?: 'male' | 'female' | 'unknown'
   memberId?: string
+  memberGroupId?: string
+
+  // Service dates
   dateOfService: string
+  dateOfServiceEnd?: string  // For date ranges
+
+  // Codes
   procedureCodes?: string[]
   procedureCode?: string
   diagnosisCodes?: string[]
   modifiers?: string[]
+
+  // Billing
   billedAmount: number
   paidAmount?: number
+
+  // Billing provider info
+  providerName?: string
+  billingProviderTIN?: string
+  billingProviderNPI?: string
+  billingProviderTaxonomy?: string
+  specialtyCodes?: string[]
+
+  // Authorization & indicators
+  priorAuthNumber?: string
+  ltssIndicator?: boolean
+  parIndicator?: boolean
+
+  // Status
   status: 'approved' | 'denied' | 'pending' | 'appealed' | 'paid'
   denialReason?: string
   policyId?: string
   policyIds?: string[]
   appealStatus?: string | null
   appealDate?: string
+
+  // Dates
   submissionDate?: string
   submittedDate?: string
   processingDate?: string
   processedDate?: string
   statusDate?: string
-  providerName?: string
+
+  // Line items
   lineItems?: LineItem[]
+
+  // AI
   aiInsight?: {
     explanation: string
     guidance: string
@@ -34,14 +67,35 @@ export interface Claim {
 
 export interface LineItem {
   lineNumber: number
+
+  // Service dates
+  dateOfService?: string
+  dateOfServiceEnd?: string
+
+  // Codes
   procedureCode: string
+  ndcCode?: string
   modifiers?: string[]
   diagnosisCodes?: string[]
+  placeOfService?: string
+
+  // Quantities and amounts
   units: number
+  unitsType?: string  // "UN" for units, "MJ" for minutes, etc.
   billedAmount: number
   paidAmount: number
+
+  // Rendering provider
+  renderingProviderName?: string
+  renderingProviderNPI?: string
+  renderingProviderTaxonomy?: string
+
+  // Indicators
+  parIndicator?: boolean
+  bypassCode?: string
+
+  // Status
   status: string
-  dateOfService?: string
   editsFired?: string[]
   policiesTriggered?: string[]
 }

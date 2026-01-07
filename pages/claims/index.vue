@@ -1,5 +1,15 @@
 <template>
-  <div class="flex-1 overflow-hidden p-8">
+  <div class="flex-1 overflow-y-auto p-8">
+    <!-- Loading State -->
+    <div v-if="appStore.isLoading" class="flex items-center justify-center h-64">
+      <div class="text-center">
+        <Icon name="heroicons:arrow-path" class="w-8 h-8 text-gray-400 animate-spin mx-auto mb-2" />
+        <p class="text-sm text-gray-600">Loading claims...</p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div v-else>
     <!-- Search Bar -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
       <div class="flex items-center gap-4 mb-4">
@@ -40,7 +50,7 @@
           class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Statuses</option>
-          <option value="approved">Approved</option>
+          <option value="paid">Paid/Approved</option>
           <option value="denied">Denied</option>
           <option value="pending">Pending</option>
           <option value="appealed">Appealed</option>
@@ -69,11 +79,51 @@
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Claim ID</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Patient</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Date of Service</th>
-              <th class="text-right px-6 py-3 text-xs font-semibold text-gray-700">Amount</th>
-              <th class="text-center px-6 py-3 text-xs font-semibold text-gray-700">Status</th>
+              <th
+                class="text-left px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('id')"
+              >
+                <div class="flex items-center gap-1">
+                  Claim ID
+                  <Icon :name="getSortIcon('id')" class="w-4 h-4" :class="sortColumn === 'id' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-left px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('patient')"
+              >
+                <div class="flex items-center gap-1">
+                  Patient
+                  <Icon :name="getSortIcon('patient')" class="w-4 h-4" :class="sortColumn === 'patient' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-left px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('dateOfService')"
+              >
+                <div class="flex items-center gap-1">
+                  Date of Service
+                  <Icon :name="getSortIcon('dateOfService')" class="w-4 h-4" :class="sortColumn === 'dateOfService' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('amount')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Amount
+                  <Icon :name="getSortIcon('amount')" class="w-4 h-4" :class="sortColumn === 'amount' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-center px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('status')"
+              >
+                <div class="flex items-center justify-center gap-1">
+                  Status
+                  <Icon :name="getSortIcon('status')" class="w-4 h-4" :class="sortColumn === 'status' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Patterns</th>
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Reason</th>
             </tr>
@@ -102,7 +152,7 @@
                 <span
                   class="px-2 py-1 text-xs font-medium rounded"
                   :class="{
-                    'bg-green-100 text-green-700': claim.status === 'approved',
+                    'bg-green-100 text-green-700': claim.status === 'paid',
                     'bg-red-100 text-red-700': claim.status === 'denied',
                     'bg-yellow-100 text-yellow-700': claim.status === 'pending',
                     'bg-blue-100 text-blue-700': claim.status === 'appealed',
@@ -147,6 +197,7 @@
         </table>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -156,6 +207,25 @@ import type { Pattern } from '~/types/enhancements'
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const router = useRouter()
+const route = useRoute()
+
+// Ensure data is loaded and apply query params
+onMounted(async () => {
+  if (appStore.claims.length === 0 && !appStore.isLoading) {
+    await appStore.initialize()
+  }
+  if (patternsStore.patterns.length === 0 && !patternsStore.isLoading) {
+    await patternsStore.loadPatterns()
+  }
+
+  // Apply query params to filters
+  if (route.query.status && typeof route.query.status === 'string') {
+    filters.status = route.query.status
+  }
+  if (route.query.dateRange && typeof route.query.dateRange === 'string') {
+    filters.dateRange = route.query.dateRange
+  }
+})
 
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
@@ -168,8 +238,26 @@ const searchParams = reactive({
 
 const filters = reactive({
   status: 'all',
-  dateRange: '90',
+  dateRange: 'all',
 })
+
+// Sorting
+const sortColumn = ref<'id' | 'patient' | 'dateOfService' | 'amount' | 'status'>('dateOfService')
+const sortDirection = ref<'asc' | 'desc'>('desc')
+
+const toggleSort = (column: typeof sortColumn.value) => {
+  if (sortColumn.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortColumn.value = column
+    sortDirection.value = column === 'dateOfService' || column === 'amount' ? 'desc' : 'asc'
+  }
+}
+
+const getSortIcon = (column: string) => {
+  if (sortColumn.value !== column) return 'heroicons:chevron-up-down'
+  return sortDirection.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
+}
 
 const filteredClaims = computed(() => {
   let result = [...appStore.claims]
@@ -206,7 +294,26 @@ const filteredClaims = computed(() => {
     result = result.filter(c => new Date(c.dateOfService) >= cutoffDate)
   }
 
-  return result.sort((a, b) => new Date(b.dateOfService).getTime() - new Date(a.dateOfService).getTime())
+  // Apply sorting
+  const dir = sortDirection.value === 'asc' ? 1 : -1
+  result.sort((a, b) => {
+    switch (sortColumn.value) {
+      case 'id':
+        return dir * a.id.localeCompare(b.id)
+      case 'patient':
+        return dir * a.patientName.localeCompare(b.patientName)
+      case 'dateOfService':
+        return dir * (new Date(a.dateOfService).getTime() - new Date(b.dateOfService).getTime())
+      case 'amount':
+        return dir * (a.billedAmount - b.billedAmount)
+      case 'status':
+        return dir * a.status.localeCompare(b.status)
+      default:
+        return 0
+    }
+  })
+
+  return result
 })
 
 // Get patterns matching a claim

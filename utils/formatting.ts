@@ -86,10 +86,17 @@ export function ensureLineItems(claim: Claim | null | undefined): Claim | null {
     modifiers: claim.modifiers || [],
     diagnosisCodes: claim.diagnosisCodes || [],
     units: 1,
+    unitsType: 'UN',
     billedAmount: claim.billedAmount / procedureCodes.length,
     paidAmount: (claim.paidAmount || 0) / procedureCodes.length,
     status: claim.status,
     dateOfService: claim.dateOfService,
+    dateOfServiceEnd: claim.dateOfServiceEnd || claim.dateOfService,
+    placeOfService: '11',  // Office
+    renderingProviderName: claim.providerName,
+    renderingProviderNPI: claim.billingProviderNPI,
+    renderingProviderTaxonomy: claim.billingProviderTaxonomy,
+    parIndicator: claim.parIndicator,
     editsFired: claim.denialReason ? [claim.denialReason] : [],
     policiesTriggered: claim.policyIds || [],
   }))

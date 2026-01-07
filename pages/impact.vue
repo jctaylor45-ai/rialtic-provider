@@ -417,8 +417,24 @@
               <th class="text-left text-xs font-medium text-gray-600 pb-3 pr-4">Category</th>
               <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Denials Before</th>
               <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Denials After</th>
-              <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Reduction</th>
-              <th class="text-right text-xs font-medium text-gray-600 pb-3">Savings Realized</th>
+              <th
+                class="text-right text-xs font-medium text-gray-600 pb-3 pr-4 cursor-pointer hover:text-gray-900 select-none"
+                @click="togglePatternSort('denials')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Reduction
+                  <Icon :name="getPatternSortIcon('denials')" class="w-4 h-4" :class="sortBy === 'denials' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-right text-xs font-medium text-gray-600 pb-3 cursor-pointer hover:text-gray-900 select-none"
+                @click="togglePatternSort('savings')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Savings Realized
+                  <Icon :name="getPatternSortIcon('savings')" class="w-4 h-4" :class="sortBy === 'savings' ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -583,16 +599,48 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-gray-200">
-                <th class="text-left text-xs font-medium text-gray-600 pb-3 pr-4">Provider</th>
-                <th class="text-center text-xs font-medium text-gray-600 pb-3 pr-4">Engagement Level</th>
-                <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Denial Rate Improvement</th>
-                <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Practice Sessions</th>
+                <th
+                  class="text-left text-xs font-medium text-gray-600 pb-3 pr-4 cursor-pointer hover:text-gray-900 select-none"
+                  @click="toggleProviderSort('name')"
+                >
+                  <div class="flex items-center gap-1">
+                    Provider
+                    <Icon :name="getProviderSortIcon('name')" class="w-4 h-4" :class="providerSortBy === 'name' ? 'text-primary-600' : 'text-gray-400'" />
+                  </div>
+                </th>
+                <th
+                  class="text-center text-xs font-medium text-gray-600 pb-3 pr-4 cursor-pointer hover:text-gray-900 select-none"
+                  @click="toggleProviderSort('engagement')"
+                >
+                  <div class="flex items-center justify-center gap-1">
+                    Engagement Level
+                    <Icon :name="getProviderSortIcon('engagement')" class="w-4 h-4" :class="providerSortBy === 'engagement' ? 'text-primary-600' : 'text-gray-400'" />
+                  </div>
+                </th>
+                <th
+                  class="text-right text-xs font-medium text-gray-600 pb-3 pr-4 cursor-pointer hover:text-gray-900 select-none"
+                  @click="toggleProviderSort('improvement')"
+                >
+                  <div class="flex items-center justify-end gap-1">
+                    Denial Rate Improvement
+                    <Icon :name="getProviderSortIcon('improvement')" class="w-4 h-4" :class="providerSortBy === 'improvement' ? 'text-primary-600' : 'text-gray-400'" />
+                  </div>
+                </th>
+                <th
+                  class="text-right text-xs font-medium text-gray-600 pb-3 pr-4 cursor-pointer hover:text-gray-900 select-none"
+                  @click="toggleProviderSort('sessions')"
+                >
+                  <div class="flex items-center justify-end gap-1">
+                    Practice Sessions
+                    <Icon :name="getProviderSortIcon('sessions')" class="w-4 h-4" :class="providerSortBy === 'sessions' ? 'text-primary-600' : 'text-gray-400'" />
+                  </div>
+                </th>
                 <th class="text-center text-xs font-medium text-gray-600 pb-3">Status</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="provider in networkProviders"
+                v-for="provider in sortedNetworkProviders"
                 :key="provider.id"
                 class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
@@ -727,9 +775,43 @@ const { formatCurrency } = useAnalytics()
 
 // State
 const sortBy = ref<'savings' | 'denials' | 'recent'>('savings')
+const sortDirection = ref<'asc' | 'desc'>('desc')
 const selectedWindow = ref(90) // Default to 90 days
 const adminCostPerAppeal = ref(350) // Default admin cost
 const activeView = ref<'provider' | 'network'>('provider')
+
+// Column sorting for pattern impact table
+const togglePatternSort = (column: 'savings' | 'denials' | 'recent') => {
+  if (sortBy.value === column) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = column
+    sortDirection.value = 'desc'
+  }
+}
+
+const getPatternSortIcon = (column: string) => {
+  if (sortBy.value !== column) return 'heroicons:chevron-up-down'
+  return sortDirection.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
+}
+
+// Provider table sorting
+const providerSortBy = ref<'name' | 'engagement' | 'improvement' | 'sessions'>('improvement')
+const providerSortDir = ref<'asc' | 'desc'>('desc')
+
+const toggleProviderSort = (column: typeof providerSortBy.value) => {
+  if (providerSortBy.value === column) {
+    providerSortDir.value = providerSortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    providerSortBy.value = column
+    providerSortDir.value = column === 'name' ? 'asc' : 'desc'
+  }
+}
+
+const getProviderSortIcon = (column: string) => {
+  if (providerSortBy.value !== column) return 'heroicons:chevron-up-down'
+  return providerSortDir.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
+}
 
 // Measurement window options
 const measurementWindows = [
@@ -947,6 +1029,25 @@ const networkProviders = computed(() => {
   ]
 })
 
+const sortedNetworkProviders = computed(() => {
+  const providers = [...networkProviders.value]
+  const dir = providerSortDir.value === 'asc' ? 1 : -1
+
+  switch (providerSortBy.value) {
+    case 'name':
+      return providers.sort((a, b) => dir * a.name.localeCompare(b.name))
+    case 'engagement':
+      const levels = { high: 3, medium: 2, low: 1 }
+      return providers.sort((a, b) => dir * (levels[a.engagementLevel as keyof typeof levels] - levels[b.engagementLevel as keyof typeof levels]))
+    case 'improvement':
+      return providers.sort((a, b) => dir * (a.improvement - b.improvement))
+    case 'sessions':
+      return providers.sort((a, b) => dir * (a.practiceSessions - b.practiceSessions))
+    default:
+      return providers
+  }
+})
+
 const savingsPerHour = computed(() => {
   const hours = roi.value.totalTimeInvested / 60
   return hours > 0 ? Math.round(roi.value.estimatedSavings / hours) : 0
@@ -964,17 +1065,18 @@ const maxActivity = computed(() => {
 
 const sortedPatternImpact = computed(() => {
   const impacts = [...roi.value.patternImpact]
+  const dir = sortDirection.value === 'asc' ? 1 : -1
 
   switch (sortBy.value) {
     case 'savings':
-      return impacts.sort((a, b) => b.savingsRealized - a.savingsRealized)
+      return impacts.sort((a, b) => dir * (b.savingsRealized - a.savingsRealized))
     case 'denials':
       return impacts.sort((a, b) =>
-        (b.denialsBefore - b.denialsAfter) - (a.denialsBefore - a.denialsAfter)
+        dir * ((b.denialsBefore - b.denialsAfter) - (a.denialsBefore - a.denialsAfter))
       )
     case 'recent':
       return impacts.sort((a, b) =>
-        new Date(b.lastPracticed).getTime() - new Date(a.lastPracticed).getTime()
+        dir * (new Date(b.lastPracticed).getTime() - new Date(a.lastPracticed).getTime())
       )
     default:
       return impacts

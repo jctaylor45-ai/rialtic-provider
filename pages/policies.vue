@@ -78,13 +78,45 @@
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Policy Name</th>
+              <th
+                class="text-left px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('name')"
+              >
+                <div class="flex items-center gap-1">
+                  Policy Name
+                  <Icon :name="getSortIcon('name')" class="w-4 h-4" :class="isSortActive('name') ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Mode</th>
               <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Topic</th>
               <th class="text-center px-6 py-3 text-xs font-semibold text-gray-700">Related Patterns</th>
-              <th class="text-right px-6 py-3 text-xs font-semibold text-gray-700">Hit Rate</th>
-              <th class="text-right px-6 py-3 text-xs font-semibold text-gray-700">Denial Rate</th>
-              <th class="text-right px-6 py-3 text-xs font-semibold text-gray-700">Impact</th>
+              <th
+                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('hitRate')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Hit Rate
+                  <Icon :name="getSortIcon('hitRate')" class="w-4 h-4" :class="isSortActive('hitRate') ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('denialRate')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Denial Rate
+                  <Icon :name="getSortIcon('denialRate')" class="w-4 h-4" :class="isSortActive('denialRate') ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
+              <th
+                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                @click="toggleSort('impact')"
+              >
+                <div class="flex items-center justify-end gap-1">
+                  Impact
+                  <Icon :name="getSortIcon('impact')" class="w-4 h-4" :class="isSortActive('impact') ? 'text-primary-600' : 'text-gray-400'" />
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
@@ -133,8 +165,8 @@
                 </div>
                 <div v-else class="text-xs text-gray-400">—</div>
               </td>
-              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.hitRate) }}%</td>
-              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.denialRate) }}%</td>
+              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.hitRate) }}</td>
+              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.denialRate) }}</td>
               <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900">{{ formatCurrency(policy.impact) }}</td>
             </tr>
           </tbody>
@@ -233,12 +265,12 @@
           <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div class="bg-gray-50 rounded-lg p-3">
               <div class="text-xs text-gray-600 mb-1">Hit Rate</div>
-              <div class="text-lg font-semibold text-gray-900">{{ formatPercentage(selectedPolicy.hitRate) }}%</div>
+              <div class="text-lg font-semibold text-gray-900">{{ formatPercentage(selectedPolicy.hitRate) }}</div>
               <div class="text-xs text-gray-500 mt-1">of claims affected</div>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
               <div class="text-xs text-gray-600 mb-1">Denial Rate</div>
-              <div class="text-lg font-semibold text-red-700">{{ formatPercentage(selectedPolicy.denialRate) }}%</div>
+              <div class="text-lg font-semibold text-red-700">{{ formatPercentage(selectedPolicy.denialRate) }}</div>
               <div class="text-xs text-gray-500 mt-1">when policy triggered</div>
             </div>
             <div class="bg-gray-50 rounded-lg p-3">
@@ -273,6 +305,48 @@ const filters = reactive({
 })
 
 const selectedPolicy = ref<Policy | null>(null)
+
+// Column click sorting
+const toggleSort = (column: string) => {
+  const columnMap: Record<string, { asc: string; desc: string }> = {
+    name: { asc: 'name', desc: 'name' },
+    hitRate: { asc: 'hit-rate-desc', desc: 'hit-rate-desc' },
+    denialRate: { asc: 'denial-rate-asc', desc: 'denial-rate-desc' },
+    impact: { asc: 'impact-asc', desc: 'impact-desc' },
+  }
+  const current = sortBy.value
+  const mapping = columnMap[column]
+  if (!mapping) return
+
+  // Toggle between asc and desc for the same column
+  if (current === mapping.desc) {
+    sortBy.value = mapping.asc
+  } else {
+    sortBy.value = mapping.desc
+  }
+}
+
+const getSortIcon = (column: string) => {
+  const current = sortBy.value
+  if (column === 'name' && current === 'name') return 'heroicons:chevron-up'
+  if (column === 'hitRate' && current === 'hit-rate-desc') return 'heroicons:chevron-down'
+  if (column === 'denialRate' && current.startsWith('denial-rate')) {
+    return current === 'denial-rate-desc' ? 'heroicons:chevron-down' : 'heroicons:chevron-up'
+  }
+  if (column === 'impact' && current.startsWith('impact')) {
+    return current === 'impact-desc' ? 'heroicons:chevron-down' : 'heroicons:chevron-up'
+  }
+  return 'heroicons:chevron-up-down'
+}
+
+const isSortActive = (column: string) => {
+  const current = sortBy.value
+  if (column === 'name') return current === 'name'
+  if (column === 'hitRate') return current === 'hit-rate-desc'
+  if (column === 'denialRate') return current.startsWith('denial-rate')
+  if (column === 'impact') return current.startsWith('impact')
+  return false
+}
 
 const filteredPolicies = computed(() => {
   let result = appStore.policies
