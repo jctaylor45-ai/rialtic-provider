@@ -2,12 +2,42 @@
   <div class="flex-1 overflow-auto p-8">
     <!-- Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Learning Impact & ROI Dashboard</h1>
-      <p class="text-sm text-gray-600 mt-1">
-        Measure the return on your practice sessions and pattern learning
-      </p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">Learning Impact & ROI Dashboard</h1>
+          <p class="text-sm text-gray-600 mt-1">
+            Measure the return on your practice sessions and pattern learning
+          </p>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            @click="activeView = 'provider'"
+            class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            :class="{
+              'bg-white text-gray-900 shadow-sm': activeView === 'provider',
+              'text-gray-600 hover:text-gray-900': activeView !== 'provider'
+            }"
+          >
+            Provider View
+          </button>
+          <button
+            @click="activeView = 'network'"
+            class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            :class="{
+              'bg-white text-gray-900 shadow-sm': activeView === 'network',
+              'text-gray-600 hover:text-gray-900': activeView !== 'network'
+            }"
+          >
+            Network View
+          </button>
+        </div>
+      </div>
     </div>
 
+    <!-- Provider View -->
+    <div v-if="activeView === 'provider'">
     <!-- Executive Summary -->
     <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg shadow-sm border border-primary-200 p-6 mb-6">
       <h2 class="text-lg font-semibold text-primary-900 mb-4 flex items-center gap-2">
@@ -515,6 +545,171 @@
         </NuxtLink>
       </div>
     </div>
+    </div><!-- End Provider View -->
+
+    <!-- Network View (Payer Aggregate) -->
+    <div v-else>
+      <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-sm border border-blue-200 p-6 mb-6">
+        <h2 class="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+          <Icon name="heroicons:building-office-2" class="w-5 h-5" />
+          Network Impact Summary
+        </h2>
+        <div class="bg-white/80 backdrop-blur rounded-lg p-4">
+          <div class="grid grid-cols-4 gap-4">
+            <div>
+              <div class="text-xs text-gray-600 mb-1">Providers Using Tool</div>
+              <div class="text-2xl font-bold text-gray-900">{{ networkMetrics.providersCount }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-600 mb-1">Avg Denial Rate Improvement</div>
+              <div class="text-2xl font-bold text-green-600">{{ networkMetrics.avgImprovement }}%</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-600 mb-1">Total Appeals Avoided</div>
+              <div class="text-2xl font-bold text-gray-900">{{ networkMetrics.totalAppealsAvoided }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-600 mb-1">Total Admin Savings</div>
+              <div class="text-2xl font-bold text-green-600">{{ formatCurrency(networkMetrics.totalSavings) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Provider Breakdown Table -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Provider Performance</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left text-xs font-medium text-gray-600 pb-3 pr-4">Provider</th>
+                <th class="text-center text-xs font-medium text-gray-600 pb-3 pr-4">Engagement Level</th>
+                <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Denial Rate Improvement</th>
+                <th class="text-right text-xs font-medium text-gray-600 pb-3 pr-4">Practice Sessions</th>
+                <th class="text-center text-xs font-medium text-gray-600 pb-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="provider in networkProviders"
+                :key="provider.id"
+                class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <td class="py-3 pr-4">
+                  <div class="text-sm font-medium text-gray-900">{{ provider.name }}</div>
+                  <div class="text-xs text-gray-500">{{ provider.specialty }}</div>
+                </td>
+                <td class="py-3 pr-4 text-center">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full"
+                    :class="{
+                      'bg-green-100 text-green-700': provider.engagementLevel === 'high',
+                      'bg-yellow-100 text-yellow-700': provider.engagementLevel === 'medium',
+                      'bg-red-100 text-red-700': provider.engagementLevel === 'low'
+                    }"
+                  >
+                    {{ provider.engagementLevel.charAt(0).toUpperCase() + provider.engagementLevel.slice(1) }}
+                  </span>
+                </td>
+                <td class="py-3 pr-4 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <Icon
+                      :name="provider.improvement > 0 ? 'heroicons:arrow-down' : 'heroicons:arrow-up'"
+                      class="w-4 h-4"
+                      :class="{
+                        'text-green-600': provider.improvement > 0,
+                        'text-red-600': provider.improvement < 0
+                      }"
+                    />
+                    <span
+                      class="text-sm font-medium"
+                      :class="{
+                        'text-green-600': provider.improvement > 0,
+                        'text-red-600': provider.improvement < 0
+                      }"
+                    >
+                      {{ Math.abs(provider.improvement).toFixed(1) }}%
+                    </span>
+                  </div>
+                </td>
+                <td class="py-3 pr-4 text-right text-sm text-gray-900">
+                  {{ provider.practiceSessions }}
+                </td>
+                <td class="py-3 text-center">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded-full"
+                    :class="{
+                      'bg-green-100 text-green-700': provider.status === 'active',
+                      'bg-gray-100 text-gray-700': provider.status === 'inactive'
+                    }"
+                  >
+                    {{ provider.status.charAt(0).toUpperCase() + provider.status.slice(1) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Correlation Proof -->
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Engagement → Outcome Correlation</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+              <div>
+                <div class="text-sm font-medium text-green-900">High Engagement Providers</div>
+                <div class="text-xs text-green-700 mt-1">{{ networkMetrics.highEngagementCount }} providers</div>
+              </div>
+              <div class="text-2xl font-bold text-green-600">{{ networkMetrics.highEngagementImprovement }}%</div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+              <div>
+                <div class="text-sm font-medium text-red-900">Low Engagement Providers</div>
+                <div class="text-xs text-red-700 mt-1">{{ networkMetrics.lowEngagementCount }} providers</div>
+              </div>
+              <div class="text-2xl font-bold text-red-600">{{ networkMetrics.lowEngagementImprovement }}%</div>
+            </div>
+            <div class="pt-4 border-t border-gray-200">
+              <div class="flex items-center gap-2 text-sm text-gray-700">
+                <Icon name="heroicons:light-bulb" class="w-5 h-5 text-yellow-500" />
+                <span>
+                  High engagement providers show
+                  <strong>{{ (networkMetrics.highEngagementImprovement - networkMetrics.lowEngagementImprovement).toFixed(1) }}%</strong>
+                  better improvement
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Network-Wide Patterns</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm text-gray-700">Total Patterns Identified</div>
+              <div class="text-lg font-semibold text-gray-900">{{ networkMetrics.totalPatterns }}</div>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm text-gray-700">Patterns Resolved</div>
+              <div class="text-lg font-semibold text-green-600">{{ networkMetrics.patternsResolved }}</div>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="text-sm text-gray-700">Currently In Progress</div>
+              <div class="text-lg font-semibold text-yellow-600">{{ networkMetrics.patternsInProgress }}</div>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div class="text-sm text-blue-900 font-medium">Resolution Rate</div>
+              <div class="text-lg font-bold text-blue-600">
+                {{ Math.round((networkMetrics.patternsResolved / networkMetrics.totalPatterns) * 100) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- End Network View -->
   </div>
 </template>
 
@@ -534,6 +729,7 @@ const { formatCurrency } = useAnalytics()
 const sortBy = ref<'savings' | 'denials' | 'recent'>('savings')
 const selectedWindow = ref(90) // Default to 90 days
 const adminCostPerAppeal = ref(350) // Default admin cost
+const activeView = ref<'provider' | 'network'>('provider')
 
 // Measurement window options
 const measurementWindows = [
@@ -612,6 +808,141 @@ const adminSavings = computed(() => {
   const appealsAvoided = Math.round(denialsAvoided * assumedAppealRate)
 
   return appealsAvoided * adminCostPerAppeal.value
+})
+
+// Network-level aggregated metrics (simulated for demo)
+const networkMetrics = computed(() => {
+  // Simulate network data with current provider + fictional providers
+  const currentProviderImprovement = denialRateReduction.value
+  const currentProviderSessions = roi.value.totalPracticeSessions
+
+  return {
+    providersCount: 12,
+    avgImprovement: 6.8,
+    totalAppealsAvoided: 142,
+    totalSavings: 49700,
+    highEngagementCount: 5,
+    highEngagementImprovement: 9.2,
+    lowEngagementCount: 7,
+    lowEngagementImprovement: 4.1,
+    totalPatterns: 84,
+    patternsResolved: 31,
+    patternsInProgress: 42,
+  }
+})
+
+// Simulated network provider data
+const networkProviders = computed(() => {
+  return [
+    {
+      id: 'p1',
+      name: 'Summit Primary Care',
+      specialty: 'Family Medicine',
+      engagementLevel: 'high',
+      improvement: 8.2,
+      practiceSessions: 45,
+      status: 'active'
+    },
+    {
+      id: 'p2',
+      name: 'Valley Medical Group',
+      specialty: 'Internal Medicine',
+      engagementLevel: 'high',
+      improvement: 11.5,
+      practiceSessions: 67,
+      status: 'active'
+    },
+    {
+      id: 'p3',
+      name: 'Riverside Cardiology',
+      specialty: 'Cardiology',
+      engagementLevel: 'medium',
+      improvement: 5.3,
+      practiceSessions: 28,
+      status: 'active'
+    },
+    {
+      id: 'p4',
+      name: 'Harbor Orthopedics',
+      specialty: 'Orthopedic Surgery',
+      engagementLevel: 'high',
+      improvement: 9.7,
+      practiceSessions: 52,
+      status: 'active'
+    },
+    {
+      id: 'p5',
+      name: 'Coastal Family Health',
+      specialty: 'Family Medicine',
+      engagementLevel: 'low',
+      improvement: 2.8,
+      practiceSessions: 12,
+      status: 'active'
+    },
+    {
+      id: 'p6',
+      name: 'Metro Pediatrics',
+      specialty: 'Pediatrics',
+      engagementLevel: 'medium',
+      improvement: 6.1,
+      practiceSessions: 34,
+      status: 'active'
+    },
+    {
+      id: 'p7',
+      name: 'Lakeside Dermatology',
+      specialty: 'Dermatology',
+      engagementLevel: 'low',
+      improvement: 3.4,
+      practiceSessions: 8,
+      status: 'active'
+    },
+    {
+      id: 'p8',
+      name: 'North Point Surgery',
+      specialty: 'General Surgery',
+      engagementLevel: 'high',
+      improvement: 10.3,
+      practiceSessions: 58,
+      status: 'active'
+    },
+    {
+      id: 'p9',
+      name: 'Eastside Wellness',
+      specialty: 'Family Medicine',
+      engagementLevel: 'low',
+      improvement: 4.2,
+      practiceSessions: 15,
+      status: 'active'
+    },
+    {
+      id: 'p10',
+      name: 'Sunset Radiology',
+      specialty: 'Radiology',
+      engagementLevel: 'medium',
+      improvement: 5.9,
+      practiceSessions: 31,
+      status: 'active'
+    },
+    {
+      id: 'p11',
+      name: 'Greenwood Urgent Care',
+      specialty: 'Emergency Medicine',
+      engagementLevel: 'low',
+      improvement: -1.2,
+      practiceSessions: 5,
+      status: 'inactive'
+    },
+    {
+      id: 'p12',
+      name: 'Hilltop Neurology',
+      specialty: 'Neurology',
+      engagementLevel: 'medium',
+      improvement: 7.4,
+      practiceSessions: 39,
+      status: 'active'
+    }
+  ]
 })
 
 const savingsPerHour = computed(() => {
