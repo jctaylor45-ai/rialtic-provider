@@ -2,26 +2,26 @@
   <div class="flex-1 overflow-y-auto p-8">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Policy Analytics</h1>
-      <button class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+      <h1 class="text-2xl font-semibold text-neutral-900">Policy Analytics</h1>
+      <button class="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors">
         <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
         Export CSV
       </button>
     </div>
 
     <!-- Search and Filters -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
       <input
         v-model="searchQuery"
         type="text"
         placeholder="Search policies..."
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 mb-4"
+        class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 mb-4"
       />
 
       <div class="flex items-center gap-4">
         <select
           v-model="filters.mode"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Modes</option>
           <option value="Edit">Edit</option>
@@ -31,7 +31,7 @@
 
         <select
           v-model="filters.topic"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Topics</option>
           <option value="Modifiers">Modifiers</option>
@@ -42,7 +42,7 @@
 
         <select
           v-model="filters.source"
-          class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All Sources</option>
           <option value="CMS">CMS</option>
@@ -51,10 +51,10 @@
         </select>
 
         <div class="ml-auto flex items-center gap-2">
-          <label class="text-sm text-gray-600">Sort by:</label>
+          <label class="text-sm text-neutral-600">Sort by:</label>
           <select
             v-model="sortBy"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            class="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="impact-desc">Impact (High to Low)</option>
             <option value="impact-asc">Impact (Low to High)</option>
@@ -68,58 +68,58 @@
     </div>
 
     <!-- Results Count -->
-    <div class="text-sm text-gray-600 mb-4">
+    <div class="text-sm text-neutral-600 mb-4">
       {{ filteredPolicies.length }} policies found
     </div>
 
     <!-- Policies Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-gray-50">
+          <thead class="bg-neutral-50">
             <tr>
               <th
-                class="text-left px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
                 @click="toggleSort('name')"
               >
                 <div class="flex items-center gap-1">
                   Policy Name
-                  <Icon :name="getSortIcon('name')" class="w-4 h-4" :class="isSortActive('name') ? 'text-primary-600' : 'text-gray-400'" />
+                  <Icon :name="getSortIcon('name')" class="w-4 h-4" :class="isSortActive('name') ? 'text-primary-600' : 'text-neutral-400'" />
                 </div>
               </th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Mode</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold text-gray-700">Topic</th>
-              <th class="text-center px-6 py-3 text-xs font-semibold text-gray-700">Related Patterns</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Mode</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold text-neutral-700">Topic</th>
+              <th class="text-center px-6 py-3 text-xs font-semibold text-neutral-700">Related Patterns</th>
               <th
-                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
                 @click="toggleSort('hitRate')"
               >
                 <div class="flex items-center justify-end gap-1">
                   Hit Rate
-                  <Icon :name="getSortIcon('hitRate')" class="w-4 h-4" :class="isSortActive('hitRate') ? 'text-primary-600' : 'text-gray-400'" />
+                  <Icon :name="getSortIcon('hitRate')" class="w-4 h-4" :class="isSortActive('hitRate') ? 'text-primary-600' : 'text-neutral-400'" />
                 </div>
               </th>
               <th
-                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
                 @click="toggleSort('denialRate')"
               >
                 <div class="flex items-center justify-end gap-1">
                   Denial Rate
-                  <Icon :name="getSortIcon('denialRate')" class="w-4 h-4" :class="isSortActive('denialRate') ? 'text-primary-600' : 'text-gray-400'" />
+                  <Icon :name="getSortIcon('denialRate')" class="w-4 h-4" :class="isSortActive('denialRate') ? 'text-primary-600' : 'text-neutral-400'" />
                 </div>
               </th>
               <th
-                class="text-right px-6 py-3 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                class="text-right px-6 py-3 text-xs font-semibold text-neutral-700 cursor-pointer hover:bg-neutral-100 select-none"
                 @click="toggleSort('impact')"
               >
                 <div class="flex items-center justify-end gap-1">
                   Impact
-                  <Icon :name="getSortIcon('impact')" class="w-4 h-4" :class="isSortActive('impact') ? 'text-primary-600' : 'text-gray-400'" />
+                  <Icon :name="getSortIcon('impact')" class="w-4 h-4" :class="isSortActive('impact') ? 'text-primary-600' : 'text-neutral-400'" />
                 </div>
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-neutral-200">
             <tr
               v-for="policy in filteredPolicies"
               :key="policy.id"
@@ -127,22 +127,22 @@
               @click="selectedPolicy = policy"
             >
               <td class="px-6 py-4">
-                <div class="font-medium text-sm text-gray-900">{{ policy.name }}</div>
-                <div class="text-xs text-gray-500">{{ policy.id }}</div>
+                <div class="font-medium text-sm text-neutral-900">{{ policy.name }}</div>
+                <div class="text-xs text-neutral-500">{{ policy.id }}</div>
               </td>
               <td class="px-6 py-4">
                 <span
                   class="px-2 py-1 text-xs font-medium rounded"
                   :class="{
-                    'bg-red-100 text-red-700': policy.mode === 'Edit',
-                    'bg-blue-100 text-blue-700': policy.mode === 'Informational',
-                    'bg-yellow-100 text-yellow-700': policy.mode === 'Pay & Advise',
+                    'bg-error-100 text-error-700': policy.mode === 'Edit',
+                    'bg-secondary-100 text-secondary-700': policy.mode === 'Informational',
+                    'bg-warning-100 text-warning-700': policy.mode === 'Pay & Advise',
                   }"
                 >
                   {{ policy.mode }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-sm text-gray-700">{{ policy.topic }}</td>
+              <td class="px-6 py-4 text-sm text-neutral-700">{{ policy.topic }}</td>
               <td class="px-6 py-4 text-center" @click.stop>
                 <div v-if="getPolicyPatterns(policy.id).length > 0" class="flex justify-center gap-1">
                   <button
@@ -157,17 +157,17 @@
                   </button>
                   <span
                     v-if="getPolicyPatterns(policy.id).length > 2"
-                    class="inline-flex items-center px-2 py-0.5 text-xs text-gray-600"
+                    class="inline-flex items-center px-2 py-0.5 text-xs text-neutral-600"
                     :title="`+${getPolicyPatterns(policy.id).length - 2} more pattern(s)`"
                   >
                     +{{ getPolicyPatterns(policy.id).length - 2 }}
                   </span>
                 </div>
-                <div v-else class="text-xs text-gray-400">—</div>
+                <div v-else class="text-xs text-neutral-400">—</div>
               </td>
-              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.hitRate) }}</td>
-              <td class="px-6 py-4 text-right text-sm text-gray-900">{{ formatPercentage(policy.denialRate) }}</td>
-              <td class="px-6 py-4 text-right text-sm font-semibold text-gray-900">{{ formatCurrency(policy.impact) }}</td>
+              <td class="px-6 py-4 text-right text-sm text-neutral-900">{{ formatPercentage(policy.hitRate) }}</td>
+              <td class="px-6 py-4 text-right text-sm text-neutral-900">{{ formatPercentage(policy.denialRate) }}</td>
+              <td class="px-6 py-4 text-right text-sm font-semibold text-neutral-900">{{ formatCurrency(policy.impact) }}</td>
             </tr>
           </tbody>
         </table>
@@ -181,13 +181,13 @@
       @click.self="selectedPolicy = null"
     >
       <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 p-6">
+        <div class="sticky top-0 bg-white border-b border-neutral-200 p-6">
           <div class="flex items-start justify-between">
             <div>
-              <h2 class="text-2xl font-semibold text-gray-900 mb-2">{{ selectedPolicy.name }}</h2>
-              <p class="text-sm text-gray-600">{{ selectedPolicy.id }}</p>
+              <h2 class="text-2xl font-semibold text-neutral-900 mb-2">{{ selectedPolicy.name }}</h2>
+              <p class="text-sm text-neutral-600">{{ selectedPolicy.id }}</p>
             </div>
-            <button @click="selectedPolicy = null" class="text-gray-400 hover:text-gray-600">
+            <button @click="selectedPolicy = null" class="text-neutral-400 hover:text-neutral-600">
               <Icon name="heroicons:x-mark" class="w-6 h-6" />
             </button>
           </div>
@@ -212,7 +212,7 @@
                     <div class="flex items-start justify-between mb-2">
                       <div class="flex items-center gap-2">
                         <Icon :name="getPatternIcon(pattern.category)" class="w-4 h-4 text-orange-600" />
-                        <span class="text-sm font-medium text-gray-900">{{ pattern.title }}</span>
+                        <span class="text-sm font-medium text-neutral-900">{{ pattern.title }}</span>
                       </div>
                       <span
                         class="px-2 py-0.5 text-xs font-medium rounded-full border"
@@ -221,9 +221,9 @@
                         {{ pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1) }}
                       </span>
                     </div>
-                    <p class="text-xs text-gray-600 mb-2">{{ pattern.description }}</p>
+                    <p class="text-xs text-neutral-600 mb-2">{{ pattern.description }}</p>
                     <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3 text-xs text-gray-600">
+                      <div class="flex items-center gap-3 text-xs text-neutral-600">
                         <span>{{ pattern.score.frequency }} occurrences</span>
                         <span>{{ formatCurrency(pattern.totalAtRisk) }} at risk</span>
                       </div>
@@ -241,42 +241,42 @@
           </div>
 
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Description</h3>
-            <p class="text-sm text-gray-700">{{ selectedPolicy.description }}</p>
+            <h3 class="text-sm font-semibold text-neutral-900 mb-2">Description</h3>
+            <p class="text-sm text-neutral-700">{{ selectedPolicy.description }}</p>
           </div>
 
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">Clinical Rationale</h3>
-            <p class="text-sm text-gray-700">{{ selectedPolicy.clinicalRationale }}</p>
+            <h3 class="text-sm font-semibold text-neutral-900 mb-2">Clinical Rationale</h3>
+            <p class="text-sm text-neutral-700">{{ selectedPolicy.clinicalRationale }}</p>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <h3 class="text-sm font-semibold text-gray-900 mb-2">Common Mistake</h3>
-              <p class="text-sm text-gray-700">{{ selectedPolicy.commonMistake }}</p>
+              <h3 class="text-sm font-semibold text-neutral-900 mb-2">Common Mistake</h3>
+              <p class="text-sm text-neutral-700">{{ selectedPolicy.commonMistake }}</p>
             </div>
             <div>
-              <h3 class="text-sm font-semibold text-gray-900 mb-2">Fix Guidance</h3>
-              <p class="text-sm text-gray-700">{{ selectedPolicy.fixGuidance }}</p>
+              <h3 class="text-sm font-semibold text-neutral-900 mb-2">Fix Guidance</h3>
+              <p class="text-sm text-neutral-700">{{ selectedPolicy.fixGuidance }}</p>
             </div>
           </div>
 
           <!-- Impact Metrics -->
-          <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-            <div class="bg-gray-50 rounded-lg p-3">
-              <div class="text-xs text-gray-600 mb-1">Hit Rate</div>
-              <div class="text-lg font-semibold text-gray-900">{{ formatPercentage(selectedPolicy.hitRate) }}</div>
-              <div class="text-xs text-gray-500 mt-1">of claims affected</div>
+          <div class="grid grid-cols-3 gap-4 pt-4 border-t border-neutral-200">
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Hit Rate</div>
+              <div class="text-lg font-semibold text-neutral-900">{{ formatPercentage(selectedPolicy.hitRate) }}</div>
+              <div class="text-xs text-neutral-500 mt-1">of claims affected</div>
             </div>
-            <div class="bg-gray-50 rounded-lg p-3">
-              <div class="text-xs text-gray-600 mb-1">Denial Rate</div>
-              <div class="text-lg font-semibold text-red-700">{{ formatPercentage(selectedPolicy.denialRate) }}</div>
-              <div class="text-xs text-gray-500 mt-1">when policy triggered</div>
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Denial Rate</div>
+              <div class="text-lg font-semibold text-error-700">{{ formatPercentage(selectedPolicy.denialRate) }}</div>
+              <div class="text-xs text-neutral-500 mt-1">when policy triggered</div>
             </div>
-            <div class="bg-gray-50 rounded-lg p-3">
-              <div class="text-xs text-gray-600 mb-1">Total Impact</div>
-              <div class="text-lg font-semibold text-gray-900">{{ formatCurrency(selectedPolicy.impact) }}</div>
-              <div class="text-xs text-gray-500 mt-1">estimated savings</div>
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
+              <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(selectedPolicy.impact) }}</div>
+              <div class="text-xs text-neutral-500 mt-1">estimated savings</div>
             </div>
           </div>
         </div>
@@ -407,12 +407,12 @@ const getPolicyPatterns = (policyId: string): Pattern[] => {
 // Get pattern tier badge class
 const getPatternBadgeClass = (tier: string) => {
   const classes = {
-    critical: 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200',
+    critical: 'bg-error-100 text-error-700 border-error-300 hover:bg-error-200',
     high: 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200',
-    medium: 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200',
-    low: 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200',
+    medium: 'bg-warning-100 text-warning-700 border-warning-300 hover:bg-warning-200',
+    low: 'bg-secondary-100 text-secondary-700 border-secondary-300 hover:bg-secondary-200',
   }
-  return classes[tier as keyof typeof classes] || 'bg-gray-100 text-gray-700 border-gray-300'
+  return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
 }
 
 // Get pattern category icon

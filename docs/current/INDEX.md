@@ -1,7 +1,7 @@
 # Current Documentation Index
 
-**Version**: 1.0.0
-**Last Updated**: January 7, 2026 at 14:50 UTC
+**Version**: 1.1.0
+**Last Updated**: January 7, 2026 at 16:00 UTC
 **Status**: Active
 
 ---
@@ -12,7 +12,8 @@
 |----------|---------|---------|
 | `MEMORY.md` | 1.1.0 | Comprehensive project context, implementation status, and design decisions |
 | `PROJECT_INSTRUCTIONS.md` | 1.0.0 | Developer guide for setup, patterns, and common tasks |
-| `.claude-code-rules.md` | 1.0.0 | AI assistant behavior rules and documentation standards |
+| `.claude-code-rules.md` | 1.3.0 | AI assistant behavior rules, documentation and styling standards |
+| `STYLE_GUIDE.md` | 1.0.0 | UI/UX design standards, color palette, typography, component patterns |
 
 ---
 

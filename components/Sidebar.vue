@@ -1,33 +1,43 @@
 <template>
-  <div class="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-primary-600 to-primary-700 text-white flex flex-col">
-    <div class="p-6">
-      <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center mb-6">
-        <span class="text-primary-600 font-bold text-2xl">R</span>
-      </div>
+  <div class="fixed left-0 top-0 h-screen w-64 bg-neutral-900 text-white flex flex-col">
+    <!-- Logo Section -->
+    <div class="p-6 border-b border-neutral-700">
+      <img
+        src="/assets/rialtic_logo_white.svg"
+        alt="Rialtic"
+        class="h-8 w-auto"
+      />
+    </div>
 
+    <!-- Practice Selector -->
+    <div class="p-4">
       <select
         v-model="selectedPractice"
-        class="w-full px-3 py-2 bg-primary-500 border border-primary-400 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white mb-6"
+        class="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary-500 text-sm"
       >
         <option value="practice-1">Main Practice</option>
       </select>
     </div>
 
-    <nav class="flex-1 px-3">
+    <!-- Navigation -->
+    <nav class="flex-1 px-3 overflow-y-auto">
       <NuxtLink
         v-for="item in navItems"
         :key="item.id"
         :to="item.path"
-        class="w-full flex items-center gap-3 px-3 py-3 mb-1 rounded-lg text-sm transition-colors no-underline"
-        :class="isActive(item.path) ? 'bg-primary-500 text-white' : 'text-primary-100 hover:bg-primary-500/50'"
+        class="w-full flex items-center gap-3 px-3 py-2.5 mb-1 rounded-lg text-sm transition-colors no-underline"
+        :class="isActive(item.path)
+          ? 'bg-primary-600 text-white'
+          : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'"
       >
-        <Icon :name="item.icon" class="w-5 h-5" />
+        <Icon :name="item.icon" class="w-5 h-5 flex-shrink-0" />
         <span>{{ item.label }}</span>
       </NuxtLink>
     </nav>
 
-    <div class="p-6 border-t border-primary-500">
-      <button class="flex items-center gap-2 text-primary-100 hover:text-white text-sm transition-colors">
+    <!-- Footer -->
+    <div class="p-4 border-t border-neutral-700">
+      <button class="flex items-center gap-2 text-neutral-400 hover:text-white text-sm transition-colors">
         <Icon name="heroicons:book-open" class="w-4 h-4" />
         <span>Product Guide</span>
       </button>
@@ -56,7 +66,6 @@ function isActive(path: string): boolean {
 </script>
 
 <style scoped>
-/* Override NuxtLink default styling */
 a {
   text-decoration: none;
 }

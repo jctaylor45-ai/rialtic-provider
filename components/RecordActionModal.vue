@@ -12,26 +12,26 @@
       <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
         <!-- Header -->
         <div class="mb-4">
-          <h2 class="text-xl font-semibold text-gray-900">Record Action Taken</h2>
-          <p class="text-sm text-gray-600 mt-1">
+          <h2 class="text-xl font-semibold text-neutral-900">Record Action Taken</h2>
+          <p class="text-sm text-neutral-600 mt-1">
             Track what you've done to address this pattern
           </p>
         </div>
 
         <!-- Pattern Info -->
-        <div v-if="pattern" class="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div class="text-sm font-medium text-gray-900">{{ pattern.title }}</div>
-          <div class="text-xs text-gray-600 mt-1">{{ pattern.affectedClaims.length }} affected claims</div>
+        <div v-if="pattern" class="mb-4 p-3 bg-neutral-50 rounded-lg">
+          <div class="text-sm font-medium text-neutral-900">{{ pattern.title }}</div>
+          <div class="text-xs text-neutral-600 mt-1">{{ pattern.affectedClaims.length }} affected claims</div>
         </div>
 
         <!-- Action Type Selection -->
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-neutral-700 mb-2">
             What did you do to address this pattern?
           </label>
           <select
             v-model="selectedActionType"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             required
           >
             <option value="">Select an action...</option>
@@ -46,16 +46,16 @@
 
         <!-- Notes -->
         <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-neutral-700 mb-2">
             Notes (optional)
           </label>
           <textarea
             v-model="notes"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+            class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
             placeholder="Add any additional details about the action you took..."
           ></textarea>
-          <p class="text-xs text-gray-500 mt-1">
+          <p class="text-xs text-neutral-500 mt-1">
             This creates a marker you can measure progress against.
           </p>
         </div>
@@ -64,7 +64,7 @@
         <div class="flex items-center gap-3">
           <button
             @click="$emit('close')"
-            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+            class="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors text-sm font-medium"
           >
             Cancel
           </button>

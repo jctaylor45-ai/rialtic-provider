@@ -2,9 +2,9 @@
   <div class="flex-1 flex overflow-hidden">
     <div v-if="!originalClaim" class="flex-1 p-8">
       <div class="text-center py-12">
-        <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h2 class="text-xl font-semibold text-gray-900 mb-2">No Claim Selected</h2>
-        <p class="text-gray-600 mb-4">Please select a claim to test in the lab.</p>
+        <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+        <h2 class="text-xl font-semibold text-neutral-900 mb-2">No Claim Selected</h2>
+        <p class="text-neutral-600 mb-4">Please select a claim to test in the lab.</p>
         <button
           @click="navigateTo('/claims')"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
@@ -16,7 +16,7 @@
 
     <template v-else>
       <!-- Left Panel: Original Claim & Pattern Context -->
-      <div class="w-[30%] bg-gray-50 border-r border-gray-200 p-6 overflow-y-auto">
+      <div class="w-[30%] bg-neutral-50 border-r border-neutral-200 p-6 overflow-y-auto">
         <!-- Pattern Context (if practicing a pattern) -->
         <div v-if="contextPattern" class="mb-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-2">
@@ -29,7 +29,7 @@
           </div>
           <div class="bg-white border border-primary-200 rounded p-3">
             <div class="text-xs text-primary-900 font-medium mb-1">Your Goal:</div>
-            <p class="text-xs text-gray-700">{{ contextPattern.suggestedAction }}</p>
+            <p class="text-xs text-neutral-700">{{ contextPattern.suggestedAction }}</p>
           </div>
           <div class="mt-3 flex items-center justify-between text-xs">
             <span class="text-primary-700">{{ contextPattern.learningProgress }}% learned</span>
@@ -38,8 +38,8 @@
         </div>
 
         <div class="mb-6">
-          <h3 class="text-sm font-semibold text-gray-900 mb-2">Original Submission</h3>
-          <div class="text-xs text-gray-600 space-y-1">
+          <h3 class="text-sm font-semibold text-neutral-900 mb-2">Original Submission</h3>
+          <div class="text-xs text-neutral-600 space-y-1">
             <div>Claim ID: {{ originalClaim.id }}</div>
             <div>Patient: {{ originalClaim.patientName }}</div>
             <div>DOS: {{ originalClaim.dateOfService }}</div>
@@ -49,33 +49,33 @@
 
         <div class="mb-6">
           <div class="flex items-center gap-2 mb-3">
-            <Icon name="heroicons:x-circle" class="w-4 h-4 text-red-500" />
-            <span class="text-sm font-semibold text-gray-900">Denied</span>
+            <Icon name="heroicons:x-circle" class="w-4 h-4 text-error-500" />
+            <span class="text-sm font-semibold text-neutral-900">Denied</span>
           </div>
-          <div class="bg-red-50 border border-red-200 rounded p-3">
-            <div class="text-xs text-red-900">{{ originalClaim.denialReason }}</div>
+          <div class="bg-error-light border border-error-200 rounded p-3">
+            <div class="text-xs text-error-900">{{ originalClaim.denialReason }}</div>
           </div>
         </div>
 
         <!-- Pattern Hints -->
-        <div v-if="contextPattern" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <div v-if="contextPattern" class="mb-6 bg-secondary-50 border border-secondary-200 rounded-lg p-3">
           <div class="flex items-center gap-2 mb-2">
-            <Icon name="heroicons:light-bulb" class="w-4 h-4 text-blue-600" />
-            <span class="text-xs font-semibold text-blue-900">Pattern Hints</span>
+            <Icon name="heroicons:light-bulb" class="w-4 h-4 text-secondary-600" />
+            <span class="text-xs font-semibold text-secondary-900">Pattern Hints</span>
           </div>
-          <ul class="text-xs text-blue-800 space-y-1 list-disc list-inside">
+          <ul class="text-xs text-secondary-800 space-y-1 list-disc list-inside">
             <li v-for="(hint, index) in patternHints" :key="index">{{ hint }}</li>
           </ul>
         </div>
 
         <!-- Line Items (read-only) -->
         <div>
-          <h4 class="text-sm font-semibold text-gray-900 mb-3">Original Line Items</h4>
+          <h4 class="text-sm font-semibold text-neutral-900 mb-3">Original Line Items</h4>
           <div class="space-y-3">
             <div
               v-for="item in originalClaim.lineItems"
               :key="item.lineNumber"
-              class="bg-white border border-gray-200 rounded p-3"
+              class="bg-white border border-neutral-200 rounded p-3"
             >
               <div class="flex items-center gap-2 mb-1">
                 <button
@@ -87,12 +87,12 @@
                   {{ item.procedureCode }}
                   <Icon name="heroicons:information-circle" class="w-3 h-3" />
                 </button>
-                <span v-else class="font-mono text-xs text-gray-900">{{ item.procedureCode }}</span>
+                <span v-else class="font-mono text-xs text-neutral-900">{{ item.procedureCode }}</span>
               </div>
-              <div class="text-xs text-gray-600">
+              <div class="text-xs text-neutral-600">
                 Modifiers: {{ item.modifiers?.join(', ') || 'None' }}
               </div>
-              <div class="text-xs text-gray-600">
+              <div class="text-xs text-neutral-600">
                 Units: {{ item.units }} • {{ formatCurrency(item.billedAmount) }}
               </div>
             </div>
@@ -104,21 +104,21 @@
       <div class="flex-1 bg-white p-6 overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h2 class="text-lg font-semibold text-gray-900">Edit & Test</h2>
-            <p class="text-sm text-gray-600">Make changes to fix the denial</p>
+            <h2 class="text-lg font-semibold text-neutral-900">Edit & Test</h2>
+            <p class="text-sm text-neutral-600">Make changes to fix the denial</p>
           </div>
           <div class="flex items-center gap-2">
             <button
               v-if="hasChanges"
               @click="resetChanges"
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              class="px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
             >
               Reset
             </button>
             <button
               :disabled="!hasChanges"
               @click="runSimulation"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Icon name="heroicons:beaker" class="w-4 h-4" />
               Run Simulation
@@ -127,9 +127,9 @@
         </div>
 
         <!-- Changes Summary -->
-        <div v-if="changesSummary.length > 0" class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div class="text-sm font-medium text-yellow-900 mb-2">Changes Made:</div>
-          <ul class="text-sm text-yellow-800 space-y-1">
+        <div v-if="changesSummary.length > 0" class="mb-6 bg-warning-50 border border-warning-200 rounded-lg p-4">
+          <div class="text-sm font-medium text-warning-900 mb-2">Changes Made:</div>
+          <ul class="text-sm text-warning-800 space-y-1">
             <li v-for="(change, index) in changesSummary" :key="index" class="flex items-start gap-2">
               <Icon name="heroicons:arrow-right" class="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>{{ change }}</span>
@@ -138,37 +138,37 @@
         </div>
 
         <!-- Code Intelligence Helper -->
-        <div v-if="selectedCodeForHelp" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div v-if="selectedCodeForHelp" class="mb-6 bg-secondary-50 border border-secondary-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
-            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-secondary-600 mt-0.5 flex-shrink-0" />
             <div class="flex-1">
               <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-semibold text-blue-900">Code Intelligence: {{ selectedCodeForHelp.code }}</h4>
+                <h4 class="text-sm font-semibold text-secondary-900">Code Intelligence: {{ selectedCodeForHelp.code }}</h4>
                 <button
                   @click="selectedCodeForHelp = null"
-                  class="text-blue-400 hover:text-blue-600"
+                  class="text-blue-400 hover:text-secondary-600"
                 >
                   <Icon name="heroicons:x-mark" class="w-4 h-4" />
                 </button>
               </div>
-              <p class="text-xs text-blue-800 mb-3">{{ selectedCodeForHelp.description }}</p>
+              <p class="text-xs text-secondary-800 mb-3">{{ selectedCodeForHelp.description }}</p>
 
               <!-- Quick Stats -->
               <div class="grid grid-cols-2 gap-2 mb-3">
-                <div class="bg-white rounded p-2 border border-blue-200">
-                  <div class="text-xs text-blue-700">Your Approval Rate</div>
-                  <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.yourApprovalRate.toFixed(1) }}%</div>
+                <div class="bg-white rounded p-2 border border-secondary-200">
+                  <div class="text-xs text-secondary-700">Your Approval Rate</div>
+                  <div class="text-sm font-semibold text-secondary-900">{{ selectedCodeForHelp.yourApprovalRate.toFixed(1) }}%</div>
                 </div>
-                <div v-if="selectedCodeForHelp.nationalApprovalRate !== undefined" class="bg-white rounded p-2 border border-blue-200">
-                  <div class="text-xs text-blue-700">National Avg</div>
-                  <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.nationalApprovalRate.toFixed(1) }}%</div>
+                <div v-if="selectedCodeForHelp.nationalApprovalRate !== undefined" class="bg-white rounded p-2 border border-secondary-200">
+                  <div class="text-xs text-secondary-700">National Avg</div>
+                  <div class="text-sm font-semibold text-secondary-900">{{ selectedCodeForHelp.nationalApprovalRate.toFixed(1) }}%</div>
                 </div>
               </div>
 
               <!-- Common Issues -->
               <div v-if="selectedCodeForHelp.commonDenialReasons && selectedCodeForHelp.commonDenialReasons.length > 0" class="mb-3">
-                <div class="text-xs font-medium text-blue-900 mb-1">Common Denial Reasons:</div>
-                <ul class="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
+                <div class="text-xs font-medium text-secondary-900 mb-1">Common Denial Reasons:</div>
+                <ul class="text-xs text-secondary-800 space-y-0.5 list-disc list-inside">
                   <li v-for="(reason, idx) in selectedCodeForHelp.commonDenialReasons.slice(0, 2)" :key="idx">
                     {{ reason }}
                   </li>
@@ -177,12 +177,12 @@
 
               <!-- Required Modifiers -->
               <div v-if="selectedCodeForHelp.requiredModifiers && selectedCodeForHelp.requiredModifiers.length > 0" class="mb-2">
-                <div class="text-xs font-medium text-blue-900 mb-1">Required Modifiers:</div>
+                <div class="text-xs font-medium text-secondary-900 mb-1">Required Modifiers:</div>
                 <div class="flex flex-wrap gap-1">
                   <span
                     v-for="mod in selectedCodeForHelp.requiredModifiers"
                     :key="mod.code"
-                    class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-mono border border-red-300"
+                    class="px-2 py-0.5 bg-error-100 text-error-800 rounded text-xs font-mono border border-error-300"
                     :title="mod.description"
                   >
                     {{ mod.code }}
@@ -192,7 +192,7 @@
 
               <button
                 @click="openCodeIntelligence(selectedCodeForHelp.code)"
-                class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                class="text-xs text-secondary-600 hover:text-secondary-700 font-medium"
               >
                 View full details →
               </button>
@@ -205,16 +205,16 @@
           <div
             v-for="(item, index) in editedLineItems"
             :key="index"
-            class="bg-gray-50 border border-gray-200 rounded-lg p-4"
+            class="bg-neutral-50 border border-neutral-200 rounded-lg p-4"
           >
             <div class="flex items-center justify-between mb-4">
-              <h4 class="text-sm font-semibold text-gray-900">Line {{ index + 1 }}</h4>
+              <h4 class="text-sm font-semibold text-neutral-900">Line {{ index + 1 }}</h4>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <label class="text-xs text-gray-600">Procedure Code</label>
+                  <label class="text-xs text-neutral-600">Procedure Code</label>
                   <button
                     v-if="hasCodeIntelligence(item.procedureCode)"
                     @click="showCodeHelp(item.procedureCode)"
@@ -227,27 +227,27 @@
                 <input
                   v-model="item.procedureCode"
                   type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
                   @blur="checkCodeIntelligence(item.procedureCode)"
                 />
               </div>
 
               <div>
-                <label class="text-xs text-gray-600 mb-1 block">Units</label>
+                <label class="text-xs text-neutral-600 mb-1 block">Units</label>
                 <input
                   v-model.number="item.units"
                   type="number"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
               <div class="col-span-2">
-                <label class="text-xs text-gray-600 mb-1 block">Modifiers (comma-separated)</label>
+                <label class="text-xs text-neutral-600 mb-1 block">Modifiers (comma-separated)</label>
                 <input
                   v-model="item.modifiersInput"
                   type="text"
                   placeholder="e.g., 25, 59"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   @input="detectChanges"
                 />
               </div>
@@ -257,12 +257,12 @@
       </div>
 
       <!-- Right Panel: Results -->
-      <div class="w-[30%] bg-gray-50 border-l border-gray-200 p-6 overflow-y-auto">
-        <h3 class="text-sm font-semibold text-gray-900 mb-4">Simulation Results</h3>
+      <div class="w-[30%] bg-neutral-50 border-l border-neutral-200 p-6 overflow-y-auto">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Simulation Results</h3>
 
         <div v-if="!simulationResults" class="text-center py-12">
-          <Icon name="heroicons:beaker" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p class="text-sm text-gray-600">Run a simulation to see results</p>
+          <Icon name="heroicons:beaker" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+          <p class="text-sm text-neutral-600">Run a simulation to see results</p>
         </div>
 
         <div v-else class="space-y-4">
@@ -270,8 +270,8 @@
             <div
               class="flex items-center gap-2 mb-3"
               :class="{
-                'text-green-700': simulationResults.outcome === 'approved',
-                'text-red-700': simulationResults.outcome === 'denied',
+                'text-success-700': simulationResults.outcome === 'approved',
+                'text-error-700': simulationResults.outcome === 'denied',
               }"
             >
               <Icon
@@ -281,29 +281,29 @@
               <span class="font-semibold text-lg">{{ simulationResults.outcome === 'approved' ? 'Approved' : 'Denied' }}</span>
             </div>
 
-            <div class="text-sm text-gray-700 space-y-2">
+            <div class="text-sm text-neutral-700 space-y-2">
               <div v-if="simulationResults.outcome === 'approved'">
-                <div class="text-xs text-gray-600 mb-1">Estimated Payment</div>
-                <div class="text-2xl font-semibold text-green-600">
+                <div class="text-xs text-neutral-600 mb-1">Estimated Payment</div>
+                <div class="text-2xl font-semibold text-success-600">
                   {{ formatCurrency(simulationResults.estimatedPayment) }}
                 </div>
               </div>
-              <div v-else class="bg-red-50 border border-red-200 rounded p-3">
-                <div class="text-xs text-red-900 font-medium mb-1">Denial Reason:</div>
-                <div class="text-sm text-red-800">{{ simulationResults.reason }}</div>
+              <div v-else class="bg-error-light border border-error-200 rounded p-3">
+                <div class="text-xs text-error-900 font-medium mb-1">Denial Reason:</div>
+                <div class="text-sm text-error-800">{{ simulationResults.reason }}</div>
               </div>
             </div>
 
             <!-- Corrections Applied -->
-            <div v-if="simulationResults.correctionsApplied && simulationResults.correctionsApplied.length > 0" class="mt-4 pt-4 border-t border-gray-200">
-              <div class="text-xs font-medium text-gray-900 mb-2">Corrections Applied:</div>
+            <div v-if="simulationResults.correctionsApplied && simulationResults.correctionsApplied.length > 0" class="mt-4 pt-4 border-t border-neutral-200">
+              <div class="text-xs font-medium text-neutral-900 mb-2">Corrections Applied:</div>
               <div class="space-y-1">
                 <div
                   v-for="(correction, index) in simulationResults.correctionsApplied"
                   :key="index"
-                  class="flex items-start gap-2 text-xs text-gray-700"
+                  class="flex items-start gap-2 text-xs text-neutral-700"
                 >
-                  <Icon name="heroicons:check" class="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                  <Icon name="heroicons:check" class="w-3 h-3 text-success-600 mt-0.5 flex-shrink-0" />
                   <span>{{ correction }}</span>
                 </div>
               </div>
@@ -314,14 +314,14 @@
           <div v-if="simulationResults.outcome === 'approved'" class="space-y-2">
             <button
               @click="saveLearning"
-              class="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              class="w-full py-3 bg-success-600 text-white font-medium rounded-lg hover:bg-success-700 transition-colors flex items-center justify-center gap-2"
             >
               <Icon name="heroicons:check-circle" class="w-5 h-5" />
               Save Learning
             </button>
 
-            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div class="text-xs text-green-900">
+            <div class="bg-success-50 border border-success-200 rounded-lg p-3">
+              <div class="text-xs text-success-900">
                 <strong>Great job!</strong> Your corrections would likely result in approval.
                 {{ contextPattern ? 'This practice session will count towards your learning progress.' : '' }}
               </div>
@@ -332,24 +332,24 @@
           <button
             v-else
             @click="simulationResults = null"
-            class="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            class="w-full py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors"
           >
             Try Again
           </button>
         </div>
 
         <!-- Pattern Progress -->
-        <div v-if="contextPattern && simulationResults?.outcome === 'approved'" class="mt-6 pt-6 border-t border-gray-200">
-          <h4 class="text-sm font-semibold text-gray-900 mb-3">Pattern Progress</h4>
-          <div class="bg-white border border-gray-200 rounded-lg p-3">
-            <div class="text-xs text-gray-600 mb-2">{{ contextPattern.title }}</div>
-            <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+        <div v-if="contextPattern && simulationResults?.outcome === 'approved'" class="mt-6 pt-6 border-t border-neutral-200">
+          <h4 class="text-sm font-semibold text-neutral-900 mb-3">Pattern Progress</h4>
+          <div class="bg-white border border-neutral-200 rounded-lg p-3">
+            <div class="text-xs text-neutral-600 mb-2">{{ contextPattern.title }}</div>
+            <div class="w-full bg-neutral-200 rounded-full h-2 mb-2">
               <div
-                class="bg-green-500 h-2 rounded-full transition-all"
+                class="bg-success-500 h-2 rounded-full transition-all"
                 :style="{ width: `${contextPattern.learningProgress}%` }"
               />
             </div>
-            <div class="text-xs text-gray-600">
+            <div class="text-xs text-neutral-600">
               {{ contextPattern.learningProgress }}% learned
             </div>
           </div>

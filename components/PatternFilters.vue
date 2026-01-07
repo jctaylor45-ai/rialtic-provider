@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-lg p-4">
+  <div class="bg-white border border-neutral-200 rounded-lg p-4">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-sm font-semibold text-gray-900">Filters</h3>
+      <h3 class="text-sm font-semibold text-neutral-900">Filters</h3>
       <button
         v-if="hasActiveFilters"
         @click="clearFilters"
@@ -14,21 +14,21 @@
     <div class="space-y-4">
       <!-- Search -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-2">Search</label>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Search</label>
         <div class="relative">
-          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input
             v-model="localFilters.search"
             type="text"
             placeholder="Search patterns..."
-            class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="w-full pl-10 pr-3 py-2 text-sm border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
       </div>
 
       <!-- Status Filter -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-2">Status</label>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Status</label>
         <div class="space-y-2">
           <label
             v-for="status in statusOptions"
@@ -39,9 +39,9 @@
               type="checkbox"
               :value="status.value"
               v-model="localFilters.status"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
             />
-            <span class="text-sm text-gray-700">{{ status.label }}</span>
+            <span class="text-sm text-neutral-700">{{ status.label }}</span>
             <span
               class="ml-auto px-2 py-0.5 text-xs rounded-full"
               :class="status.badgeClass"
@@ -54,7 +54,7 @@
 
       <!-- Tier Filter -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-2">Priority Tier</label>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Priority Tier</label>
         <div class="space-y-2">
           <label
             v-for="tier in tierOptions"
@@ -65,9 +65,9 @@
               type="checkbox"
               :value="tier.value"
               v-model="localFilters.tier"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
             />
-            <span class="text-sm text-gray-700">{{ tier.label }}</span>
+            <span class="text-sm text-neutral-700">{{ tier.label }}</span>
             <span
               class="ml-auto px-2 py-0.5 text-xs rounded-full"
               :class="tier.badgeClass"
@@ -80,7 +80,7 @@
 
       <!-- Category Filter -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-2">Category</label>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Category</label>
         <div class="space-y-2">
           <label
             v-for="category in categoryOptions"
@@ -91,10 +91,10 @@
               type="checkbox"
               :value="category.value"
               v-model="localFilters.category"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
             />
-            <span class="text-sm text-gray-700">{{ category.label }}</span>
-            <span class="ml-auto text-xs text-gray-500">
+            <span class="text-sm text-neutral-700">{{ category.label }}</span>
+            <span class="ml-auto text-xs text-neutral-500">
               {{ category.count }}
             </span>
           </label>
@@ -103,7 +103,7 @@
 
       <!-- Impact Range -->
       <div>
-        <label class="block text-xs font-medium text-gray-700 mb-2">
+        <label class="block text-xs font-medium text-neutral-700 mb-2">
           Minimum Impact: {{ formatCurrency(localFilters.minImpact || 0) }}
         </label>
         <input
@@ -112,9 +112,9 @@
           min="0"
           :max="maxImpact"
           step="1000"
-          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          class="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
         />
-        <div class="flex justify-between text-xs text-gray-500 mt-1">
+        <div class="flex justify-between text-xs text-neutral-500 mt-1">
           <span>$0</span>
           <span>{{ formatCurrency(maxImpact) }}</span>
         </div>
@@ -122,8 +122,8 @@
     </div>
 
     <!-- Active Filters Summary -->
-    <div v-if="hasActiveFilters" class="mt-4 pt-4 border-t border-gray-200">
-      <div class="text-xs font-medium text-gray-700 mb-2">Active Filters</div>
+    <div v-if="hasActiveFilters" class="mt-4 pt-4 border-t border-neutral-200">
+      <div class="text-xs font-medium text-neutral-700 mb-2">Active Filters</div>
       <div class="flex flex-wrap gap-2">
         <span
           v-for="(filter, index) in activeFilterTags"
@@ -186,19 +186,19 @@ const statusOptions = computed(() => {
       value: 'active' as PatternStatus,
       label: 'Active',
       count: counts.active,
-      badgeClass: 'bg-red-100 text-red-700',
+      badgeClass: 'bg-error-100 text-error-700',
     },
     {
       value: 'improving' as PatternStatus,
       label: 'Improving',
       count: counts.improving,
-      badgeClass: 'bg-yellow-100 text-yellow-700',
+      badgeClass: 'bg-warning-100 text-warning-700',
     },
     {
       value: 'resolved' as PatternStatus,
       label: 'Resolved',
       count: counts.resolved,
-      badgeClass: 'bg-green-100 text-green-700',
+      badgeClass: 'bg-success-100 text-success-700',
     },
   ]
 })
@@ -217,7 +217,7 @@ const tierOptions = computed(() => {
       value: 'critical' as PatternTier,
       label: 'Critical',
       count: counts.critical,
-      badgeClass: 'bg-red-100 text-red-700',
+      badgeClass: 'bg-error-100 text-error-700',
     },
     {
       value: 'high' as PatternTier,
@@ -229,13 +229,13 @@ const tierOptions = computed(() => {
       value: 'medium' as PatternTier,
       label: 'Medium',
       count: counts.medium,
-      badgeClass: 'bg-yellow-100 text-yellow-700',
+      badgeClass: 'bg-warning-100 text-warning-700',
     },
     {
       value: 'low' as PatternTier,
       label: 'Low',
       count: counts.low,
-      badgeClass: 'bg-blue-100 text-blue-700',
+      badgeClass: 'bg-secondary-100 text-secondary-700',
     },
   ]
 })

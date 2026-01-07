@@ -1,9 +1,9 @@
 <template>
   <div v-if="!claim" class="flex-1 p-8">
     <div class="text-center py-12">
-      <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h2 class="text-xl font-semibold text-gray-900 mb-2">Claim Not Found</h2>
-      <p class="text-gray-600 mb-4">The claim you're looking for doesn't exist.</p>
+      <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+      <h2 class="text-xl font-semibold text-neutral-900 mb-2">Claim Not Found</h2>
+      <p class="text-neutral-600 mb-4">The claim you're looking for doesn't exist.</p>
       <button
         @click="navigateTo('/claims')"
         class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
@@ -17,24 +17,24 @@
     <!-- Main Content -->
     <div class="flex-1 overflow-auto">
       <!-- Header -->
-      <div class="bg-white border-b border-gray-200 p-6">
+      <div class="bg-white border-b border-neutral-200 p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
             <button
               @click="navigateTo('/claims')"
-              class="p-1 hover:bg-gray-100 rounded transition-colors"
+              class="p-1 hover:bg-neutral-100 rounded transition-colors"
             >
-              <Icon name="heroicons:arrow-left" class="w-5 h-5 text-gray-600" />
+              <Icon name="heroicons:arrow-left" class="w-5 h-5 text-neutral-600" />
             </button>
-            <h1 class="text-2xl font-semibold text-gray-900">{{ claim.id }}</h1>
+            <h1 class="text-2xl font-semibold text-neutral-900">{{ claim.id }}</h1>
           </div>
           <span
             class="px-3 py-1 text-sm font-medium rounded"
             :class="{
-              'bg-green-100 text-green-700': claim.status === 'approved' || claim.status === 'paid',
-              'bg-red-100 text-red-700': claim.status === 'denied',
-              'bg-yellow-100 text-yellow-700': claim.status === 'pending',
-              'bg-blue-100 text-blue-700': claim.status === 'appealed',
+              'bg-success-100 text-success-700': claim.status === 'approved' || claim.status === 'paid',
+              'bg-error-100 text-error-700': claim.status === 'denied',
+              'bg-warning-100 text-warning-700': claim.status === 'pending',
+              'bg-secondary-100 text-secondary-700': claim.status === 'appealed',
             }"
           >
             {{ claim.status.charAt(0).toUpperCase() + claim.status.slice(1) }}
@@ -45,47 +45,47 @@
         <div class="grid grid-cols-4 gap-x-8 gap-y-4 text-sm">
           <!-- Row 1 -->
           <div>
-            <div class="text-gray-500 text-xs mb-1">Claim type</div>
-            <div class="text-gray-900 font-medium">{{ claim.claimType || 'Professional' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Claim type</div>
+            <div class="text-neutral-900 font-medium">{{ claim.claimType || 'Professional' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Patient name</div>
-            <div class="text-gray-900 font-medium">{{ claim.patientName }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Patient name</div>
+            <div class="text-neutral-900 font-medium">{{ claim.patientName }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Patient birthdate</div>
-            <div class="text-gray-900 font-medium">{{ claim.patientDOB ? formatDateLong(claim.patientDOB) : '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Patient birthdate</div>
+            <div class="text-neutral-900 font-medium">{{ claim.patientDOB ? formatDateLong(claim.patientDOB) : '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Patient sex</div>
-            <div class="text-gray-900 font-medium">{{ claim.patientSex || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Patient sex</div>
+            <div class="text-neutral-900 font-medium">{{ claim.patientSex || '–' }}</div>
           </div>
 
           <!-- Row 2 -->
           <div>
-            <div class="text-gray-500 text-xs mb-1">Date(s) of service</div>
-            <div class="text-gray-900 font-medium">
+            <div class="text-neutral-500 text-xs mb-1">Date(s) of service</div>
+            <div class="text-neutral-900 font-medium">
               {{ formatDateLong(claim.dateOfService) }}{{ claim.dateOfServiceEnd && claim.dateOfServiceEnd !== claim.dateOfService ? ' – ' + formatDateLong(claim.dateOfServiceEnd) : '' }}
             </div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Member ID</div>
-            <div class="text-gray-900 font-medium">{{ claim.memberId || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Member ID</div>
+            <div class="text-neutral-900 font-medium">{{ claim.memberId || '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Member group ID</div>
-            <div class="text-gray-900 font-medium">{{ claim.memberGroupId || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Member group ID</div>
+            <div class="text-neutral-900 font-medium">{{ claim.memberGroupId || '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Total charged</div>
-            <div class="text-gray-900 font-medium">{{ formatCurrency(claim.billedAmount) }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Total charged</div>
+            <div class="text-neutral-900 font-medium">{{ formatCurrency(claim.billedAmount) }}</div>
           </div>
 
           <!-- Row 3 -->
           <div class="col-span-2">
-            <div class="text-gray-500 text-xs mb-1">Billing provider ID</div>
-            <div class="text-gray-900 font-medium">{{ claim.providerName || 'no name' }}</div>
-            <div class="text-xs text-gray-600 mt-0.5">
+            <div class="text-neutral-500 text-xs mb-1">Billing provider ID</div>
+            <div class="text-neutral-900 font-medium">{{ claim.providerName || 'no name' }}</div>
+            <div class="text-xs text-neutral-600 mt-0.5">
               <span v-if="claim.billingProviderTIN">TIN: {{ claim.billingProviderTIN }}</span>
               <span v-if="claim.billingProviderTIN && claim.billingProviderNPI"> · </span>
               <span v-if="claim.billingProviderNPI">NPI: {{ claim.billingProviderNPI }}</span>
@@ -93,36 +93,36 @@
             </div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Billing provider taxonomy</div>
-            <div class="text-gray-900 font-medium">{{ claim.billingProviderTaxonomy || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Billing provider taxonomy</div>
+            <div class="text-neutral-900 font-medium">{{ claim.billingProviderTaxonomy || '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Specialty codes</div>
-            <div class="text-gray-900 font-medium">{{ claim.specialtyCodes?.join(', ') || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Specialty codes</div>
+            <div class="text-neutral-900 font-medium">{{ claim.specialtyCodes?.join(', ') || '–' }}</div>
           </div>
 
           <!-- Row 4 -->
           <div>
-            <div class="text-gray-500 text-xs mb-1">Prior auth #</div>
-            <div class="text-gray-900 font-medium">{{ claim.priorAuthNumber || '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Prior auth #</div>
+            <div class="text-neutral-900 font-medium">{{ claim.priorAuthNumber || '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">LTSS indicator</div>
-            <div class="text-gray-900 font-medium">{{ claim.ltssIndicator === true ? 'Yes' : claim.ltssIndicator === false ? 'No' : '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">LTSS indicator</div>
+            <div class="text-neutral-900 font-medium">{{ claim.ltssIndicator === true ? 'Yes' : claim.ltssIndicator === false ? 'No' : '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Par indicator</div>
-            <div class="text-gray-900 font-medium">{{ claim.parIndicator === true ? 'Yes' : claim.parIndicator === false ? 'No' : '–' }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Par indicator</div>
+            <div class="text-neutral-900 font-medium">{{ claim.parIndicator === true ? 'Yes' : claim.parIndicator === false ? 'No' : '–' }}</div>
           </div>
           <div>
-            <div class="text-gray-500 text-xs mb-1">Amount paid</div>
-            <div class="text-gray-900 font-medium">{{ formatCurrency(claim.paidAmount || 0) }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Amount paid</div>
+            <div class="text-neutral-900 font-medium">{{ formatCurrency(claim.paidAmount || 0) }}</div>
           </div>
 
           <!-- Row 5 - Diagnosis codes (full width) -->
           <div class="col-span-4">
-            <div class="text-gray-500 text-xs mb-1">Diagnosis codes</div>
-            <div class="text-gray-900 font-medium font-mono">
+            <div class="text-neutral-500 text-xs mb-1">Diagnosis codes</div>
+            <div class="text-neutral-900 font-medium font-mono">
               {{ claim.diagnosisCodes?.join(' ,  ') || '–' }}
             </div>
           </div>
@@ -155,8 +155,8 @@
                 <div class="flex items-center gap-3">
                   <Icon :name="getPatternCategoryIcon(pattern.category)" class="w-5 h-5 text-orange-600" />
                   <div>
-                    <h4 class="font-medium text-gray-900">{{ pattern.title }}</h4>
-                    <p class="text-xs text-gray-600 mt-0.5">{{ pattern.category }}</p>
+                    <h4 class="font-medium text-neutral-900">{{ pattern.title }}</h4>
+                    <p class="text-xs text-neutral-600 mt-0.5">{{ pattern.category }}</p>
                   </div>
                 </div>
                 <span
@@ -167,10 +167,10 @@
                 </span>
               </div>
 
-              <p class="text-sm text-gray-700 mb-3">{{ pattern.description }}</p>
+              <p class="text-sm text-neutral-700 mb-3">{{ pattern.description }}</p>
 
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4 text-xs text-gray-600">
+                <div class="flex items-center gap-4 text-xs text-neutral-600">
                   <span>{{ pattern.score.frequency }} occurrences</span>
                   <span>{{ formatCurrency(pattern.avgDenialAmount) }} avg denial</span>
                   <span>{{ pattern.learningProgress }}% learned</span>
@@ -199,17 +199,17 @@
 
       <!-- Line Items -->
       <div class="p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Line Items</h2>
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Line Items</h2>
         <div class="space-y-4">
           <div
             v-for="item in claim.lineItems"
             :key="item.lineNumber"
-            class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+            class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden"
           >
             <!-- Line Header -->
-            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="bg-neutral-50 px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold text-gray-900">Line {{ item.lineNumber }}</span>
+                <span class="text-sm font-semibold text-neutral-900">Line {{ item.lineNumber }}</span>
                 <div class="flex items-center gap-2">
                   <span class="font-mono text-sm font-medium text-primary-700">{{ item.procedureCode }}</span>
                   <button
@@ -223,13 +223,13 @@
                 </div>
               </div>
               <div class="flex items-center gap-4">
-                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(item.billedAmount) }}</span>
+                <span class="text-sm font-semibold text-neutral-900">{{ formatCurrency(item.billedAmount) }}</span>
                 <span
                   class="px-2 py-1 text-xs font-medium rounded"
                   :class="{
-                    'bg-green-100 text-green-700': (item.status || claim.status) === 'approved' || (item.status || claim.status) === 'paid',
-                    'bg-red-100 text-red-700': (item.status || claim.status) === 'denied',
-                    'bg-yellow-100 text-yellow-700': (item.status || claim.status) === 'pending',
+                    'bg-success-100 text-success-700': (item.status || claim.status) === 'approved' || (item.status || claim.status) === 'paid',
+                    'bg-error-100 text-error-700': (item.status || claim.status) === 'denied',
+                    'bg-warning-100 text-warning-700': (item.status || claim.status) === 'pending',
                   }"
                 >
                   {{ ((item.status || claim.status).charAt(0).toUpperCase() + (item.status || claim.status).slice(1)) }}
@@ -242,69 +242,69 @@
               <div class="grid grid-cols-6 gap-x-6 gap-y-3 text-sm">
                 <!-- Row 1 -->
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Date(s) of service</div>
-                  <div class="text-gray-900 font-medium">
+                  <div class="text-neutral-500 text-xs mb-1">Date(s) of service</div>
+                  <div class="text-neutral-900 font-medium">
                     {{ formatDateLong(item.dateOfService || claim.dateOfService) }}{{ item.dateOfServiceEnd && item.dateOfServiceEnd !== item.dateOfService ? ' – ' + formatDateLong(item.dateOfServiceEnd) : '' }}
                   </div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">CPT®/HCPCS</div>
-                  <div class="text-gray-900 font-medium font-mono">{{ item.procedureCode }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">CPT®/HCPCS</div>
+                  <div class="text-neutral-900 font-medium font-mono">{{ item.procedureCode }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">NDC</div>
-                  <div class="text-gray-900 font-medium font-mono">{{ item.ndcCode || '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">NDC</div>
+                  <div class="text-neutral-900 font-medium font-mono">{{ item.ndcCode || '–' }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Days or units</div>
-                  <div class="text-gray-900 font-medium">{{ item.units || 1 }} {{ item.unitsType || 'UN' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Days or units</div>
+                  <div class="text-neutral-900 font-medium">{{ item.units || 1 }} {{ item.unitsType || 'UN' }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Charges</div>
-                  <div class="text-gray-900 font-medium">{{ formatCurrency(item.billedAmount) }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Charges</div>
+                  <div class="text-neutral-900 font-medium">{{ formatCurrency(item.billedAmount) }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Place of service</div>
-                  <div class="text-gray-900 font-medium">{{ item.placeOfService || '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Place of service</div>
+                  <div class="text-neutral-900 font-medium">{{ item.placeOfService || '–' }}</div>
                 </div>
 
                 <!-- Row 2 -->
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Modifier</div>
-                  <div class="text-gray-900 font-medium font-mono">{{ item.modifiers?.join(', ') || '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Modifier</div>
+                  <div class="text-neutral-900 font-medium font-mono">{{ item.modifiers?.join(', ') || '–' }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Diagnosis 1</div>
-                  <div class="text-gray-900 font-medium font-mono">{{ item.diagnosisCodes?.[0] || claim.diagnosisCodes?.[0] || '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Diagnosis 1</div>
+                  <div class="text-neutral-900 font-medium font-mono">{{ item.diagnosisCodes?.[0] || claim.diagnosisCodes?.[0] || '–' }}</div>
                 </div>
                 <div class="col-span-2">
-                  <div class="text-gray-500 text-xs mb-1">Additional diagnoses</div>
-                  <div class="text-gray-900 font-medium font-mono">
+                  <div class="text-neutral-500 text-xs mb-1">Additional diagnoses</div>
+                  <div class="text-neutral-900 font-medium font-mono">
                     {{ (item.diagnosisCodes?.slice(1) || claim.diagnosisCodes?.slice(1))?.join(' ,  ') || '–' }}
                   </div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Par indicator</div>
-                  <div class="text-gray-900 font-medium">{{ item.parIndicator === true ? 'Yes' : item.parIndicator === false ? 'No' : '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Par indicator</div>
+                  <div class="text-neutral-900 font-medium">{{ item.parIndicator === true ? 'Yes' : item.parIndicator === false ? 'No' : '–' }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Bypass code</div>
-                  <div class="text-gray-900 font-medium">{{ item.bypassCode || '–' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Bypass code</div>
+                  <div class="text-neutral-900 font-medium">{{ item.bypassCode || '–' }}</div>
                 </div>
 
                 <!-- Row 3 - Rendering Provider -->
                 <div class="col-span-3">
-                  <div class="text-gray-500 text-xs mb-1">Rendering provider ID</div>
-                  <div class="text-gray-900 font-medium">{{ item.renderingProviderName || 'No Name' }}</div>
-                  <div v-if="item.renderingProviderNPI" class="text-xs text-gray-600 mt-0.5">NPI: {{ item.renderingProviderNPI }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Rendering provider ID</div>
+                  <div class="text-neutral-900 font-medium">{{ item.renderingProviderName || 'No Name' }}</div>
+                  <div v-if="item.renderingProviderNPI" class="text-xs text-neutral-600 mt-0.5">NPI: {{ item.renderingProviderNPI }}</div>
                 </div>
                 <div class="col-span-2">
-                  <div class="text-gray-500 text-xs mb-1">Rendering provider taxonomy</div>
-                  <div class="text-gray-900 font-medium">{{ item.renderingProviderTaxonomy || 'None provided' }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Rendering provider taxonomy</div>
+                  <div class="text-neutral-900 font-medium">{{ item.renderingProviderTaxonomy || 'None provided' }}</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs mb-1">Paid</div>
-                  <div class="text-gray-900 font-medium">{{ formatCurrency(item.paidAmount || 0) }}</div>
+                  <div class="text-neutral-500 text-xs mb-1">Paid</div>
+                  <div class="text-neutral-900 font-medium">{{ formatCurrency(item.paidAmount || 0) }}</div>
                 </div>
               </div>
             </div>
@@ -314,33 +314,33 @@
 
       <!-- WHY THIS WAS DENIED -->
       <div v-if="claim.status === 'denied'" class="px-6 pb-6">
-        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div class="bg-error-light border border-error-200 rounded-lg p-6">
           <div class="flex items-start gap-3 mb-6">
-            <Icon name="heroicons:x-circle" class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <Icon name="heroicons:x-circle" class="w-6 h-6 text-error-600 flex-shrink-0 mt-0.5" />
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-red-900 mb-2">WHY THIS WAS DENIED</h3>
-              <div class="text-base font-semibold text-red-900 mb-3">{{ claim.denialReason }}</div>
+              <h3 class="text-lg font-semibold text-error-900 mb-2">WHY THIS WAS DENIED</h3>
+              <div class="text-base font-semibold text-error-900 mb-3">{{ claim.denialReason }}</div>
 
               <!-- Related Policy -->
-              <div v-if="relatedPolicy" class="bg-white border border-gray-200 rounded-lg p-4">
+              <div v-if="relatedPolicy" class="bg-white border border-neutral-200 rounded-lg p-4">
                 <div class="flex items-start justify-between mb-2">
                   <div>
-                    <div class="text-xs text-gray-600 mb-1">Policy Reference</div>
-                    <div class="font-medium text-gray-900">{{ relatedPolicy.name }}</div>
-                    <div class="text-xs text-gray-500">{{ relatedPolicy.id }}</div>
+                    <div class="text-xs text-neutral-600 mb-1">Policy Reference</div>
+                    <div class="font-medium text-neutral-900">{{ relatedPolicy.name }}</div>
+                    <div class="text-xs text-neutral-500">{{ relatedPolicy.id }}</div>
                   </div>
                   <span
                     class="px-2 py-1 text-xs font-medium rounded"
                     :class="{
-                      'bg-red-100 text-red-700': relatedPolicy.mode === 'Edit',
-                      'bg-blue-100 text-blue-700': relatedPolicy.mode === 'Informational',
-                      'bg-yellow-100 text-yellow-700': relatedPolicy.mode === 'Pay & Advise',
+                      'bg-error-100 text-error-700': relatedPolicy.mode === 'Edit',
+                      'bg-secondary-100 text-secondary-700': relatedPolicy.mode === 'Informational',
+                      'bg-warning-100 text-warning-700': relatedPolicy.mode === 'Pay & Advise',
                     }"
                   >
                     {{ relatedPolicy.mode }}
                   </span>
                 </div>
-                <p class="text-sm text-gray-700 mb-3 mt-3">{{ relatedPolicy.description }}</p>
+                <p class="text-sm text-neutral-700 mb-3 mt-3">{{ relatedPolicy.description }}</p>
                 <div class="flex items-center gap-2">
                   <button
                     @click="viewPolicy(relatedPolicy)"
@@ -352,8 +352,8 @@
               </div>
 
               <!-- Pattern Context (if no policy found) -->
-              <div v-else-if="primaryPattern" class="bg-white border border-gray-200 rounded-lg p-4">
-                <p class="text-sm text-gray-700">
+              <div v-else-if="primaryPattern" class="bg-white border border-neutral-200 rounded-lg p-4">
+                <p class="text-sm text-neutral-700">
                   This claim matches a known denial pattern: <span class="font-semibold">{{ primaryPattern.title }}</span>
                 </p>
               </div>
@@ -364,36 +364,36 @@
 
       <!-- HOW TO FIX THIS CLAIM -->
       <div v-if="claim.status === 'denied'" class="px-6 pb-6">
-        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div class="bg-success-50 border border-success-200 rounded-lg p-6">
           <div class="flex items-start gap-3">
-            <Icon name="heroicons:wrench-screwdriver" class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+            <Icon name="heroicons:wrench-screwdriver" class="w-6 h-6 text-success-600 flex-shrink-0 mt-0.5" />
             <div class="flex-1">
-              <h3 class="text-lg font-semibold text-green-900 mb-2">HOW TO FIX THIS CLAIM</h3>
+              <h3 class="text-lg font-semibold text-success-900 mb-2">HOW TO FIX THIS CLAIM</h3>
 
               <!-- Pattern-Based Fix Guidance -->
               <div v-if="primaryPattern">
-                <p class="text-sm text-gray-700 mb-4">
+                <p class="text-sm text-neutral-700 mb-4">
                   {{ primaryPattern.suggestedAction }}
                 </p>
 
                 <!-- Step-by-step guidance from policy -->
-                <div v-if="relatedPolicy" class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                  <div class="text-xs font-semibold text-gray-900 mb-2">Common Mistake:</div>
-                  <p class="text-sm text-gray-700 mb-3">{{ relatedPolicy.commonMistake }}</p>
-                  <div class="text-xs font-semibold text-gray-900 mb-2">Fix Guidance:</div>
-                  <p class="text-sm text-gray-700">{{ relatedPolicy.fixGuidance }}</p>
+                <div v-if="relatedPolicy" class="bg-white border border-neutral-200 rounded-lg p-4 mb-4">
+                  <div class="text-xs font-semibold text-neutral-900 mb-2">Common Mistake:</div>
+                  <p class="text-sm text-neutral-700 mb-3">{{ relatedPolicy.commonMistake }}</p>
+                  <div class="text-xs font-semibold text-neutral-900 mb-2">Fix Guidance:</div>
+                  <p class="text-sm text-neutral-700">{{ relatedPolicy.fixGuidance }}</p>
                 </div>
 
                 <div class="flex items-center gap-2">
                   <button
                     @click="practicePattern(primaryPattern)"
-                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                    class="px-4 py-2 bg-success-600 text-white text-sm font-medium rounded-lg hover:bg-success-700 transition-colors"
                   >
                     Test This Correction in Claim Lab
                   </button>
                   <button
                     @click="navigateTo(`/insights`)"
-                    class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    class="px-4 py-2 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors"
                   >
                     View Pattern Details
                   </button>
@@ -402,16 +402,16 @@
 
               <!-- Legacy AI Insight -->
               <div v-else-if="claim.aiInsight">
-                <p class="text-sm text-gray-700 mb-4">
+                <p class="text-sm text-neutral-700 mb-4">
                   {{ claim.aiInsight.explanation }}
                 </p>
-                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                  <div class="text-xs font-semibold text-gray-900 mb-2">Recommended Action:</div>
-                  <p class="text-sm text-gray-700">{{ claim.aiInsight.guidance }}</p>
+                <div class="bg-white border border-neutral-200 rounded-lg p-4 mb-4">
+                  <div class="text-xs font-semibold text-neutral-900 mb-2">Recommended Action:</div>
+                  <p class="text-sm text-neutral-700">{{ claim.aiInsight.guidance }}</p>
                 </div>
                 <button
                   @click="navigateTo(`/claim-lab?claim=${claim.id}`)"
-                  class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                  class="px-4 py-2 bg-success-600 text-white text-sm font-medium rounded-lg hover:bg-success-700 transition-colors"
                 >
                   Test This Correction in Claim Lab
                 </button>
@@ -423,28 +423,28 @@
 
       <!-- Submission Timeline -->
       <div class="px-6 pb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Submission Timeline</h3>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <h3 class="text-lg font-semibold text-neutral-900 mb-4">Submission Timeline</h3>
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-4">
           <div class="space-y-3">
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
+              <div class="w-2 h-2 bg-secondary-500 rounded-full mt-1.5"></div>
               <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">Submitted</div>
-                <div class="text-xs text-gray-600">{{ formatDate(claim.submissionDate) }}</div>
+                <div class="text-sm font-medium text-neutral-900">Submitted</div>
+                <div class="text-xs text-neutral-600">{{ formatDate(claim.submissionDate) }}</div>
               </div>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-gray-400 rounded-full mt-1.5"></div>
+              <div class="w-2 h-2 bg-neutral-400 rounded-full mt-1.5"></div>
               <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">Processed</div>
-                <div class="text-xs text-gray-600">{{ formatDate(claim.processingDate) }}</div>
+                <div class="text-sm font-medium text-neutral-900">Processed</div>
+                <div class="text-xs text-neutral-600">{{ formatDate(claim.processingDate) }}</div>
               </div>
             </div>
             <div v-if="claim.status === 'denied'" class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
+              <div class="w-2 h-2 bg-error-light0 rounded-full mt-1.5"></div>
               <div class="flex-1">
-                <div class="text-sm font-medium text-gray-900">Denied</div>
-                <div class="text-xs text-gray-600">{{ claim.denialReason }}</div>
+                <div class="text-sm font-medium text-neutral-900">Denied</div>
+                <div class="text-xs text-neutral-600">{{ claim.denialReason }}</div>
               </div>
             </div>
           </div>
@@ -453,8 +453,8 @@
     </div>
 
     <!-- Actions Panel (Right Sidebar) -->
-    <div class="w-80 bg-white border-l border-gray-200 p-6 space-y-4 overflow-y-auto">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+    <div class="w-80 bg-white border-l border-neutral-200 p-6 space-y-4 overflow-y-auto">
+      <h3 class="text-lg font-semibold text-neutral-900 mb-4">Actions</h3>
 
       <NuxtLink
         :to="`/claim-lab?claim=${claim.id}`"
@@ -464,16 +464,16 @@
       </NuxtLink>
 
       <!-- Quick Stats -->
-      <div v-if="matchingPatterns.length > 0" class="border-t border-gray-200 pt-4">
-        <h4 class="text-sm font-semibold text-gray-900 mb-3">Pattern Insights</h4>
+      <div v-if="matchingPatterns.length > 0" class="border-t border-neutral-200 pt-4">
+        <h4 class="text-sm font-semibold text-neutral-900 mb-3">Pattern Insights</h4>
         <div class="space-y-3">
           <div class="bg-orange-50 rounded-lg p-3">
             <div class="text-xs text-orange-700 mb-1">Matching Patterns</div>
             <div class="text-2xl font-semibold text-orange-900">{{ matchingPatterns.length }}</div>
           </div>
-          <div class="bg-blue-50 rounded-lg p-3">
-            <div class="text-xs text-blue-700 mb-1">Total At Risk</div>
-            <div class="text-lg font-semibold text-blue-900">
+          <div class="bg-secondary-50 rounded-lg p-3">
+            <div class="text-xs text-secondary-700 mb-1">Total At Risk</div>
+            <div class="text-lg font-semibold text-secondary-900">
               {{ formatCurrency(totalPatternRisk) }}
             </div>
           </div>
@@ -481,15 +481,15 @@
       </div>
 
       <!-- Procedure Code Intelligence -->
-      <div v-if="claim.procedureCodes && claim.procedureCodes.length > 0" class="border-t border-gray-200 pt-4">
-        <h4 class="text-sm font-semibold text-gray-900 mb-3">Procedure Codes</h4>
+      <div v-if="claim.procedureCodes && claim.procedureCodes.length > 0" class="border-t border-neutral-200 pt-4">
+        <h4 class="text-sm font-semibold text-neutral-900 mb-3">Procedure Codes</h4>
         <div class="space-y-2">
           <div
             v-for="code in claim.procedureCodes"
             :key="code"
-            class="flex items-center justify-between p-2 bg-gray-50 rounded"
+            class="flex items-center justify-between p-2 bg-neutral-50 rounded"
           >
-            <span class="font-mono text-sm text-gray-900">{{ code }}</span>
+            <span class="font-mono text-sm text-neutral-900">{{ code }}</span>
             <button
               v-if="codeIntelligence.has(code)"
               @click="showCodeIntelligence(code)"
@@ -501,15 +501,15 @@
         </div>
       </div>
 
-      <div class="border-t border-gray-200 pt-4 space-y-2">
-        <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+      <div class="border-t border-neutral-200 pt-4 space-y-2">
+        <button class="w-full py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors">
           <div class="flex items-center justify-center gap-2">
             <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
             Download EOB
           </div>
         </button>
 
-        <button class="w-full py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <button class="w-full py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors">
           Export Details
         </button>
       </div>
