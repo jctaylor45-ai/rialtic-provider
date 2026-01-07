@@ -9,5 +9,9 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "console-ui"
+  ]
 }
