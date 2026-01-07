@@ -33,18 +33,19 @@
           </button>
         </div>
 
-        <button
+        <UiButton
+          variant="outlined"
           @click="refreshPatterns"
           :disabled="patternsStore.isLoading"
-          class="px-4 py-2 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors flex items-center gap-2"
+          :loading="patternsStore.isLoading"
         >
           <Icon
+            v-if="!patternsStore.isLoading"
             name="heroicons:arrow-path"
             class="w-4 h-4"
-            :class="{ 'animate-spin': patternsStore.isLoading }"
           />
-          <span class="text-sm font-medium">Refresh</span>
-        </button>
+          Refresh
+        </UiButton>
       </div>
     </div>
 
@@ -141,7 +142,7 @@
 
         <!-- Patterns Display -->
         <div v-if="patternsStore.isLoading" class="text-center py-12">
-          <Icon name="heroicons:arrow-path" class="w-8 h-8 text-neutral-400 animate-spin mx-auto mb-2" />
+          <UiLoading size="lg" class="mx-auto mb-2" />
           <p class="text-sm text-neutral-600">Loading patterns...</p>
         </div>
 
@@ -149,12 +150,9 @@
           <Icon name="heroicons:magnifying-glass" class="w-12 h-12 text-neutral-400 mx-auto mb-3" />
           <h3 class="text-lg font-medium text-neutral-900 mb-1">No patterns found</h3>
           <p class="text-sm text-neutral-600 mb-4">Try adjusting your filters</p>
-          <button
-            @click="patternsStore.clearFilters()"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-          >
+          <UiButton @click="patternsStore.clearFilters()">
             Clear Filters
-          </button>
+          </UiButton>
         </div>
 
         <div v-else class="space-y-4">
@@ -304,12 +302,9 @@
           <p class="text-sm text-neutral-600 mb-4">
             Keep working on active patterns to see your achievements here
           </p>
-          <button
-            @click="viewMode = 'active'"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-          >
+          <UiButton @click="viewMode = 'active'">
             View Active Patterns
-          </button>
+          </UiButton>
         </div>
       </div>
 

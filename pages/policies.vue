@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-semibold text-neutral-900">Policy Analytics</h1>
-      <button class="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors">
+      <UiButton variant="outlined">
         <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
         Export CSV
-      </button>
+      </UiButton>
     </div>
 
     <!-- Search and Filters -->

@@ -25,10 +25,10 @@
             {{ range.label }}
           </button>
         </div>
-        <button class="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors">
+        <UiButton variant="outlined">
           <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
           Export
-        </button>
+        </UiButton>
       </div>
     </div>
 
@@ -248,12 +248,9 @@
                   </div>
                 </div>
               </div>
-              <button
-                @click="navigateTo(`/insights`)"
-                class="px-3 py-1.5 bg-error text-white text-sm font-medium rounded-lg hover:bg-error-dark transition-colors"
-              >
+              <UiButton size="sm" @click="navigateTo(`/insights`)">
                 Review
-              </button>
+              </UiButton>
             </div>
           </div>
           <NuxtLink

@@ -3,7 +3,7 @@
     <!-- Loading State -->
     <div v-if="appStore.isLoading" class="flex items-center justify-center h-64">
       <div class="text-center">
-        <Icon name="heroicons:arrow-path" class="w-8 h-8 text-neutral-400 animate-spin mx-auto mb-2" />
+        <UiLoading size="lg" class="mx-auto mb-2" />
         <p class="text-sm text-neutral-600">Loading claims...</p>
       </div>
     </div>
@@ -149,17 +149,7 @@
                 <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(claim.billedAmount) }}</div>
               </td>
               <td class="px-6 py-4 text-center">
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded"
-                  :class="{
-                    'bg-success-100 text-success-700': claim.status === 'paid',
-                    'bg-error-100 text-error-700': claim.status === 'denied',
-                    'bg-warning-100 text-warning-700': claim.status === 'pending',
-                    'bg-secondary-100 text-secondary-700': claim.status === 'appealed',
-                  }"
-                >
-                  {{ claim.status.charAt(0).toUpperCase() + claim.status.slice(1) }}
-                </span>
+                <UiStatusBadge :status="claim.status" />
               </td>
               <td class="px-6 py-4" @click.stop>
                 <div v-if="getClaimPatterns(claim.id).length > 0" class="flex flex-wrap gap-1">
