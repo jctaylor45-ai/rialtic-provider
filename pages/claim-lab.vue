@@ -77,7 +77,18 @@
               :key="item.lineNumber"
               class="bg-white border border-gray-200 rounded p-3"
             >
-              <div class="font-mono text-xs text-gray-900 mb-1">{{ item.procedureCode }}</div>
+              <div class="flex items-center gap-2 mb-1">
+                <button
+                  v-if="hasCodeIntelligence(item.procedureCode)"
+                  @click="viewCodeIntelligence(item.procedureCode)"
+                  class="font-mono text-xs text-primary-600 hover:text-primary-700 hover:underline cursor-pointer flex items-center gap-1"
+                  :title="`View intelligence for ${item.procedureCode}`"
+                >
+                  {{ item.procedureCode }}
+                  <Icon name="heroicons:information-circle" class="w-3 h-3" />
+                </button>
+                <span v-else class="font-mono text-xs text-gray-900">{{ item.procedureCode }}</span>
+              </div>
               <div class="text-xs text-gray-600">
                 Modifiers: {{ item.modifiers?.join(', ') || 'None' }}
               </div>
@@ -126,6 +137,69 @@
           </ul>
         </div>
 
+        <!-- Code Intelligence Helper -->
+        <div v-if="selectedCodeForHelp" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-semibold text-blue-900">Code Intelligence: {{ selectedCodeForHelp.code }}</h4>
+                <button
+                  @click="selectedCodeForHelp = null"
+                  class="text-blue-400 hover:text-blue-600"
+                >
+                  <Icon name="heroicons:x-mark" class="w-4 h-4" />
+                </button>
+              </div>
+              <p class="text-xs text-blue-800 mb-3">{{ selectedCodeForHelp.description }}</p>
+
+              <!-- Quick Stats -->
+              <div class="grid grid-cols-2 gap-2 mb-3">
+                <div class="bg-white rounded p-2 border border-blue-200">
+                  <div class="text-xs text-blue-700">Your Approval Rate</div>
+                  <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.yourApprovalRate.toFixed(1) }}%</div>
+                </div>
+                <div class="bg-white rounded p-2 border border-blue-200">
+                  <div class="text-xs text-blue-700">National Avg</div>
+                  <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.nationalApprovalRate.toFixed(1) }}%</div>
+                </div>
+              </div>
+
+              <!-- Common Issues -->
+              <div v-if="selectedCodeForHelp.commonDenialReasons && selectedCodeForHelp.commonDenialReasons.length > 0" class="mb-3">
+                <div class="text-xs font-medium text-blue-900 mb-1">Common Denial Reasons:</div>
+                <ul class="text-xs text-blue-800 space-y-0.5 list-disc list-inside">
+                  <li v-for="(reason, idx) in selectedCodeForHelp.commonDenialReasons.slice(0, 2)" :key="idx">
+                    {{ reason }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Required Modifiers -->
+              <div v-if="selectedCodeForHelp.requiredModifiers && selectedCodeForHelp.requiredModifiers.length > 0" class="mb-2">
+                <div class="text-xs font-medium text-blue-900 mb-1">Required Modifiers:</div>
+                <div class="flex flex-wrap gap-1">
+                  <span
+                    v-for="mod in selectedCodeForHelp.requiredModifiers"
+                    :key="mod.code"
+                    class="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-mono border border-red-300"
+                    :title="mod.description"
+                  >
+                    {{ mod.code }}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                @click="openCodeIntelligence(selectedCodeForHelp.code)"
+                class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                View full details →
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Edit Form -->
         <div class="space-y-6">
           <div
@@ -139,11 +213,22 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="text-xs text-gray-600 mb-1 block">Procedure Code</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs text-gray-600">Procedure Code</label>
+                  <button
+                    v-if="hasCodeIntelligence(item.procedureCode)"
+                    @click="showCodeHelp(item.procedureCode)"
+                    class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                  >
+                    <Icon name="heroicons:information-circle" class="w-3 h-3" />
+                    Help
+                  </button>
+                </div>
                 <input
                   v-model="item.procedureCode"
                   type="text"
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+                  @blur="checkCodeIntelligence(item.procedureCode)"
                 />
               </div>
 
@@ -271,22 +356,42 @@
         </div>
       </div>
     </template>
+
+    <!-- Code Intelligence Modal -->
+    <CodeIntelligenceModal
+      :code="selectedCode"
+      :is-open="isCodeIntelModalOpen"
+      @close="closeCodeIntelligence"
+      @navigate-to-code="navigateToCode"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { LineItem } from '~/types'
-import type { Pattern } from '~/types/enhancements'
+import type { Pattern, ProcedureCodeIntelligence } from '~/types/enhancements'
 
 const route = useRoute()
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
+const analyticsStore = useAnalyticsStore()
 
 // Composables
 const { formatCurrency } = useAnalytics()
 const { completePracticeSession, recordCorrection } = usePatterns()
 const { trackPracticeStart, trackPracticeCompletion, trackCorrection } = useTracking()
+const {
+  isModalOpen: isCodeIntelModalOpen,
+  selectedCode,
+  openCodeIntelligence,
+  closeCodeIntelligence,
+  navigateToCode,
+  hasIntelligence,
+} = useCodeIntelligence()
+
+// Code intelligence helper state
+const selectedCodeForHelp = ref<ProcedureCodeIntelligence | null>(null)
 
 const claimId = route.query.claim as string | undefined
 const patternId = route.query.pattern as string | undefined
@@ -508,5 +613,28 @@ function saveLearning() {
 
   alert(`Learning saved! ${correctionsCount.value} correction(s) applied. ${contextPattern.value ? 'Pattern progress updated.' : ''}`)
   navigateTo('/')
+}
+
+// Code intelligence helper functions
+const hasCodeIntelligence = (code: string): boolean => {
+  return hasIntelligence(code)
+}
+
+const viewCodeIntelligence = (code: string) => {
+  openCodeIntelligence(code)
+}
+
+const showCodeHelp = (code: string) => {
+  const intelligence = analyticsStore.getCodeIntelligence(code)
+  if (intelligence) {
+    selectedCodeForHelp.value = intelligence
+  }
+}
+
+const checkCodeIntelligence = (code: string) => {
+  // Auto-show help when a code with intelligence is entered
+  if (hasCodeIntelligence(code) && !selectedCodeForHelp.value) {
+    showCodeHelp(code)
+  }
 }
 </script>
