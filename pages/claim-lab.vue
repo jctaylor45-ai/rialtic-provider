@@ -159,7 +159,7 @@
                   <div class="text-xs text-blue-700">Your Approval Rate</div>
                   <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.yourApprovalRate.toFixed(1) }}%</div>
                 </div>
-                <div class="bg-white rounded p-2 border border-blue-200">
+                <div v-if="selectedCodeForHelp.nationalApprovalRate !== undefined" class="bg-white rounded p-2 border border-blue-200">
                   <div class="text-xs text-blue-700">National Avg</div>
                   <div class="text-sm font-semibold text-blue-900">{{ selectedCodeForHelp.nationalApprovalRate.toFixed(1) }}%</div>
                 </div>
@@ -486,7 +486,7 @@ const changesSummary = computed(() => {
 
   const changes: string[] = []
   editedLineItems.value.forEach((edited, index) => {
-    const original = originalClaim.value!.lineItems[index]
+    const original = originalClaim.value?.lineItems?.[index]
     if (!original) return
 
     if (edited.procedureCode !== original.procedureCode) {
@@ -560,7 +560,7 @@ function runSimulation() {
   if (originalClaim.value.denialReason?.includes('Bundling') ||
       originalClaim.value.denialReason?.includes('Unbundling')) {
     // Simplified check - removed problematic bundled codes
-    if (editedLineItems.value.length < originalClaim.value.lineItems.length) {
+    if (originalClaim.value.lineItems && editedLineItems.value.length < originalClaim.value.lineItems.length) {
       outcome = 'approved'
       correctionsApplied.push('Removed bundled procedure codes')
       correctionsCount.value++

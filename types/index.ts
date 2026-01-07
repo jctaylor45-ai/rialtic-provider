@@ -13,7 +13,7 @@ export interface Claim {
   modifiers?: string[]
   billedAmount: number
   paidAmount?: number
-  status: 'approved' | 'denied' | 'pending' | 'appealed'
+  status: 'approved' | 'denied' | 'pending' | 'appealed' | 'paid'
   denialReason?: string
   policyId?: string
   policyIds?: string[]

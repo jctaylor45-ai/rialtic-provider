@@ -161,7 +161,7 @@ export const useEventsStore = defineStore('events', {
 
         if (daysDiff > streak) break
 
-        const dateKey = eventDate.toISOString().split('T')[0]
+        const dateKey = eventDate.toISOString().split('T')[0] || ''
         uniqueDays.add(dateKey)
       }
 

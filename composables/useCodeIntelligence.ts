@@ -28,7 +28,7 @@ export const useCodeIntelligence = () => {
     // Track the event
     track('code-intel-viewed', {
       procedureCode: code,
-      category: intelligence.category,
+      codeCategory: intelligence.category,
     })
   }
 
@@ -54,8 +54,7 @@ export const useCodeIntelligence = () => {
     if (intelligence) {
       track('code-intel-viewed', {
         procedureCode: code,
-        category: intelligence.category,
-        navigation: 'related-code',
+        codeCategory: intelligence.category,
       })
     }
   }

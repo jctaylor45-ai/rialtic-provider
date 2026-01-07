@@ -2,6 +2,7 @@
  * Composable for recording and tracking pattern actions
  */
 
+import { formatRelative } from 'date-fns'
 import type { ActionType, Pattern } from '~/types/enhancements'
 
 export const useActions = () => {

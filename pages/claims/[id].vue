@@ -191,56 +191,109 @@
         </div>
       </div>
 
-      <!-- Denial Information -->
+      <!-- WHY THIS WAS DENIED -->
       <div v-if="claim.status === 'denied'" class="px-6 pb-6">
         <div class="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Denial Information</h3>
+          <div class="flex items-start gap-3 mb-6">
+            <Icon name="heroicons:x-circle" class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-red-900 mb-2">WHY THIS WAS DENIED</h3>
+              <div class="text-base font-semibold text-red-900 mb-3">{{ claim.denialReason }}</div>
 
-          <div class="mb-4">
-            <div class="text-sm text-gray-600 mb-1">Primary Denial Reason</div>
-            <div class="text-base font-semibold text-red-900">{{ claim.denialReason }}</div>
+              <!-- Related Policy -->
+              <div v-if="relatedPolicy" class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <div class="text-xs text-gray-600 mb-1">Policy Reference</div>
+                    <div class="font-medium text-gray-900">{{ relatedPolicy.name }}</div>
+                    <div class="text-xs text-gray-500">{{ relatedPolicy.id }}</div>
+                  </div>
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded"
+                    :class="{
+                      'bg-red-100 text-red-700': relatedPolicy.mode === 'Edit',
+                      'bg-blue-100 text-blue-700': relatedPolicy.mode === 'Informational',
+                      'bg-yellow-100 text-yellow-700': relatedPolicy.mode === 'Pay & Advise',
+                    }"
+                  >
+                    {{ relatedPolicy.mode }}
+                  </span>
+                </div>
+                <p class="text-sm text-gray-700 mb-3 mt-3">{{ relatedPolicy.description }}</p>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="viewPolicy(relatedPolicy)"
+                    class="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    View Full Policy →
+                  </button>
+                </div>
+              </div>
+
+              <!-- Pattern Context (if no policy found) -->
+              <div v-else-if="primaryPattern" class="bg-white border border-gray-200 rounded-lg p-4">
+                <p class="text-sm text-gray-700">
+                  This claim matches a known denial pattern: <span class="font-semibold">{{ primaryPattern.title }}</span>
+                </p>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Pattern-Based Guidance -->
-          <div v-if="primaryPattern" class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
-            <div class="flex items-start gap-3">
-              <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
-              <div class="flex-1">
-                <h4 class="text-sm font-semibold text-gray-900 mb-2">Pattern-Based Guidance</h4>
-                <p class="text-sm text-gray-700 mb-3">
+      <!-- HOW TO FIX THIS CLAIM -->
+      <div v-if="claim.status === 'denied'" class="px-6 pb-6">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+          <div class="flex items-start gap-3">
+            <Icon name="heroicons:wrench-screwdriver" class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-green-900 mb-2">HOW TO FIX THIS CLAIM</h3>
+
+              <!-- Pattern-Based Fix Guidance -->
+              <div v-if="primaryPattern">
+                <p class="text-sm text-gray-700 mb-4">
                   {{ primaryPattern.suggestedAction }}
                 </p>
+
+                <!-- Step-by-step guidance from policy -->
+                <div v-if="relatedPolicy" class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div class="text-xs font-semibold text-gray-900 mb-2">Common Mistake:</div>
+                  <p class="text-sm text-gray-700 mb-3">{{ relatedPolicy.commonMistake }}</p>
+                  <div class="text-xs font-semibold text-gray-900 mb-2">Fix Guidance:</div>
+                  <p class="text-sm text-gray-700">{{ relatedPolicy.fixGuidance }}</p>
+                </div>
+
                 <div class="flex items-center gap-2">
                   <button
                     @click="practicePattern(primaryPattern)"
-                    class="px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 transition-colors"
+                    class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    Practice This Pattern
+                    Test This Correction in Claim Lab
                   </button>
                   <button
                     @click="navigateTo(`/insights`)"
-                    class="px-3 py-1.5 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 transition-colors"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     View Pattern Details
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Legacy AI Insight -->
-          <div v-else-if="claim.aiInsight" class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="flex items-start gap-3">
-              <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 class="text-sm font-semibold text-gray-900 mb-2">AI Insight</h4>
-                <p class="text-sm text-gray-700 mb-3">
-                  This claim was denied because {{ claim.aiInsight.explanation }}
+              <!-- Legacy AI Insight -->
+              <div v-else-if="claim.aiInsight">
+                <p class="text-sm text-gray-700 mb-4">
+                  {{ claim.aiInsight.explanation }}
                 </p>
-                <div class="bg-green-50 border border-green-200 rounded p-3">
-                  <div class="text-xs font-semibold text-gray-900 mb-1">To fix this:</div>
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                  <div class="text-xs font-semibold text-gray-900 mb-2">Recommended Action:</div>
                   <p class="text-sm text-gray-700">{{ claim.aiInsight.guidance }}</p>
                 </div>
+                <button
+                  @click="navigateTo(`/claim-lab?claim=${claim.id}`)"
+                  class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Test This Correction in Claim Lab
+                </button>
               </div>
             </div>
           </div>
@@ -307,7 +360,7 @@
       </div>
 
       <!-- Procedure Code Intelligence -->
-      <div v-if="claim.procedureCodes.length > 0" class="border-t border-gray-200 pt-4">
+      <div v-if="claim.procedureCodes && claim.procedureCodes.length > 0" class="border-t border-gray-200 pt-4">
         <h4 class="text-sm font-semibold text-gray-900 mb-3">Procedure Codes</h4>
         <div class="space-y-2">
           <div
@@ -400,6 +453,12 @@ const totalPatternRisk = computed(() => {
   return matchingPatterns.value.reduce((sum, p) => sum + p.avgDenialAmount, 0)
 })
 
+// Get related policy for this claim
+const relatedPolicy = computed(() => {
+  if (!claim.value || !claim.value.policyIds || claim.value.policyIds.length === 0) return null
+  return appStore.policies.find(p => claim.value!.policyIds!.includes(p.id)) || null
+})
+
 // Code intelligence access
 const codeIntelligence = computed(() => analyticsStore.codeIntelligence)
 
@@ -410,6 +469,14 @@ const practicePattern = async (pattern: Pattern) => {
 
 const showCodeIntelligence = (code: string) => {
   openCodeIntelligence(code)
+}
+
+const viewPolicy = (policy: any) => {
+  // Store the policy ID in session storage so policies page can open it
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem('openPolicyId', policy.id)
+  }
+  navigateTo('/policies')
 }
 
 // Track claim view

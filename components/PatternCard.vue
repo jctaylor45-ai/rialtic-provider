@@ -96,7 +96,7 @@
     </div>
 
     <!-- Improvements Summary -->
-    <div v-if="pattern.improvements.length > 0" class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+    <div v-if="latestImprovement" class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
       <div class="flex items-center gap-2 mb-1">
         <Icon name="heroicons:arrow-trending-down" class="w-4 h-4 text-green-600" />
         <span class="text-sm font-medium text-green-800">Recent Improvement</span>
@@ -200,9 +200,9 @@ const props = defineProps<{
 defineEmits<{
   click: [pattern: Pattern]
   practice: [pattern: Pattern]
-  viewClaims: [pattern: Pattern]
-  viewDetails: [pattern: Pattern]
-  recordAction: [pattern: Pattern]
+  'view-claims': [pattern: Pattern]
+  'view-details': [pattern: Pattern]
+  'record-action': [pattern: Pattern]
 }>()
 
 // Composables

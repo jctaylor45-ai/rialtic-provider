@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 overflow-hidden p-8">
+  <div class="flex-1 overflow-y-auto p-8">
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-semibold text-gray-900">Policy Analytics</h1>
@@ -354,4 +354,18 @@ const viewPattern = (pattern: Pattern) => {
   }
   router.push('/insights')
 }
+
+// Check for policy to open from session storage
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    const policyId = sessionStorage.getItem('openPolicyId')
+    if (policyId) {
+      sessionStorage.removeItem('openPolicyId')
+      const policy = appStore.policies.find(p => p.id === policyId)
+      if (policy) {
+        selectedPolicy.value = policy
+      }
+    }
+  }
+})
 </script>

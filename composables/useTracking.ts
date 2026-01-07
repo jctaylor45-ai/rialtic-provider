@@ -51,7 +51,7 @@ export function useTracking() {
   }
 
   // Track insight view
-  const trackInsightView = (patternId: string, patternCategory: string) => {
+  const trackInsightView = (patternId: string, patternCategory: import('~/types/enhancements').PatternCategory) => {
     track('insight-viewed', {
       patternId,
       patternCategory,

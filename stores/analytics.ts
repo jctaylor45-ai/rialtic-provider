@@ -46,9 +46,10 @@ export const useAnalyticsStore = defineStore('analytics', {
       const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
 
       const recentClaims = appStore.claims.filter(c =>
-        new Date(c.submissionDate) >= thirtyDaysAgo
+        c.submissionDate && new Date(c.submissionDate) >= thirtyDaysAgo
       )
       const previousClaims = appStore.claims.filter(c => {
+        if (!c.submissionDate) return false
         const date = new Date(c.submissionDate)
         return date >= sixtyDaysAgo && date < thirtyDaysAgo
       })
@@ -181,7 +182,7 @@ export const useAnalyticsStore = defineStore('analytics', {
       if (!pattern || pattern.improvements.length === 0) return 0
 
       const latestImprovement = pattern.improvements[pattern.improvements.length - 1]
-      return Math.abs(latestImprovement.percentChange)
+      return latestImprovement ? Math.abs(latestImprovement.percentChange) : 0
     },
 
     // Get performance metrics for a specific time period
@@ -193,6 +194,7 @@ export const useAnalyticsStore = defineStore('analytics', {
       const end = new Date(endDate)
 
       const periodClaims = appStore.claims.filter(c => {
+        if (!c.submissionDate) return false
         const date = new Date(c.submissionDate)
         return date >= start && date <= end
       })

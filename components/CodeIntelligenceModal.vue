@@ -47,7 +47,7 @@
                         {{ codeData.yourApprovalRate.toFixed(1) }}%
                       </span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div v-if="codeData.nationalApprovalRate !== undefined" class="flex items-center gap-2">
                       <span class="text-xs text-gray-600">National Avg:</span>
                       <span class="text-sm font-semibold text-gray-700">
                         {{ codeData.nationalApprovalRate.toFixed(1) }}%
@@ -450,13 +450,14 @@ const approvalRateColor = computed(() => {
   const rate = codeData.value.yourApprovalRate
   const national = codeData.value.nationalApprovalRate
 
+  if (national === undefined) return 'text-gray-700'
   if (rate >= national) return 'text-green-600'
   if (rate >= national - 5) return 'text-yellow-600'
   return 'text-red-600'
 })
 
 const performanceGap = computed(() => {
-  if (!codeData.value) return 0
+  if (!codeData.value || codeData.value.nationalApprovalRate === undefined) return 0
   return codeData.value.yourApprovalRate - codeData.value.nationalApprovalRate
 })
 
@@ -504,13 +505,14 @@ const formatDate = (dateString: string) => {
 const formatMonth = (monthString: string) => {
   // monthString format: "2024-07"
   const [year, month] = monthString.split('-')
-  return format(new Date(parseInt(year), parseInt(month) - 1, 1), 'MMM yyyy')
+  return format(new Date(parseInt(year || '0'), parseInt(month || '1') - 1, 1), 'MMM yyyy')
 }
 
 const getApprovalRateColor = (rate: number) => {
   if (!codeData.value) return 'text-gray-700'
   const national = codeData.value.nationalApprovalRate
 
+  if (national === undefined) return 'text-gray-700'
   if (rate >= national) return 'text-green-600'
   if (rate >= national - 5) return 'text-yellow-600'
   return 'text-red-600'

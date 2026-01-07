@@ -75,8 +75,11 @@ export function calculateVelocity(evidence: PatternEvidence[]): number {
     new Date(a.denialDate).getTime() - new Date(b.denialDate).getTime()
   )
 
-  const firstDate = new Date(sortedEvidence[0].denialDate)
-  const lastDate = new Date(sortedEvidence[sortedEvidence.length - 1].denialDate)
+  const firstEvidence = sortedEvidence[0]
+  const lastEvidence = sortedEvidence[sortedEvidence.length - 1]
+  if (!firstEvidence || !lastEvidence) return 0
+  const firstDate = new Date(firstEvidence.denialDate)
+  const lastDate = new Date(lastEvidence.denialDate)
   const monthsSpan = differenceInMonths(lastDate, firstDate) || 1
 
   return Math.round((evidence.length / monthsSpan) * 10) / 10
@@ -96,14 +99,21 @@ export function calculateTrend(evidence: PatternEvidence[]): 'up' | 'down' | 'st
   const firstHalf = sorted.slice(0, midpoint)
   const secondHalf = sorted.slice(midpoint)
 
+  const firstHalfFirst = firstHalf[0]
+  const firstHalfLast = firstHalf[firstHalf.length - 1]
+  const secondHalfFirst = secondHalf[0]
+  const secondHalfLast = secondHalf[secondHalf.length - 1]
+
+  if (!firstHalfFirst || !firstHalfLast || !secondHalfFirst || !secondHalfLast) return 'stable'
+
   const firstHalfRate = firstHalf.length / (differenceInMonths(
-    new Date(firstHalf[firstHalf.length - 1].denialDate),
-    new Date(firstHalf[0].denialDate)
+    new Date(firstHalfLast.denialDate),
+    new Date(firstHalfFirst.denialDate)
   ) || 1)
 
   const secondHalfRate = secondHalf.length / (differenceInMonths(
-    new Date(secondHalf[secondHalf.length - 1].denialDate),
-    new Date(secondHalf[0].denialDate)
+    new Date(secondHalfLast.denialDate),
+    new Date(secondHalfFirst.denialDate)
   ) || 1)
 
   const change = ((secondHalfRate - firstHalfRate) / firstHalfRate) * 100
@@ -125,15 +135,17 @@ export function calculatePatternScore(evidence: PatternEvidence[]): PatternScore
   const sorted = [...evidence].sort((a, b) =>
     new Date(b.denialDate).getTime() - new Date(a.denialDate).getTime()
   )
-  const recency = sorted.length > 0
-    ? differenceInDays(new Date(), new Date(sorted[0].denialDate))
+  const firstSorted = sorted[0]
+  const lastSorted = sorted[sorted.length - 1]
+  const recency = firstSorted
+    ? differenceInDays(new Date(), new Date(firstSorted.denialDate))
     : 999
 
   // Calculate consistency for confidence
-  const timeSpan = differenceInDays(
-    new Date(sorted[0].denialDate),
-    new Date(sorted[sorted.length - 1].denialDate)
-  )
+  const timeSpan = firstSorted && lastSorted ? differenceInDays(
+    new Date(firstSorted.denialDate),
+    new Date(lastSorted.denialDate)
+  ) : 0
   const consistencyScore = frequency > 1 ? Math.min(frequency / (timeSpan / 30), 1) : 0.5
 
   const confidence = calculatePatternConfidence(frequency, timeSpan, consistencyScore)
@@ -264,8 +276,9 @@ export function calculatePracticeROI(
     streakDays = uniqueDays.size
   }
 
-  const lastActivityDate = sortedEvents.length > 0
-    ? sortedEvents[0].timestamp
+  const firstEvent = sortedEvents[0]
+  const lastActivityDate = firstEvent
+    ? firstEvent.timestamp
     : new Date().toISOString()
 
   return {
@@ -296,7 +309,7 @@ function calculateImprovedApprovalRate(patterns: Pattern[]): number {
   const totalImprovement = patterns.reduce((sum, p) => {
     if (p.improvements.length === 0) return sum
     const latest = p.improvements[p.improvements.length - 1]
-    return sum + Math.abs(latest.percentChange)
+    return latest ? sum + Math.abs(latest.percentChange) : sum
   }, 0)
 
   return Math.round((totalImprovement / patterns.length) * 10) / 10
@@ -511,6 +524,8 @@ export function calculateLearningVelocity(patterns: Pattern[]): number {
 
     const firstImprovement = pattern.improvements[0]
     const latestImprovement = pattern.improvements[pattern.improvements.length - 1]
+
+    if (!firstImprovement || !latestImprovement) return sum
 
     const timeSpan = differenceInDays(
       parseISO(latestImprovement.date),

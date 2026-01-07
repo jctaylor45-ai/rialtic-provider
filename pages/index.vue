@@ -106,6 +106,72 @@
       </div>
     </div>
 
+    <!-- Your Improvement Section -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 bg-blue-600 rounded-lg">
+          <Icon name="heroicons:chart-bar-square" class="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h2 class="text-xl font-semibold text-gray-900">Your Improvement</h2>
+          <p class="text-sm text-gray-600">Progress since baseline (6 months ago)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4">
+        <!-- Denial Rate Improvement -->
+        <div class="bg-white rounded-lg border border-blue-200 p-4">
+          <div class="text-xs text-gray-600 mb-2">Denial Rate</div>
+          <div class="text-2xl font-semibold text-gray-900 mb-1">
+            {{ formatPercentage(appStore.denialRate) }}%
+          </div>
+          <div class="flex items-center gap-1 text-sm">
+            <Icon name="heroicons:arrow-down" class="w-4 h-4 text-green-600" />
+            <span class="font-medium text-green-600">
+              {{ formatPercentage(baselineDenialRate - appStore.denialRate) }}pts
+            </span>
+            <span class="text-gray-500">from {{ formatPercentage(baselineDenialRate) }}%</span>
+          </div>
+        </div>
+
+        <!-- Patterns Addressed -->
+        <div class="bg-white rounded-lg border border-blue-200 p-4">
+          <div class="text-xs text-gray-600 mb-2">Patterns Addressed</div>
+          <div class="text-2xl font-semibold text-gray-900 mb-1">
+            {{ patternsStore.resolvedPatterns.length }} of {{ patternsStore.totalPatternsDetected }}
+          </div>
+          <div class="flex items-center gap-1 text-sm">
+            <span class="font-medium text-blue-600">
+              {{ Math.round((patternsStore.resolvedPatterns.length / patternsStore.totalPatternsDetected) * 100) }}%
+            </span>
+            <span class="text-gray-500">completion rate</span>
+          </div>
+        </div>
+
+        <!-- Claim Lab Tests -->
+        <div class="bg-white rounded-lg border border-blue-200 p-4">
+          <div class="text-xs text-gray-600 mb-2">Claim Lab Tests</div>
+          <div class="text-2xl font-semibold text-gray-900 mb-1">
+            {{ eventsStore.totalPracticeSessions }}
+          </div>
+          <div class="flex items-center gap-1 text-sm">
+            <span class="text-gray-500">this quarter</span>
+          </div>
+        </div>
+
+        <!-- Est. Admin Savings -->
+        <div class="bg-white rounded-lg border border-blue-200 p-4 ring-2 ring-blue-500">
+          <div class="text-xs text-gray-600 mb-2">Est. Admin Savings</div>
+          <div class="text-2xl font-semibold text-blue-600 mb-1">
+            {{ formatCurrency(estimatedAdminSavings, true) }}
+          </div>
+          <div class="flex items-center gap-1 text-sm">
+            <span class="text-gray-500">this quarter</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Critical Patterns Alert -->
     <div
       v-if="patternsStore.criticalPatterns.length > 0"
@@ -319,13 +385,32 @@ const { formatCurrency, formatMetricTrend, getTrendIcon, getTrendColor } = useAn
 
 const greeting = computed(() => getGreeting())
 
+// Baseline metrics (from 6 months ago)
+const baselineDenialRate = computed(() => {
+  // Based on pattern data showing improvement from 18% to current rate
+  return 18.0
+})
+
+const estimatedAdminSavings = computed(() => {
+  // Calculate savings based on denied claims prevented
+  const denialRateReduction = baselineDenialRate.value - appStore.denialRate
+  const totalClaims = appStore.claims.length
+  const claimsPrevented = Math.round(totalClaims * (denialRateReduction / 100))
+  const avgClaimAmount = totalDeniedAmount.value / Math.max(appStore.deniedClaims.length, 1)
+  const adminCostPerAppeal = 350 // Default admin cost
+
+  // Savings = (claims prevented * avg claim amount) + (appeals avoided * admin cost)
+  return Math.round(claimsPrevented * avgClaimAmount * 0.3) + (claimsPrevented * adminCostPerAppeal)
+})
+
 const totalDeniedAmount = computed(() => {
   return appStore.deniedClaims.reduce((sum, claim) => sum + claim.billedAmount, 0)
 })
 
 const recentDeniedClaims = computed(() => {
   return appStore.deniedClaims
-    .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime())
+    .filter(c => c.submissionDate)
+    .sort((a, b) => new Date(b.submissionDate!).getTime() - new Date(a.submissionDate!).getTime())
     .slice(0, 5)
 })
 

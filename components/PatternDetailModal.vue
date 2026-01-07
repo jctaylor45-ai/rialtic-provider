@@ -2,7 +2,7 @@
   <Teleport to="body">
     <Transition name="modal">
       <div
-        v-if="isOpen"
+        v-if="isOpen && pattern"
         class="fixed inset-0 z-50 overflow-y-auto"
         @click.self="close"
       >

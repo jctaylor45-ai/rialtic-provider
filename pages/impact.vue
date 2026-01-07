@@ -488,16 +488,16 @@
             <div
               class="w-10 h-10 rounded-full flex items-center justify-center"
               :class="{
-                'bg-green-100': session.metadata.correctionsApplied > 0,
-                'bg-gray-100': session.metadata.correctionsApplied === 0
+                'bg-green-100': (session.metadata.correctionsCount || 0) > 0,
+                'bg-gray-100': (session.metadata.correctionsCount || 0) === 0
               }"
             >
               <Icon
                 name="heroicons:academic-cap"
                 class="w-5 h-5"
                 :class="{
-                  'text-green-600': session.metadata.correctionsApplied > 0,
-                  'text-gray-600': session.metadata.correctionsApplied === 0
+                  'text-green-600': (session.metadata.correctionsCount || 0) > 0,
+                  'text-gray-600': (session.metadata.correctionsCount || 0) === 0
                 }"
               />
             </div>
@@ -520,7 +520,7 @@
             <div class="text-right">
               <div class="text-xs text-gray-600">Corrections</div>
               <div class="text-sm font-medium text-gray-900">
-                {{ session.metadata.correctionsApplied || 0 }}
+                {{ session.metadata.correctionsCount || 0 }}
               </div>
             </div>
             <button
@@ -751,6 +751,7 @@ const baselineMetrics = computed(() => {
   const baselineStart = new Date(windowStart.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
 
   const baselineClaims = appStore.claims.filter(c => {
+    if (!c.submissionDate) return false
     const date = new Date(c.submissionDate)
     return date >= baselineStart && date < windowStart
   })
@@ -771,6 +772,7 @@ const currentMetrics = computed(() => {
   const windowStart = new Date(now.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
 
   const currentClaims = appStore.claims.filter(c => {
+    if (!c.submissionDate) return false
     const date = new Date(c.submissionDate)
     return date >= windowStart
   })
