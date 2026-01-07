@@ -1,7 +1,7 @@
 # Provider Portal
 
-**Version**: 1.0.0
-**Last Updated**: January 7, 2026 at 14:30 UTC
+**Version**: 1.0.1
+**Last Updated**: January 7, 2026 at 15:20 UTC
 **Status**: Production-Ready MVP
 
 ---
@@ -121,6 +121,7 @@ docs/
 | Document | Location | Purpose |
 |----------|----------|---------|
 | `README.md` | Root | Master document - project overview |
+| `CLAUDE.md` | Root | Claude Code auto-loaded instructions |
 | `MEMORY.md` | docs/current/ | Comprehensive project context |
 | `PROJECT_INSTRUCTIONS.md` | docs/current/ | Developer guide and patterns |
 | `.claude-code-rules.md` | docs/current/ | AI assistant rules |
