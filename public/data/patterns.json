@@ -148,6 +148,45 @@
         "36415",
         "93000"
       ],
+      "actionCategory": "coding_knowledge",
+      "recoveryStatus": "recoverable",
+      "possibleRootCauses": [
+        {
+          "id": "RC-001-1",
+          "description": "Coders not trained on modifier 25 requirements for same-day procedures",
+          "likelihood": "high",
+          "category": "coding_knowledge"
+        },
+        {
+          "id": "RC-001-2",
+          "description": "EHR system not prompting for modifier when E&M billed with procedure",
+          "likelihood": "medium",
+          "category": "operational_system"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-001-1",
+          "action": "Resubmit denied claims with modifier 25 added",
+          "priority": "high",
+          "estimatedImpact": "Recover $7,890",
+          "timeframe": "This week"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-001-1",
+          "action": "Configure EHR to auto-prompt for modifier 25 on same-day E&M + procedure",
+          "category": "operational_system",
+          "expectedOutcome": "Eliminate 90% of modifier 25 errors"
+        },
+        {
+          "id": "LT-001-2",
+          "action": "Conduct coding team training on modifier 25 usage",
+          "category": "coding_knowledge",
+          "expectedOutcome": "Reduce new occurrences by 75%"
+        }
+      ],
       "detectionConfidence": 92,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -251,6 +290,52 @@
         "45378",
         "20610",
         "93306"
+      ],
+      "actionCategory": "operational_system",
+      "recoveryStatus": "partial",
+      "possibleRootCauses": [
+        {
+          "id": "RC-002-1",
+          "description": "Scheduling staff not checking auth requirements before booking procedures",
+          "likelihood": "high",
+          "category": "operational_system"
+        },
+        {
+          "id": "RC-002-2",
+          "description": "Auth requirements vary by payer and are not centrally tracked",
+          "likelihood": "medium",
+          "category": "payer_specific"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-002-1",
+          "action": "Request retroactive auth for recent denials where possible",
+          "priority": "high",
+          "estimatedImpact": "Recover $12,000",
+          "timeframe": "Next 30 days"
+        },
+        {
+          "id": "ST-002-2",
+          "action": "Peer-to-peer review for high-value procedure denials",
+          "priority": "medium",
+          "estimatedImpact": "Recover $8,000",
+          "timeframe": "Next 30 days"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-002-1",
+          "action": "Implement pre-scheduling auth verification workflow",
+          "category": "operational_system",
+          "expectedOutcome": "Prevent 95% of auth-related denials"
+        },
+        {
+          "id": "LT-002-2",
+          "action": "Create payer-specific auth requirement matrix",
+          "category": "payer_specific",
+          "expectedOutcome": "Reduce lookup time and errors by 80%"
+        }
       ],
       "detectionConfidence": 88,
       "lastUpdated": "2025-01-06",
@@ -361,6 +446,45 @@
         "99214",
         "99215"
       ],
+      "actionCategory": "documentation",
+      "recoveryStatus": "recoverable",
+      "possibleRootCauses": [
+        {
+          "id": "RC-003-1",
+          "description": "Clinical notes lack specific medical necessity language",
+          "likelihood": "high",
+          "category": "documentation"
+        },
+        {
+          "id": "RC-003-2",
+          "description": "Providers rushing documentation at end of day",
+          "likelihood": "medium",
+          "category": "operational_system"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-003-1",
+          "action": "Resubmit with addended documentation",
+          "priority": "high",
+          "estimatedImpact": "Recover $4,820",
+          "timeframe": "Next 2 weeks"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-003-1",
+          "action": "Implement documentation templates with required elements",
+          "category": "documentation",
+          "expectedOutcome": "Reduce documentation denials by 70%"
+        },
+        {
+          "id": "LT-003-2",
+          "action": "Add real-time documentation completeness checks in EHR",
+          "category": "operational_system",
+          "expectedOutcome": "Catch 85% of issues before submission"
+        }
+      ],
       "detectionConfidence": 75,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -459,6 +583,45 @@
         "93000",
         "99000"
       ],
+      "actionCategory": "coding_knowledge",
+      "recoveryStatus": "not_recoverable",
+      "possibleRootCauses": [
+        {
+          "id": "RC-004-1",
+          "description": "Coders not referencing CCI edits before submission",
+          "likelihood": "high",
+          "category": "coding_knowledge"
+        },
+        {
+          "id": "RC-004-2",
+          "description": "Billing software lacks built-in CCI edit checking",
+          "likelihood": "medium",
+          "category": "operational_system"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-004-1",
+          "action": "Review and correct future claims before submission",
+          "priority": "medium",
+          "estimatedImpact": "Prevent $1,200/month",
+          "timeframe": "Ongoing"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-004-1",
+          "action": "Integrate CCI edit checking into claim scrubbing workflow",
+          "category": "operational_system",
+          "expectedOutcome": "Catch 95% of bundling issues pre-submission"
+        },
+        {
+          "id": "LT-004-2",
+          "action": "Monthly coding team review of common bundling scenarios",
+          "category": "coding_knowledge",
+          "expectedOutcome": "Reduce bundling errors by 60%"
+        }
+      ],
       "detectionConfidence": 68,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -525,6 +688,45 @@
         "POL-007"
       ],
       "relatedCodes": [],
+      "actionCategory": "operational_system",
+      "recoveryStatus": "not_recoverable",
+      "possibleRootCauses": [
+        {
+          "id": "RC-005-1",
+          "description": "No automated alerts for claims approaching filing deadline",
+          "likelihood": "high",
+          "category": "operational_system"
+        },
+        {
+          "id": "RC-005-2",
+          "description": "Claims stuck in pending status not being monitored",
+          "likelihood": "medium",
+          "category": "operational_system"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-005-1",
+          "action": "Review all claims >60 days old immediately",
+          "priority": "high",
+          "estimatedImpact": "Prevent future losses",
+          "timeframe": "This week"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-005-1",
+          "action": "Implement automated claim aging alerts at 60/75/85 days",
+          "category": "operational_system",
+          "expectedOutcome": "Eliminate timely filing denials"
+        },
+        {
+          "id": "LT-005-2",
+          "action": "Weekly claims aging report review process",
+          "category": "operational_system",
+          "expectedOutcome": "Catch at-risk claims before deadline"
+        }
+      ],
       "detectionConfidence": 82,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -585,6 +787,45 @@
         "POL-010"
       ],
       "relatedCodes": [],
+      "actionCategory": "coverage_blindspot",
+      "recoveryStatus": "partial",
+      "possibleRootCauses": [
+        {
+          "id": "RC-006-1",
+          "description": "Coverage limitations not verified before service",
+          "likelihood": "high",
+          "category": "coverage_blindspot"
+        },
+        {
+          "id": "RC-006-2",
+          "description": "Front desk not obtaining ABNs for potentially non-covered services",
+          "likelihood": "medium",
+          "category": "operational_system"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-006-1",
+          "action": "Bill patient or secondary insurance for non-covered amounts",
+          "priority": "medium",
+          "estimatedImpact": "Recover $1,500",
+          "timeframe": "Next 30 days"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-006-1",
+          "action": "Implement pre-visit eligibility and benefits verification",
+          "category": "operational_system",
+          "expectedOutcome": "Identify coverage gaps before service"
+        },
+        {
+          "id": "LT-006-2",
+          "action": "Train front desk on ABN requirements and process",
+          "category": "coverage_blindspot",
+          "expectedOutcome": "Proper patient notification for non-covered services"
+        }
+      ],
       "detectionConfidence": 71,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -674,6 +915,45 @@
         "POL-011"
       ],
       "relatedCodes": [],
+      "actionCategory": "coding_knowledge",
+      "recoveryStatus": "recoverable",
+      "possibleRootCauses": [
+        {
+          "id": "RC-007-1",
+          "description": "Coders defaulting to unspecified codes for speed",
+          "likelihood": "high",
+          "category": "coding_knowledge"
+        },
+        {
+          "id": "RC-007-2",
+          "description": "Clinical documentation not specifying laterality or type",
+          "likelihood": "medium",
+          "category": "documentation"
+        }
+      ],
+      "shortTermActions": [
+        {
+          "id": "ST-007-1",
+          "action": "Resubmit with corrected specific diagnosis codes",
+          "priority": "high",
+          "estimatedImpact": "Recover $3,960",
+          "timeframe": "Next 2 weeks"
+        }
+      ],
+      "longTermActions": [
+        {
+          "id": "LT-007-1",
+          "action": "Add coding software alerts for unspecified codes",
+          "category": "operational_system",
+          "expectedOutcome": "Flag 90% of specificity issues before submission"
+        },
+        {
+          "id": "LT-007-2",
+          "action": "Provider education on documenting specificity (laterality, type)",
+          "category": "documentation",
+          "expectedOutcome": "Improve documentation completeness by 50%"
+        }
+      ],
       "detectionConfidence": 79,
       "lastUpdated": "2025-01-06",
       "actions": []
