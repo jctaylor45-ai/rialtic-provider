@@ -202,7 +202,6 @@
         <InsightsInsightDetailsContent
           :pattern-id="selectedPatternId"
           @close="closeDrawer"
-          @practice="handlePractice"
           @view-claims="handleViewClaims"
           @record-action="handleOpenRecordAction"
         />
@@ -230,7 +229,7 @@ const router = useRouter()
 
 // Composables
 const { formatCurrency } = useAnalytics()
-const { startPracticeSession, getPatternCategoryIcon } = usePatterns()
+const { getPatternCategoryIcon } = usePatterns()
 const { trackInsightView } = useTracking()
 const { recordAction } = useActions()
 const {
@@ -320,11 +319,6 @@ const closeDrawer = () => {
 }
 
 // Handlers for drawer events
-const handlePractice = async (pattern: Pattern) => {
-  closeDrawer()
-  await startPracticeSession(pattern)
-}
-
 const handleViewClaims = (pattern: Pattern) => {
   closeDrawer()
   // Navigate to claims page with filter for this pattern's affected claims
