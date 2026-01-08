@@ -16,7 +16,7 @@
           <div class="flex-1">
             <label class="text-sm text-neutral-600 mb-1 block">Claim ID</label>
             <input
-              v-model="searchParams.claimId"
+              v-model="searchClaimId"
               type="text"
               placeholder="CLM-2025-XXXX"
               class="form-input w-full"
@@ -26,7 +26,7 @@
           <div class="flex-1">
             <label class="text-sm text-neutral-600 mb-1 block">Patient</label>
             <input
-              v-model="searchParams.patient"
+              v-model="searchPatient"
               type="text"
               placeholder="Search by patient..."
               class="form-input w-full"
@@ -36,7 +36,7 @@
           <div class="flex-1">
             <label class="text-sm text-neutral-600 mb-1 block">Procedure Code</label>
             <input
-              v-model="searchParams.procedureCode"
+              v-model="searchProcedureCode"
               type="text"
               placeholder="CPT/HCPCS code"
               class="form-input w-full"
@@ -45,7 +45,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-          <select v-model="filters.status" class="form-input">
+          <select v-model="filterStatus" class="form-input">
             <option value="all">All Statuses</option>
             <option value="paid">Paid/Approved</option>
             <option value="denied">Denied</option>
@@ -53,18 +53,58 @@
             <option value="appealed">Appealed</option>
           </select>
 
-          <select v-model="filters.dateRange" class="form-input">
+          <select v-model="filterDateRange" class="form-input">
             <option value="7">Last 7 Days</option>
             <option value="30">Last 30 Days</option>
             <option value="90">Last 90 Days</option>
             <option value="all">All Time</option>
           </select>
+
+          <!-- Clear Filters Button -->
+          <button
+            v-if="hasActiveFilters"
+            @click="handleClearFilters"
+            class="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+          >
+            <Icon name="heroicons:x-mark" class="w-4 h-4" />
+            Clear filters
+            <span class="bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium">
+              {{ activeFilterCount }}
+            </span>
+          </button>
         </div>
       </div>
 
-      <!-- Results Count -->
-      <div class="text-sm text-neutral-600 mb-4">
-        {{ filteredClaims.length }} claims found
+      <!-- Results Count & Bulk Actions -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-sm text-neutral-600">
+          {{ filteredClaims.length }} claims found
+        </div>
+
+        <!-- Bulk Action Bar -->
+        <div
+          v-if="hasSelection"
+          class="flex items-center gap-3 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2"
+        >
+          <span class="text-sm font-medium text-primary-700">
+            {{ selectedCount }} selected
+          </span>
+          <div class="h-4 w-px bg-primary-300" />
+          <button
+            @click="handleExportSelected"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-100 rounded transition-colors"
+          >
+            <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
+            Export
+          </button>
+          <button
+            @click="handleClearSelection"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-primary-100 rounded transition-colors"
+          >
+            <Icon name="heroicons:x-mark" class="w-4 h-4" />
+            Clear
+          </button>
+        </div>
       </div>
 
       <!-- Results Table using TanStack -->
@@ -138,6 +178,62 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-neutral-600">
+              Showing {{ table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 }}
+              to {{ Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredClaims.length) }}
+              of {{ filteredClaims.length }} claims
+            </span>
+            <select
+              :value="table.getState().pagination.pageSize"
+              @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
+              class="form-input py-1 text-sm"
+            >
+              <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                {{ size }} per page
+              </option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="table.setPageIndex(0)"
+              :disabled="!table.getCanPreviousPage()"
+              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="heroicons:chevron-double-left" class="w-4 h-4" />
+            </button>
+            <button
+              @click="table.previousPage()"
+              :disabled="!table.getCanPreviousPage()"
+              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="heroicons:chevron-left" class="w-4 h-4" />
+            </button>
+
+            <span class="text-sm text-neutral-600 px-2">
+              Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}
+            </span>
+
+            <button
+              @click="table.nextPage()"
+              :disabled="!table.getCanNextPage()"
+              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+            </button>
+            <button
+              @click="table.setPageIndex(table.getPageCount() - 1)"
+              :disabled="!table.getCanNextPage()"
+              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Icon name="heroicons:chevron-double-right" class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -162,9 +258,13 @@ import {
   FlexRender,
   getCoreRowModel,
   getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
   useVueTable,
   type ColumnDef,
   type SortingState,
+  type RowSelectionState,
+  type PaginationState,
   type Column,
 } from '@tanstack/vue-table'
 import type { Claim } from '~/types'
@@ -177,6 +277,106 @@ const route = useRoute()
 
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
+const toast = useToast()
+
+// Row selection state for bulk actions
+const rowSelection = ref<RowSelectionState>({})
+
+// Pagination state
+const pagination = ref<PaginationState>({
+  pageIndex: 0,
+  pageSize: 25,
+})
+
+const pageSizeOptions = [10, 25, 50, 100]
+
+// Computed for selected claims
+const selectedClaims = computed(() => {
+  const selectedIds = Object.keys(rowSelection.value).filter(id => rowSelection.value[id])
+  return filteredClaims.value.filter((_, index) => selectedIds.includes(String(index)))
+})
+
+const selectedCount = computed(() => selectedClaims.value.length)
+const hasSelection = computed(() => selectedCount.value > 0)
+
+// Bulk action handlers
+const handleExportSelected = () => {
+  const claims = selectedClaims.value
+  // Create CSV content
+  const headers = ['Claim ID', 'Patient', 'Date of Service', 'Amount', 'Status', 'Denial Reason']
+  const rows = claims.map(c => [
+    c.id,
+    c.patientName,
+    c.dateOfService,
+    c.billedAmount.toString(),
+    c.status,
+    c.denialReason || '',
+  ])
+  const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+
+  // Download
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `claims-export-${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+
+  toast.success(`Exported ${claims.length} claims`)
+}
+
+const handleClearSelection = () => {
+  rowSelection.value = {}
+}
+
+// URL-persisted filter state
+const {
+  normalizedParams,
+  setUrlParam,
+  setUrlParamDebounced,
+  clearUrlParams,
+  hasActiveFilters,
+  activeFilterCount,
+} = useUrlParamsState({
+  excludeKeys: ['claim', 'sort'],
+  defaults: {
+    status: 'all',
+    dateRange: 'all',
+  },
+})
+
+// URL-persisted sort state
+const { sortState, setSortState } = useUrlSortState({
+  defaultColumn: 'dateOfService',
+  defaultDirection: 'desc',
+})
+
+// Local refs for input fields (synced with URL via watchers)
+const searchClaimId = ref('')
+const searchPatient = ref('')
+const searchProcedureCode = ref('')
+const filterStatus = ref('all')
+const filterDateRange = ref('all')
+
+// Sync URL params to local refs on mount and route changes
+const syncFromUrl = () => {
+  searchClaimId.value = normalizedParams.value.claimId || ''
+  searchPatient.value = normalizedParams.value.patient || ''
+  searchProcedureCode.value = normalizedParams.value.procedureCode || ''
+  filterStatus.value = normalizedParams.value.status || 'all'
+  filterDateRange.value = normalizedParams.value.dateRange || 'all'
+}
+
+// Watch for URL changes (e.g., back/forward navigation)
+watch(() => route.query, syncFromUrl, { immediate: true })
+
+// Watch local refs and sync to URL
+watch(searchClaimId, (val) => setUrlParamDebounced('claimId', val || null))
+watch(searchPatient, (val) => setUrlParamDebounced('patient', val || null))
+watch(searchProcedureCode, (val) => setUrlParamDebounced('procedureCode', val || null))
+watch(filterStatus, (val) => setUrlParam('status', val === 'all' ? null : val))
+watch(filterDateRange, (val) => setUrlParam('dateRange', val === 'all' ? null : val))
 
 // Drawer state
 const isDrawerOpen = ref(false)
@@ -199,6 +399,16 @@ const closeDrawer = () => {
   router.replace({ query: rest })
 }
 
+// Clear all filters
+const handleClearFilters = () => {
+  searchClaimId.value = ''
+  searchPatient.value = ''
+  searchProcedureCode.value = ''
+  filterStatus.value = 'all'
+  filterDateRange.value = 'all'
+  clearUrlParams()
+}
+
 // Ensure data is loaded and apply query params
 onMounted(async () => {
   if (appStore.claims.length === 0 && !appStore.isLoading) {
@@ -208,14 +418,6 @@ onMounted(async () => {
     await patternsStore.loadPatterns()
   }
 
-  // Apply query params to filters
-  if (route.query.status && typeof route.query.status === 'string') {
-    filters.status = route.query.status
-  }
-  if (route.query.dateRange && typeof route.query.dateRange === 'string') {
-    filters.dateRange = route.query.dateRange
-  }
-
   // Open drawer if claim ID in URL
   if (route.query.claim && typeof route.query.claim === 'string') {
     selectedClaimId.value = route.query.claim
@@ -223,51 +425,45 @@ onMounted(async () => {
   }
 })
 
-const searchParams = reactive({
-  claimId: '',
-  patient: '',
-  procedureCode: '',
+// TanStack Table sorting state - synced with URL
+const sorting = computed<SortingState>(() => {
+  if (sortState.value) {
+    return [{ id: sortState.value.column, desc: sortState.value.direction === 'desc' }]
+  }
+  return [{ id: 'dateOfService', desc: true }]
 })
 
-const filters = reactive({
-  status: 'all',
-  dateRange: 'all',
-})
-
-// TanStack Table sorting state
-const sorting = ref<SortingState>([{ id: 'dateOfService', desc: true }])
-
-// Filter claims based on search params and filters
+// Filter claims based on search params and filters (now using URL-synced refs)
 const filteredClaims = computed(() => {
   let result = [...appStore.claims]
 
   // Search filters
-  if (searchParams.claimId) {
-    result = result.filter(c => c.id.toLowerCase().includes(searchParams.claimId.toLowerCase()))
+  if (searchClaimId.value) {
+    result = result.filter(c => c.id.toLowerCase().includes(searchClaimId.value.toLowerCase()))
   }
 
-  if (searchParams.patient) {
+  if (searchPatient.value) {
     result = result.filter(c =>
-      c.patientName.toLowerCase().includes(searchParams.patient.toLowerCase()) ||
-      c.memberId?.toLowerCase().includes(searchParams.patient.toLowerCase())
+      c.patientName.toLowerCase().includes(searchPatient.value.toLowerCase()) ||
+      c.memberId?.toLowerCase().includes(searchPatient.value.toLowerCase())
     )
   }
 
-  if (searchParams.procedureCode) {
+  if (searchProcedureCode.value) {
     result = result.filter(c => {
       const codes = c.procedureCodes || (c.procedureCode ? [c.procedureCode] : [])
-      return codes.some(code => code?.toLowerCase().includes(searchParams.procedureCode.toLowerCase()))
+      return codes.some(code => code?.toLowerCase().includes(searchProcedureCode.value.toLowerCase()))
     })
   }
 
   // Status filter
-  if (filters.status !== 'all') {
-    result = result.filter(c => c.status === filters.status)
+  if (filterStatus.value !== 'all') {
+    result = result.filter(c => c.status === filterStatus.value)
   }
 
   // Date range filter
-  if (filters.dateRange !== 'all') {
-    const days = parseInt(filters.dateRange)
+  if (filterDateRange.value !== 'all') {
+    const days = parseInt(filterDateRange.value)
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - days)
     result = result.filter(c => new Date(c.dateOfService) >= cutoffDate)
@@ -302,6 +498,28 @@ const viewPattern = (pattern: Pattern) => {
 
 // Column definitions for TanStack Table
 const columns: ColumnDef<Claim>[] = [
+  // Selection checkbox column
+  {
+    id: 'select',
+    size: 40,
+    enableSorting: false,
+    header: ({ table }) => h('input', {
+      type: 'checkbox',
+      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
+      checked: table.getIsAllPageRowsSelected(),
+      indeterminate: table.getIsSomePageRowsSelected(),
+      onChange: (e: Event) => table.toggleAllPageRowsSelected((e.target as HTMLInputElement).checked),
+      onClick: (e: Event) => e.stopPropagation(),
+    }),
+    cell: ({ row }) => h('input', {
+      type: 'checkbox',
+      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
+      checked: row.getIsSelected(),
+      disabled: !row.getCanSelect(),
+      onChange: row.getToggleSelectedHandler(),
+      onClick: (e: Event) => e.stopPropagation(),
+    }),
+  },
   {
     id: 'id',
     accessorKey: 'id',
@@ -397,14 +615,38 @@ const table = useVueTable({
     get sorting() {
       return sorting.value
     },
+    get rowSelection() {
+      return rowSelection.value
+    },
+    get pagination() {
+      return pagination.value
+    },
   },
+  enableRowSelection: true,
   onSortingChange: (updaterOrValue) => {
-    sorting.value = typeof updaterOrValue === 'function'
+    const newSorting = typeof updaterOrValue === 'function'
       ? updaterOrValue(sorting.value)
+      : updaterOrValue
+    // Sync to URL
+    const firstSort = newSorting[0]
+    if (firstSort) {
+      setSortState(firstSort.id, firstSort.desc ? 'desc' : 'asc')
+    }
+  },
+  onRowSelectionChange: (updaterOrValue) => {
+    rowSelection.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(rowSelection.value)
+      : updaterOrValue
+  },
+  onPaginationChange: (updaterOrValue) => {
+    pagination.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(pagination.value)
       : updaterOrValue
   },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
 })
 
 // Get sort icon for column

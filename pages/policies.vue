@@ -19,14 +19,14 @@
       />
 
       <div class="flex items-center gap-4">
-        <select v-model="filters.mode" class="form-input">
+        <select v-model="filterMode" class="form-input">
           <option value="all">All Modes</option>
           <option value="Edit">Edit</option>
           <option value="Informational">Informational</option>
           <option value="Pay & Advise">Pay & Advise</option>
         </select>
 
-        <select v-model="filters.topic" class="form-input">
+        <select v-model="filterTopic" class="form-input">
           <option value="all">All Topics</option>
           <option value="Modifiers">Modifiers</option>
           <option value="Bundling">Bundling</option>
@@ -34,18 +34,58 @@
           <option value="Frequency">Frequency</option>
         </select>
 
-        <select v-model="filters.source" class="form-input">
+        <select v-model="filterSource" class="form-input">
           <option value="all">All Sources</option>
           <option value="CMS">CMS</option>
           <option value="Payer">Payer</option>
           <option value="State">State</option>
         </select>
+
+        <!-- Clear Filters Button -->
+        <button
+          v-if="hasActiveFilters"
+          @click="handleClearFilters"
+          class="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+        >
+          <Icon name="heroicons:x-mark" class="w-4 h-4" />
+          Clear filters
+          <span class="bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium">
+            {{ activeFilterCount }}
+          </span>
+        </button>
       </div>
     </div>
 
-    <!-- Results Count -->
-    <div class="text-sm text-neutral-600 mb-4">
-      {{ filteredPolicies.length }} policies found
+    <!-- Results Count & Bulk Actions -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="text-sm text-neutral-600">
+        {{ filteredPolicies.length }} policies found
+      </div>
+
+      <!-- Bulk Action Bar -->
+      <div
+        v-if="hasSelection"
+        class="flex items-center gap-3 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2"
+      >
+        <span class="text-sm font-medium text-primary-700">
+          {{ selectedCount }} selected
+        </span>
+        <div class="h-4 w-px bg-primary-300" />
+        <button
+          @click="handleExportSelected"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-100 rounded transition-colors"
+        >
+          <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
+          Export
+        </button>
+        <button
+          @click="handleClearSelection"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-primary-100 rounded transition-colors"
+        >
+          <Icon name="heroicons:x-mark" class="w-4 h-4" />
+          Clear
+        </button>
+      </div>
     </div>
 
     <!-- Policies Table using TanStack -->
@@ -114,6 +154,62 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <div class="flex items-center justify-between px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-600">
+            Showing {{ table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 }}
+            to {{ Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredPolicies.length) }}
+            of {{ filteredPolicies.length }} policies
+          </span>
+          <select
+            :value="table.getState().pagination.pageSize"
+            @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
+            class="form-input py-1 text-sm"
+          >
+            <option v-for="size in pageSizeOptions" :key="size" :value="size">
+              {{ size }} per page
+            </option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            @click="table.setPageIndex(0)"
+            :disabled="!table.getCanPreviousPage()"
+            class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Icon name="heroicons:chevron-double-left" class="w-4 h-4" />
+          </button>
+          <button
+            @click="table.previousPage()"
+            :disabled="!table.getCanPreviousPage()"
+            class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Icon name="heroicons:chevron-left" class="w-4 h-4" />
+          </button>
+
+          <span class="text-sm text-neutral-600 px-2">
+            Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}
+          </span>
+
+          <button
+            @click="table.nextPage()"
+            :disabled="!table.getCanNextPage()"
+            class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+          </button>
+          <button
+            @click="table.setPageIndex(table.getPageCount() - 1)"
+            :disabled="!table.getCanNextPage()"
+            class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Icon name="heroicons:chevron-double-right" class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Policy Details Drawer -->
@@ -137,9 +233,13 @@ import {
   FlexRender,
   getCoreRowModel,
   getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
   useVueTable,
   type ColumnDef,
   type SortingState,
+  type RowSelectionState,
+  type PaginationState,
   type Column,
 } from '@tanstack/vue-table'
 import type { Policy } from '~/types'
@@ -152,13 +252,106 @@ const route = useRoute()
 
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
+const toast = useToast()
 
-const searchQuery = ref('')
-const filters = reactive({
-  mode: 'all',
-  topic: 'all',
-  source: 'all',
+// Row selection state for bulk actions
+const rowSelection = ref<RowSelectionState>({})
+
+// Pagination state
+const pagination = ref<PaginationState>({
+  pageIndex: 0,
+  pageSize: 25,
 })
+
+const pageSizeOptions = [10, 25, 50, 100]
+
+// Computed for selected policies
+const selectedPolicies = computed(() => {
+  const selectedIds = Object.keys(rowSelection.value).filter(id => rowSelection.value[id])
+  return filteredPolicies.value.filter((_, index) => selectedIds.includes(String(index)))
+})
+
+const selectedCount = computed(() => selectedPolicies.value.length)
+const hasSelection = computed(() => selectedCount.value > 0)
+
+// Bulk action handlers
+const handleExportSelected = () => {
+  const policies = selectedPolicies.value
+  // Create CSV content
+  const headers = ['Policy ID', 'Name', 'Mode', 'Topic', 'Source', 'Hit Rate', 'Denial Rate', 'Impact']
+  const rows = policies.map(p => [
+    p.id,
+    p.name,
+    p.mode,
+    p.topic,
+    p.source,
+    (p.hitRate * 100).toFixed(1) + '%',
+    (p.denialRate * 100).toFixed(1) + '%',
+    p.impact.toString(),
+  ])
+  const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+
+  // Download
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `policies-export-${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+
+  toast.success(`Exported ${policies.length} policies`)
+}
+
+const handleClearSelection = () => {
+  rowSelection.value = {}
+}
+
+// URL-persisted filter state
+const {
+  normalizedParams,
+  setUrlParam,
+  setUrlParamDebounced,
+  clearUrlParams,
+  hasActiveFilters,
+  activeFilterCount,
+} = useUrlParamsState({
+  excludeKeys: ['policy', 'sort'],
+  defaults: {
+    mode: 'all',
+    topic: 'all',
+    source: 'all',
+  },
+})
+
+// URL-persisted sort state
+const { sortState, setSortState } = useUrlSortState({
+  defaultColumn: 'impact',
+  defaultDirection: 'desc',
+})
+
+// Local refs for input fields (synced with URL via watchers)
+const searchQuery = ref('')
+const filterMode = ref('all')
+const filterTopic = ref('all')
+const filterSource = ref('all')
+
+// Sync URL params to local refs on mount and route changes
+const syncFromUrl = () => {
+  searchQuery.value = normalizedParams.value.search || ''
+  filterMode.value = normalizedParams.value.mode || 'all'
+  filterTopic.value = normalizedParams.value.topic || 'all'
+  filterSource.value = normalizedParams.value.source || 'all'
+}
+
+// Watch for URL changes (e.g., back/forward navigation)
+watch(() => route.query, syncFromUrl, { immediate: true })
+
+// Watch local refs and sync to URL
+watch(searchQuery, (val) => setUrlParamDebounced('search', val || null))
+watch(filterMode, (val) => setUrlParam('mode', val === 'all' ? null : val))
+watch(filterTopic, (val) => setUrlParam('topic', val === 'all' ? null : val))
+watch(filterSource, (val) => setUrlParam('source', val === 'all' ? null : val))
 
 const selectedPolicy = ref<Policy | null>(null)
 const isDrawerOpen = ref(false)
@@ -180,10 +373,24 @@ const closeDrawer = () => {
   router.replace({ query: rest })
 }
 
-// TanStack Table sorting state - default to impact descending
-const sorting = ref<SortingState>([{ id: 'impact', desc: true }])
+// Clear all filters
+const handleClearFilters = () => {
+  searchQuery.value = ''
+  filterMode.value = 'all'
+  filterTopic.value = 'all'
+  filterSource.value = 'all'
+  clearUrlParams()
+}
 
-// Filter policies based on search and filters
+// TanStack Table sorting state - synced with URL
+const sorting = computed<SortingState>(() => {
+  if (sortState.value) {
+    return [{ id: sortState.value.column, desc: sortState.value.direction === 'desc' }]
+  }
+  return [{ id: 'impact', desc: true }]
+})
+
+// Filter policies based on search and filters (now using URL-synced refs)
 const filteredPolicies = computed(() => {
   let result = appStore.policies
 
@@ -196,16 +403,16 @@ const filteredPolicies = computed(() => {
     )
   }
 
-  if (filters.mode !== 'all') {
-    result = result.filter(p => p.mode === filters.mode)
+  if (filterMode.value !== 'all') {
+    result = result.filter(p => p.mode === filterMode.value)
   }
 
-  if (filters.topic !== 'all') {
-    result = result.filter(p => p.topic === filters.topic)
+  if (filterTopic.value !== 'all') {
+    result = result.filter(p => p.topic === filterTopic.value)
   }
 
-  if (filters.source !== 'all') {
-    result = result.filter(p => p.source === filters.source)
+  if (filterSource.value !== 'all') {
+    result = result.filter(p => p.source === filterSource.value)
   }
 
   return result
@@ -254,6 +461,28 @@ const getModeClass = (mode: string) => {
 
 // Column definitions for TanStack Table
 const columns: ColumnDef<Policy>[] = [
+  // Selection checkbox column
+  {
+    id: 'select',
+    size: 40,
+    enableSorting: false,
+    header: ({ table }) => h('input', {
+      type: 'checkbox',
+      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
+      checked: table.getIsAllPageRowsSelected(),
+      indeterminate: table.getIsSomePageRowsSelected(),
+      onChange: (e: Event) => table.toggleAllPageRowsSelected((e.target as HTMLInputElement).checked),
+      onClick: (e: Event) => e.stopPropagation(),
+    }),
+    cell: ({ row }) => h('input', {
+      type: 'checkbox',
+      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
+      checked: row.getIsSelected(),
+      disabled: !row.getCanSelect(),
+      onChange: row.getToggleSelectedHandler(),
+      onClick: (e: Event) => e.stopPropagation(),
+    }),
+  },
   {
     id: 'name',
     accessorKey: 'name',
@@ -347,14 +576,38 @@ const table = useVueTable({
     get sorting() {
       return sorting.value
     },
+    get rowSelection() {
+      return rowSelection.value
+    },
+    get pagination() {
+      return pagination.value
+    },
   },
+  enableRowSelection: true,
   onSortingChange: (updaterOrValue) => {
-    sorting.value = typeof updaterOrValue === 'function'
+    const newSorting = typeof updaterOrValue === 'function'
       ? updaterOrValue(sorting.value)
+      : updaterOrValue
+    // Sync to URL
+    const firstSort = newSorting[0]
+    if (firstSort) {
+      setSortState(firstSort.id, firstSort.desc ? 'desc' : 'asc')
+    }
+  },
+  onRowSelectionChange: (updaterOrValue) => {
+    rowSelection.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(rowSelection.value)
+      : updaterOrValue
+  },
+  onPaginationChange: (updaterOrValue) => {
+    pagination.value = typeof updaterOrValue === 'function'
+      ? updaterOrValue(pagination.value)
       : updaterOrValue
   },
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
 })
 
 // Get sort icon for column
