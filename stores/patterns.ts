@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction } from '~/types/enhancements'
+import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction, ActionCategory, RecoveryStatus } from '~/types/enhancements'
 
 export const usePatternsStore = defineStore('patterns', () => {
   // State
@@ -11,6 +11,8 @@ export const usePatternsStore = defineStore('patterns', () => {
     status: [],
     tier: [],
     category: [],
+    actionCategory: [],
+    recoveryStatus: [],
     minImpact: 0,
     search: '',
   })
@@ -29,6 +31,14 @@ export const usePatternsStore = defineStore('patterns', () => {
 
     if (filters.value.category && filters.value.category.length > 0) {
       filtered = filtered.filter(p => filters.value.category!.includes(p.category))
+    }
+
+    if (filters.value.actionCategory && filters.value.actionCategory.length > 0) {
+      filtered = filtered.filter(p => filters.value.actionCategory!.includes(p.actionCategory))
+    }
+
+    if (filters.value.recoveryStatus && filters.value.recoveryStatus.length > 0) {
+      filtered = filtered.filter(p => filters.value.recoveryStatus!.includes(p.recoveryStatus))
     }
 
     if (filters.value.minImpact && filters.value.minImpact > 0) {
@@ -90,6 +100,41 @@ export const usePatternsStore = defineStore('patterns', () => {
       .sort((a, b) => a.learningProgress - b.learningProgress)
   )
 
+  // Trend-based getters (score.trend: down=improving, stable=stable, up=regressing)
+  const patternsWithImprovingTrend = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'down')
+  )
+  const patternsWithStableTrend = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'stable')
+  )
+  const patternsWithRegressingTrend = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'up')
+  )
+
+  // Recovery status getters
+  const recoverablePatterns = computed(() =>
+    patterns.value.filter(p => p.recoveryStatus === 'recoverable')
+  )
+  const partiallyRecoverablePatterns = computed(() =>
+    patterns.value.filter(p => p.recoveryStatus === 'partial')
+  )
+  const notRecoverablePatterns = computed(() =>
+    patterns.value.filter(p => p.recoveryStatus === 'not_recoverable')
+  )
+
+  // Total recoverable amount (patterns with recoveryStatus 'recoverable')
+  const totalRecoverable = computed(() =>
+    recoverablePatterns.value.reduce((sum, p) => sum + p.totalAtRisk, 0)
+  )
+
+  // Patterns by action category
+  const getPatternsByActionCategory = (actionCategory: ActionCategory): Pattern[] =>
+    patterns.value.filter(p => p.actionCategory === actionCategory)
+
+  // Patterns by recovery status
+  const getPatternsByRecoveryStatus = (recoveryStatus: RecoveryStatus): Pattern[] =>
+    patterns.value.filter(p => p.recoveryStatus === recoveryStatus)
+
   // Actions
   async function loadPatterns() {
     isLoading.value = true
@@ -134,6 +179,8 @@ export const usePatternsStore = defineStore('patterns', () => {
       status: [],
       tier: [],
       category: [],
+      actionCategory: [],
+      recoveryStatus: [],
       minImpact: 0,
       search: '',
     }
@@ -225,10 +272,21 @@ export const usePatternsStore = defineStore('patterns', () => {
     patternsByImpact,
     patternsByFrequency,
     patternsNeedingPractice,
+    // Trend-based getters
+    patternsWithImprovingTrend,
+    patternsWithStableTrend,
+    patternsWithRegressingTrend,
+    // Recovery status getters
+    recoverablePatterns,
+    partiallyRecoverablePatterns,
+    notRecoverablePatterns,
+    totalRecoverable,
     // Actions
     loadPatterns,
     getPatternById,
     getPatternsByCategory,
+    getPatternsByActionCategory,
+    getPatternsByRecoveryStatus,
     getPatternsByClaim,
     getPatternsByPolicy,
     updateFilters,
