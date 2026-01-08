@@ -206,13 +206,54 @@ const emit = defineEmits<{
 
 // Composables
 const { formatCurrency } = useAnalytics()
+const { track } = useTracking()
 
 // Local filters (v-model)
 const localFilters = ref<PatternFilters>({ ...props.filters })
 
+// Track filter changes with debounce
+let filterTrackingTimeout: ReturnType<typeof setTimeout> | null = null
+
+const trackFilterChange = (filterType: string, filterValue: string | string[] | number | undefined) => {
+  // Clear previous timeout to debounce rapid changes
+  if (filterTrackingTimeout) {
+    clearTimeout(filterTrackingTimeout)
+  }
+
+  filterTrackingTimeout = setTimeout(() => {
+    track('filter-applied', {
+      filterType: filterType as 'status' | 'tier' | 'category' | 'actionCategory' | 'recoveryStatus' | 'search' | 'minImpact',
+      filterValue: typeof filterValue === 'number' ? String(filterValue) : filterValue,
+    })
+  }, 500) // 500ms debounce
+}
+
 // Watch for changes and emit
-watch(localFilters, (newFilters) => {
+watch(localFilters, (newFilters, oldFilters) => {
   emit('update:filters', newFilters)
+
+  // Track filter changes
+  if (newFilters.status?.length !== oldFilters?.status?.length) {
+    trackFilterChange('status', newFilters.status)
+  }
+  if (newFilters.tier?.length !== oldFilters?.tier?.length) {
+    trackFilterChange('tier', newFilters.tier)
+  }
+  if (newFilters.category?.length !== oldFilters?.category?.length) {
+    trackFilterChange('category', newFilters.category)
+  }
+  if (newFilters.actionCategory?.length !== oldFilters?.actionCategory?.length) {
+    trackFilterChange('actionCategory', newFilters.actionCategory)
+  }
+  if (newFilters.recoveryStatus?.length !== oldFilters?.recoveryStatus?.length) {
+    trackFilterChange('recoveryStatus', newFilters.recoveryStatus)
+  }
+  if (newFilters.search !== oldFilters?.search) {
+    trackFilterChange('search', newFilters.search)
+  }
+  if (newFilters.minImpact !== oldFilters?.minImpact) {
+    trackFilterChange('minImpact', newFilters.minImpact)
+  }
 }, { deep: true })
 
 // Calculate max impact from patterns

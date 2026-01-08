@@ -167,6 +167,9 @@ export type EventType =
   | 'dashboard-click'  // User clicked an element on the dashboard
   | 'action-recorded'  // User marked action taken on a pattern
   | 'code-intel-viewed'  // User viewed code intelligence modal
+  | 'root-cause-viewed'  // User viewed root cause analysis section
+  | 'action-item-clicked'  // User clicked on a short-term or long-term action
+  | 'filter-applied'  // User applied a filter
 
 export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
 
@@ -207,6 +210,19 @@ export interface EventMetadata {
   // Action recording
   actionType?: ActionType
   actionNotes?: string
+
+  // Root cause / action item tracking
+  rootCauseId?: string
+  rootCauseLikelihood?: 'high' | 'medium' | 'low'
+  actionItemId?: string
+  actionItemType?: 'short-term' | 'long-term'
+  actionItemPriority?: 'high' | 'medium' | 'low'
+  actionCategory?: ActionCategory
+  recoveryStatus?: RecoveryStatus
+
+  // Filter tracking
+  filterType?: 'status' | 'tier' | 'category' | 'actionCategory' | 'recoveryStatus' | 'search' | 'minImpact'
+  filterValue?: string | string[]
 }
 
 export interface LearningEvent {

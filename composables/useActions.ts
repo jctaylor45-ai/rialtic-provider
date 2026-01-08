@@ -17,14 +17,20 @@ export const useActions = () => {
     actionType: ActionType,
     notes?: string
   ) => {
+    // Get pattern for metadata
+    const pattern = patternsStore.getPatternById(patternId)
+
     // Record in patterns store
     patternsStore.recordAction(patternId, actionType, notes)
 
-    // Track event
+    // Track event with pattern metadata
     track('action-recorded', {
       patternId,
       actionType,
       actionNotes: notes,
+      actionCategory: pattern?.actionCategory,
+      recoveryStatus: pattern?.recoveryStatus,
+      patternCategory: pattern?.category,
     })
   }
 

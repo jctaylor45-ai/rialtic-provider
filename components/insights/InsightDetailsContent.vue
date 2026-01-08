@@ -32,7 +32,7 @@ const {
   getPatternCategoryIcon,
 } = usePatterns()
 const { openCodeIntelligence } = useCodeIntelligence()
-const { trackInsightView } = useTracking()
+const { trackInsightView, track } = useTracking()
 
 // Get the pattern from store
 const pattern = computed(() => {
@@ -152,6 +152,36 @@ const viewCodeIntelligence = (code: string) => {
 const openRecordAction = () => {
   if (pattern.value) {
     emit('recordAction', pattern.value)
+  }
+}
+
+// Track root cause view
+const trackRootCauseView = (rootCauseId: string, likelihood: 'high' | 'medium' | 'low') => {
+  if (pattern.value) {
+    track('root-cause-viewed', {
+      patternId: pattern.value.id,
+      rootCauseId,
+      rootCauseLikelihood: likelihood,
+      actionCategory: pattern.value.actionCategory,
+    })
+  }
+}
+
+// Track action item click
+const trackActionItemClick = (
+  actionItemId: string,
+  actionItemType: 'short-term' | 'long-term',
+  priority?: 'high' | 'medium' | 'low'
+) => {
+  if (pattern.value) {
+    track('action-item-clicked', {
+      patternId: pattern.value.id,
+      actionItemId,
+      actionItemType,
+      actionItemPriority: priority,
+      actionCategory: pattern.value.actionCategory,
+      recoveryStatus: pattern.value.recoveryStatus,
+    })
   }
 }
 
@@ -403,7 +433,8 @@ onMounted(() => {
           <div
             v-for="cause in pattern.possibleRootCauses"
             :key="cause.id"
-            class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+            class="p-3 bg-neutral-50 rounded-lg border border-neutral-200 cursor-pointer hover:bg-neutral-100 transition-colors"
+            @click="trackRootCauseView(cause.id, cause.likelihood)"
           >
             <div class="flex items-start justify-between gap-3">
               <p class="text-sm text-neutral-800 flex-1">{{ cause.description }}</p>
@@ -432,8 +463,9 @@ onMounted(() => {
             <div
               v-for="action in pattern.shortTermActions"
               :key="action.id"
-              class="p-3 rounded-lg border"
+              class="p-3 rounded-lg border cursor-pointer hover:shadow-sm transition-shadow"
               :class="actionPriorityClass(action.priority)"
+              @click="trackActionItemClick(action.id, 'short-term', action.priority)"
             >
               <div class="flex items-start justify-between gap-3 mb-2">
                 <p class="text-sm font-medium text-neutral-900">{{ action.action }}</p>
@@ -462,7 +494,8 @@ onMounted(() => {
             <div
               v-for="action in pattern.longTermActions"
               :key="action.id"
-              class="p-3 bg-primary-50 rounded-lg border border-primary-200"
+              class="p-3 bg-primary-50 rounded-lg border border-primary-200 cursor-pointer hover:shadow-sm transition-shadow"
+              @click="trackActionItemClick(action.id, 'long-term')"
             >
               <p class="text-sm font-medium text-primary-900 mb-2">{{ action.action }}</p>
               <div class="flex items-center gap-2 text-xs">
