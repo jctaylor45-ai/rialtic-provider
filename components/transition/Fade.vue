@@ -11,6 +11,7 @@ const props = defineProps<{
   enterActiveClass?: string
   leaveActiveClass?: string
   duration?: number
+  mode?: 'default' | 'out-in' | 'in-out'
 }>()
 
 defineOptions({ name: 'TransitionFade' })
@@ -24,6 +25,7 @@ const durationClass = computed(() => {
 
 const classes = computed(() => ({
   appear: !!props.appear,
+  mode: props.mode,
   ...(props.appear
     ? {
         appearActiveClass: `transition-opacity ${props.appearActiveClass || durationClass.value}`,

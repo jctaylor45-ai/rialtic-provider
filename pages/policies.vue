@@ -92,7 +92,8 @@
               v-for="row in table.getRowModel().rows"
               :key="row.id"
               class="hover:bg-primary-50 cursor-pointer transition-colors"
-              @click="selectedPolicy = row.original"
+              :class="{ 'bg-primary-50': selectedPolicy?.id === row.original.id }"
+              @click="openPolicyDrawer(row.original)"
             >
               <td
                 v-for="cell in row.getVisibleCells()"
@@ -115,114 +116,19 @@
       </div>
     </div>
 
-    <!-- Policy Detail Modal -->
-    <div
-      v-if="selectedPolicy"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click.self="selectedPolicy = null"
+    <!-- Policy Details Drawer -->
+    <AppDetailsDrawer
+      :is-open="isDrawerOpen"
+      :is-loading="false"
+      width="700px"
+      @close="closeDrawer"
     >
-      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-        <div class="sticky top-0 bg-white border-b border-neutral-200 p-6">
-          <div class="flex items-start justify-between">
-            <div>
-              <h2 class="text-2xl font-semibold text-neutral-900 mb-2">{{ selectedPolicy.name }}</h2>
-              <p class="text-sm text-neutral-600">{{ selectedPolicy.id }}</p>
-            </div>
-            <button @click="selectedPolicy = null" class="text-neutral-400 hover:text-neutral-600">
-              <Icon name="heroicons:x-mark" class="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-
-        <div class="p-6 space-y-6">
-          <!-- Related Patterns Alert -->
-          <div v-if="getPolicyPatterns(selectedPolicy.id).length > 0" class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div class="flex items-start gap-3">
-              <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-orange-600 mt-0.5" />
-              <div class="flex-1">
-                <h3 class="text-sm font-semibold text-orange-900 mb-2">Active Denial Patterns Related to This Policy</h3>
-                <p class="text-xs text-orange-700 mb-3">
-                  {{ getPolicyPatterns(selectedPolicy.id).length }} pattern(s) detected that relate to this policy
-                </p>
-                <div class="grid grid-cols-1 gap-2">
-                  <div
-                    v-for="pattern in getPolicyPatterns(selectedPolicy.id)"
-                    :key="pattern.id"
-                    class="bg-white border border-orange-200 rounded p-3"
-                  >
-                    <div class="flex items-start justify-between mb-2">
-                      <div class="flex items-center gap-2">
-                        <Icon :name="getPatternIcon(pattern.category)" class="w-4 h-4 text-orange-600" />
-                        <span class="text-sm font-medium text-neutral-900">{{ pattern.title }}</span>
-                      </div>
-                      <span
-                        class="px-2 py-0.5 text-xs font-medium rounded-full border"
-                        :class="getPatternBadgeClass(pattern.tier)"
-                      >
-                        {{ pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1) }}
-                      </span>
-                    </div>
-                    <p class="text-xs text-neutral-600 mb-2">{{ pattern.description }}</p>
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-3 text-xs text-neutral-600">
-                        <span>{{ pattern.score.frequency }} occurrences</span>
-                        <span>{{ formatCurrency(pattern.totalAtRisk) }} at risk</span>
-                      </div>
-                      <button
-                        @click="viewPattern(pattern)"
-                        class="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                      >
-                        View Details →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-semibold text-neutral-900 mb-2">Description</h3>
-            <p class="text-sm text-neutral-700">{{ selectedPolicy.description }}</p>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-semibold text-neutral-900 mb-2">Clinical Rationale</h3>
-            <p class="text-sm text-neutral-700">{{ selectedPolicy.clinicalRationale }}</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <h3 class="text-sm font-semibold text-neutral-900 mb-2">Common Mistake</h3>
-              <p class="text-sm text-neutral-700">{{ selectedPolicy.commonMistake }}</p>
-            </div>
-            <div>
-              <h3 class="text-sm font-semibold text-neutral-900 mb-2">Fix Guidance</h3>
-              <p class="text-sm text-neutral-700">{{ selectedPolicy.fixGuidance }}</p>
-            </div>
-          </div>
-
-          <!-- Impact Metrics -->
-          <div class="grid grid-cols-3 gap-4 pt-4 border-t border-neutral-200">
-            <div class="bg-neutral-50 rounded-lg p-3">
-              <div class="text-xs text-neutral-600 mb-1">Hit Rate</div>
-              <div class="text-lg font-semibold text-neutral-900">{{ formatPercentage(selectedPolicy.hitRate) }}</div>
-              <div class="text-xs text-neutral-500 mt-1">of claims affected</div>
-            </div>
-            <div class="bg-neutral-50 rounded-lg p-3">
-              <div class="text-xs text-neutral-600 mb-1">Denial Rate</div>
-              <div class="text-lg font-semibold text-error-700">{{ formatPercentage(selectedPolicy.denialRate) }}</div>
-              <div class="text-xs text-neutral-500 mt-1">when policy triggered</div>
-            </div>
-            <div class="bg-neutral-50 rounded-lg p-3">
-              <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
-              <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(selectedPolicy.impact) }}</div>
-              <div class="text-xs text-neutral-500 mt-1">estimated savings</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <PoliciesPolicyDetailsContent
+        v-if="selectedPolicy"
+        :policy="selectedPolicy"
+        @close="closeDrawer"
+      />
+    </AppDetailsDrawer>
   </div>
 </template>
 
@@ -242,6 +148,7 @@ import type { Pattern } from '~/types/enhancements'
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const router = useRouter()
+const route = useRoute()
 
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
@@ -254,6 +161,24 @@ const filters = reactive({
 })
 
 const selectedPolicy = ref<Policy | null>(null)
+const isDrawerOpen = ref(false)
+
+// Open policy in drawer
+const openPolicyDrawer = (policy: Policy) => {
+  selectedPolicy.value = policy
+  isDrawerOpen.value = true
+  // Update URL without navigation
+  router.replace({ query: { ...route.query, policy: policy.id } })
+}
+
+// Close drawer
+const closeDrawer = () => {
+  isDrawerOpen.value = false
+  selectedPolicy.value = null
+  // Remove policy from URL
+  const { policy, ...rest } = route.query
+  router.replace({ query: rest })
+}
 
 // TanStack Table sorting state - default to impact descending
 const sorting = ref<SortingState>([{ id: 'impact', desc: true }])
@@ -439,15 +364,26 @@ const getSortIcon = (column: Column<Policy, unknown>) => {
   return sortDir === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
 }
 
-// Check for policy to open from session storage
+// Check for policy to open from session storage or URL
 onMounted(() => {
   if (typeof window !== 'undefined') {
+    // Check session storage first
     const policyId = sessionStorage.getItem('openPolicyId')
     if (policyId) {
       sessionStorage.removeItem('openPolicyId')
       const policy = appStore.policies.find(p => p.id === policyId)
       if (policy) {
+        openPolicyDrawer(policy)
+        return
+      }
+    }
+
+    // Check URL query params
+    if (route.query.policy && typeof route.query.policy === 'string') {
+      const policy = appStore.policies.find(p => p.id === route.query.policy)
+      if (policy) {
         selectedPolicy.value = policy
+        isDrawerOpen.value = true
       }
     }
   }

@@ -111,7 +111,8 @@
                 v-for="row in table.getRowModel().rows"
                 :key="row.id"
                 class="hover:bg-primary-50 cursor-pointer transition-colors"
-                @click="navigateTo(`/claims/${row.original.id}`)"
+                :class="{ 'bg-primary-50': selectedClaimId === row.original.id }"
+                @click="openClaimDrawer(row.original.id)"
               >
                 <td
                   v-for="cell in row.getVisibleCells()"
@@ -139,6 +140,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Claim Details Drawer -->
+    <AppDetailsDrawer
+      :is-open="isDrawerOpen"
+      :is-loading="false"
+      width="800px"
+      @close="closeDrawer"
+    >
+      <ClaimsClaimDetailsContent
+        v-if="selectedClaimId"
+        :claim-id="selectedClaimId"
+        @close="closeDrawer"
+      />
+    </AppDetailsDrawer>
   </div>
 </template>
 
@@ -163,6 +178,27 @@ const route = useRoute()
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
 
+// Drawer state
+const isDrawerOpen = ref(false)
+const selectedClaimId = ref<string | null>(null)
+
+// Open claim in drawer
+const openClaimDrawer = (claimId: string) => {
+  selectedClaimId.value = claimId
+  isDrawerOpen.value = true
+  // Update URL without navigation
+  router.replace({ query: { ...route.query, claim: claimId } })
+}
+
+// Close drawer
+const closeDrawer = () => {
+  isDrawerOpen.value = false
+  selectedClaimId.value = null
+  // Remove claim from URL
+  const { claim, ...rest } = route.query
+  router.replace({ query: rest })
+}
+
 // Ensure data is loaded and apply query params
 onMounted(async () => {
   if (appStore.claims.length === 0 && !appStore.isLoading) {
@@ -178,6 +214,12 @@ onMounted(async () => {
   }
   if (route.query.dateRange && typeof route.query.dateRange === 'string') {
     filters.dateRange = route.query.dateRange
+  }
+
+  // Open drawer if claim ID in URL
+  if (route.query.claim && typeof route.query.claim === 'string') {
+    selectedClaimId.value = route.query.claim
+    isDrawerOpen.value = true
   }
 })
 
