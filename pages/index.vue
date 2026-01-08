@@ -360,7 +360,7 @@ const handleClaimClick = (claim: Claim) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     claimId: claim.id,
   })
-  navigateTo(`/claims?claim=${claim.id}`)
+  navigateTo(`/claims?claim=${claim.id}&dateRange=${selectedTimeRange.value}`)
 }
 
 const handleIssueClick = (pattern: Pattern) => {
