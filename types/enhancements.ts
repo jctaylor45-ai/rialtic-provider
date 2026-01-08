@@ -18,6 +18,43 @@ export type PatternCategory =
   | 'coding-specificity'
   | 'medical-necessity'
 
+// Action categories for root cause classification
+export type ActionCategory =
+  | 'coding_knowledge'      // Staff needs training on coding rules
+  | 'documentation'         // Documentation gaps or issues
+  | 'operational_system'    // Process or system configuration issues
+  | 'coverage_blindspot'    // Coverage limitations not well understood
+  | 'payer_specific'        // Payer-specific rules or quirks
+
+// Recovery status for pattern impact assessment
+export type RecoveryStatus =
+  | 'recoverable'           // Can be recovered through appeals/resubmission
+  | 'partial'               // Partial recovery possible
+  | 'not_recoverable'       // Cannot be recovered (timely filing, etc.)
+
+export interface PossibleRootCause {
+  id: string
+  description: string
+  likelihood: 'high' | 'medium' | 'low'
+  category: ActionCategory
+}
+
+export interface ShortTermAction {
+  id: string
+  action: string
+  priority: 'high' | 'medium' | 'low'
+  estimatedImpact: string    // e.g., "Recover $12,500"
+  timeframe: string          // e.g., "This week", "Next 30 days"
+}
+
+export interface LongTermAction {
+  id: string
+  action: string
+  category: ActionCategory
+  expectedOutcome: string
+  implementationNotes?: string
+}
+
 export interface PatternEvidence {
   claimId: string
   denialDate: string
@@ -96,6 +133,15 @@ export interface Pattern {
   suggestedAction: string
   relatedPolicies: string[]
   relatedCodes?: string[]
+
+  // Root cause analysis
+  actionCategory: ActionCategory
+  recoveryStatus: RecoveryStatus
+  possibleRootCauses: PossibleRootCause[]
+
+  // Recommended actions
+  shortTermActions: ShortTermAction[]
+  longTermActions: LongTermAction[]
 
   // AI metadata
   detectionConfidence: number
@@ -367,6 +413,8 @@ export interface PatternFilters {
   status?: PatternStatus[]
   tier?: PatternTier[]
   category?: PatternCategory[]
+  actionCategory?: ActionCategory[]
+  recoveryStatus?: RecoveryStatus[]
   minImpact?: number
   dateRange?: {
     start: string
