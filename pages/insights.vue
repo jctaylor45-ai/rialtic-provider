@@ -142,7 +142,6 @@
             :key="pattern.id"
             :pattern="pattern"
             @click="openPatternDetail(pattern)"
-            @practice="handlePracticeFromCard(pattern)"
             @view-claims="handleViewClaimsFromCard(pattern)"
             @view-details="openPatternDetail(pattern)"
             @record-action="openRecordActionModal(pattern)"
@@ -339,10 +338,6 @@ const handleOpenRecordAction = (pattern: Pattern) => {
 }
 
 // Handlers for PatternCard events (without drawer open)
-const handlePracticeFromCard = async (pattern: Pattern) => {
-  await startPracticeSession(pattern)
-}
-
 const handleViewClaimsFromCard = (pattern: Pattern) => {
   // Navigate to claims page with filter for this pattern's affected claims
   const claimIds = pattern.affectedClaims.join(',')

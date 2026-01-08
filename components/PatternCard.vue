@@ -33,9 +33,14 @@
         </span>
         <span
           class="px-2.5 py-1 text-xs font-medium rounded-full border"
-          :class="statusBadgeClass"
+          :class="recoveryStatusBadgeClass"
         >
-          {{ pattern.status }}
+          {{ recoveryStatusLabel }}
+        </span>
+        <span
+          class="px-2.5 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200"
+        >
+          {{ actionCategoryLabel }}
         </span>
       </div>
     </div>
@@ -136,25 +141,18 @@
     <!-- Action Buttons -->
     <div class="flex items-center gap-2 mb-3">
       <button
-        @click.stop="$emit('practice', pattern)"
-        class="flex-1 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
-      >
-        <Icon name="heroicons:academic-cap" class="w-4 h-4" />
-        Practice
-      </button>
-
-      <button
         @click.stop="$emit('view-claims', pattern)"
-        class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
       >
         <Icon name="heroicons:document-text" class="w-4 h-4" />
-        {{ pattern.affectedClaims.length }}
+        {{ pattern.affectedClaims.length }} Claims
       </button>
 
       <button
         @click.stop="$emit('view-details', pattern)"
-        class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+        class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
       >
+        View Details
         <Icon name="heroicons:arrow-right" class="w-4 h-4" />
       </button>
     </div>
@@ -199,7 +197,6 @@ const props = defineProps<{
 
 defineEmits<{
   click: [pattern: Pattern]
-  practice: [pattern: Pattern]
   'view-claims': [pattern: Pattern]
   'view-details': [pattern: Pattern]
   'record-action': [pattern: Pattern]
@@ -222,6 +219,37 @@ const tierColor = computed(() => getPatternTierColor(props.pattern.tier))
 const tierBadgeClass = computed(() => getPatternTierBadgeClass(props.pattern.tier))
 const statusBadgeClass = computed(() => getPatternStatusBadgeClass(props.pattern.status))
 const categoryIcon = computed(() => getPatternCategoryIcon(props.pattern.category))
+
+// Recovery status badge styling and labels
+const recoveryStatusBadgeClass = computed(() => {
+  const classes: Record<string, string> = {
+    recoverable: 'bg-green-100 text-green-700 border-green-200',
+    partial: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    not_recoverable: 'bg-red-100 text-red-700 border-red-200',
+  }
+  return classes[props.pattern.recoveryStatus] || 'bg-gray-100 text-gray-700 border-gray-200'
+})
+
+const recoveryStatusLabel = computed(() => {
+  const labels: Record<string, string> = {
+    recoverable: 'Recoverable',
+    partial: 'Partial',
+    not_recoverable: 'Not Recoverable',
+  }
+  return labels[props.pattern.recoveryStatus] || props.pattern.recoveryStatus
+})
+
+// Action category label
+const actionCategoryLabel = computed(() => {
+  const labels: Record<string, string> = {
+    coding_knowledge: 'Coding Knowledge',
+    documentation: 'Documentation',
+    operational_system: 'Operational',
+    coverage_blindspot: 'Coverage Gap',
+    payer_specific: 'Payer-Specific',
+  }
+  return labels[props.pattern.actionCategory] || props.pattern.actionCategory
+})
 
 const trendIcon = computed(() => {
   const icons = {
