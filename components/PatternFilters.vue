@@ -101,6 +101,55 @@
         </div>
       </div>
 
+      <!-- Action Category Filter -->
+      <div>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Action Category</label>
+        <div class="space-y-2">
+          <label
+            v-for="actionCat in actionCategoryOptions"
+            :key="actionCat.value"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              :value="actionCat.value"
+              v-model="localFilters.actionCategory"
+              class="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+            />
+            <span class="text-sm text-neutral-700">{{ actionCat.label }}</span>
+            <span class="ml-auto text-xs text-neutral-500">
+              {{ actionCat.count }}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Recovery Status Filter -->
+      <div>
+        <label class="block text-xs font-medium text-neutral-700 mb-2">Recovery Status</label>
+        <div class="space-y-2">
+          <label
+            v-for="recovery in recoveryStatusOptions"
+            :key="recovery.value"
+            class="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              :value="recovery.value"
+              v-model="localFilters.recoveryStatus"
+              class="w-4 h-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+            />
+            <span class="text-sm text-neutral-700">{{ recovery.label }}</span>
+            <span
+              class="ml-auto px-2 py-0.5 text-xs rounded-full"
+              :class="recovery.badgeClass"
+            >
+              {{ recovery.count }}
+            </span>
+          </label>
+        </div>
+      </div>
+
       <!-- Impact Range -->
       <div>
         <label class="block text-xs font-medium text-neutral-700 mb-2">
@@ -144,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PatternFilters, PatternStatus, PatternTier, PatternCategory } from '~/types/enhancements'
+import type { PatternFilters, PatternStatus, PatternTier, PatternCategory, ActionCategory, RecoveryStatus } from '~/types/enhancements'
 
 const props = defineProps<{
   filters: PatternFilters
@@ -266,12 +315,83 @@ const categoryOptions = computed(() => {
   }))
 })
 
+// Action Category options with counts
+const actionCategoryOptions = computed(() => {
+  const counts = {
+    coding_knowledge: props.patterns.filter(p => p.actionCategory === 'coding_knowledge').length,
+    documentation: props.patterns.filter(p => p.actionCategory === 'documentation').length,
+    operational_system: props.patterns.filter(p => p.actionCategory === 'operational_system').length,
+    coverage_blindspot: props.patterns.filter(p => p.actionCategory === 'coverage_blindspot').length,
+    payer_specific: props.patterns.filter(p => p.actionCategory === 'payer_specific').length,
+  }
+
+  return [
+    {
+      value: 'coding_knowledge' as ActionCategory,
+      label: 'Coding Knowledge',
+      count: counts.coding_knowledge,
+    },
+    {
+      value: 'documentation' as ActionCategory,
+      label: 'Documentation',
+      count: counts.documentation,
+    },
+    {
+      value: 'operational_system' as ActionCategory,
+      label: 'Operational',
+      count: counts.operational_system,
+    },
+    {
+      value: 'coverage_blindspot' as ActionCategory,
+      label: 'Coverage Gap',
+      count: counts.coverage_blindspot,
+    },
+    {
+      value: 'payer_specific' as ActionCategory,
+      label: 'Payer-Specific',
+      count: counts.payer_specific,
+    },
+  ].filter(opt => opt.count > 0)
+})
+
+// Recovery Status options with counts
+const recoveryStatusOptions = computed(() => {
+  const counts = {
+    recoverable: props.patterns.filter(p => p.recoveryStatus === 'recoverable').length,
+    partial: props.patterns.filter(p => p.recoveryStatus === 'partial').length,
+    not_recoverable: props.patterns.filter(p => p.recoveryStatus === 'not_recoverable').length,
+  }
+
+  return [
+    {
+      value: 'recoverable' as RecoveryStatus,
+      label: 'Recoverable',
+      count: counts.recoverable,
+      badgeClass: 'bg-success-100 text-success-700',
+    },
+    {
+      value: 'partial' as RecoveryStatus,
+      label: 'Partial',
+      count: counts.partial,
+      badgeClass: 'bg-warning-100 text-warning-700',
+    },
+    {
+      value: 'not_recoverable' as RecoveryStatus,
+      label: 'Not Recoverable',
+      count: counts.not_recoverable,
+      badgeClass: 'bg-error-100 text-error-700',
+    },
+  ]
+})
+
 // Check if any filters are active
 const hasActiveFilters = computed(() => {
   return (
     (localFilters.value.status && localFilters.value.status.length > 0) ||
     (localFilters.value.tier && localFilters.value.tier.length > 0) ||
     (localFilters.value.category && localFilters.value.category.length > 0) ||
+    (localFilters.value.actionCategory && localFilters.value.actionCategory.length > 0) ||
+    (localFilters.value.recoveryStatus && localFilters.value.recoveryStatus.length > 0) ||
     (localFilters.value.minImpact && localFilters.value.minImpact > 0) ||
     (localFilters.value.search && localFilters.value.search.length > 0)
   )
@@ -303,6 +423,30 @@ const activeFilterTags = computed(() => {
     })
   }
 
+  if (localFilters.value.actionCategory) {
+    const actionCategoryLabels: Record<string, string> = {
+      coding_knowledge: 'Coding Knowledge',
+      documentation: 'Documentation',
+      operational_system: 'Operational',
+      coverage_blindspot: 'Coverage Gap',
+      payer_specific: 'Payer-Specific',
+    }
+    localFilters.value.actionCategory.forEach(ac => {
+      tags.push(`Action: ${actionCategoryLabels[ac] || ac}`)
+    })
+  }
+
+  if (localFilters.value.recoveryStatus) {
+    const recoveryLabels: Record<string, string> = {
+      recoverable: 'Recoverable',
+      partial: 'Partial',
+      not_recoverable: 'Not Recoverable',
+    }
+    localFilters.value.recoveryStatus.forEach(rs => {
+      tags.push(`Recovery: ${recoveryLabels[rs] || rs}`)
+    })
+  }
+
   if (localFilters.value.minImpact && localFilters.value.minImpact > 0) {
     tags.push(`Min Impact: ${formatCurrency(localFilters.value.minImpact)}`)
   }
@@ -316,6 +460,8 @@ const clearFilters = () => {
     status: [],
     tier: [],
     category: [],
+    actionCategory: [],
+    recoveryStatus: [],
     minImpact: 0,
     search: '',
   }
@@ -334,6 +480,32 @@ const removeFilter = (filterTag: string) => {
   } else if (filterTag.startsWith('Category:')) {
     const category = filterTag.split(': ')[1] as PatternCategory
     localFilters.value.category = localFilters.value.category?.filter(c => c !== category) || []
+  } else if (filterTag.startsWith('Action:')) {
+    // Reverse lookup the action category value from the label
+    const label = filterTag.split(': ')[1] ?? ''
+    const labelToValue: Record<string, ActionCategory> = {
+      'Coding Knowledge': 'coding_knowledge',
+      'Documentation': 'documentation',
+      'Operational': 'operational_system',
+      'Coverage Gap': 'coverage_blindspot',
+      'Payer-Specific': 'payer_specific',
+    }
+    const actionCategory = labelToValue[label]
+    if (actionCategory) {
+      localFilters.value.actionCategory = localFilters.value.actionCategory?.filter(ac => ac !== actionCategory) || []
+    }
+  } else if (filterTag.startsWith('Recovery:')) {
+    // Reverse lookup the recovery status value from the label
+    const label = filterTag.split(': ')[1] ?? ''
+    const labelToValue: Record<string, RecoveryStatus> = {
+      'Recoverable': 'recoverable',
+      'Partial': 'partial',
+      'Not Recoverable': 'not_recoverable',
+    }
+    const recoveryStatus = labelToValue[label]
+    if (recoveryStatus) {
+      localFilters.value.recoveryStatus = localFilters.value.recoveryStatus?.filter(rs => rs !== recoveryStatus) || []
+    }
   } else if (filterTag.startsWith('Min Impact:')) {
     localFilters.value.minImpact = 0
   }
