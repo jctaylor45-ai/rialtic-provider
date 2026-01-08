@@ -59,6 +59,34 @@ const linkedPolicies = computed(() => {
   return appStore.policies.filter(p => props.policy.relatedPolicies.includes(p.id))
 })
 
+// Get claims that hit this policy
+const policyClaimsData = computed(() => {
+  const claims = appStore.claims.filter(claim =>
+    claim.policyId === props.policy.id ||
+    claim.policyIds?.includes(props.policy.id)
+  )
+
+  // Calculate summary stats
+  const totalBilled = claims.reduce((sum, c) => sum + c.billedAmount, 0)
+  const deniedClaims = claims.filter(c => c.status === 'denied')
+  const deniedAmount = deniedClaims.reduce((sum, c) => sum + c.billedAmount, 0)
+
+  return {
+    claims,
+    totalCount: claims.length,
+    totalBilled,
+    deniedCount: deniedClaims.length,
+    deniedAmount,
+  }
+})
+
+// How many claims to show initially
+const showAllClaims = ref(false)
+const displayedClaims = computed(() => {
+  if (showAllClaims.value) return policyClaimsData.value.claims
+  return policyClaimsData.value.claims.slice(0, 5)
+})
+
 // Get pattern tier badge class
 const getPatternBadgeClass = (tier: string) => {
   const classes = {
@@ -113,6 +141,23 @@ const viewRelatedPolicy = (policyId: string) => {
     sessionStorage.setItem('openPolicyId', policyId)
   }
   router.push('/policies')
+}
+
+// Navigate to claim details
+const viewClaim = (claimId: string) => {
+  router.push({ path: '/claims', query: { claim: claimId } })
+}
+
+// Get status badge class
+const getStatusClass = (status: string) => {
+  const classes = {
+    approved: 'bg-success-100 text-success-700',
+    paid: 'bg-success-100 text-success-700',
+    denied: 'bg-error-100 text-error-700',
+    pending: 'bg-warning-100 text-warning-700',
+    appealed: 'bg-secondary-100 text-secondary-700',
+  }
+  return classes[status as keyof typeof classes] || 'bg-neutral-100 text-neutral-700'
 }
 
 // Show code intelligence
@@ -444,6 +489,83 @@ const showCodeIntelligence = (code: string) => {
               {{ relPolicy.mode }}
             </span>
           </div>
+        </div>
+      </div>
+
+      <!-- Claims Hitting This Policy -->
+      <div class="p-6 border-b border-neutral-200">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-neutral-900">Claims Hitting This Policy</h3>
+          <span class="text-xs text-neutral-500">{{ policyClaimsData.totalCount }} total</span>
+        </div>
+
+        <!-- Summary Stats -->
+        <div v-if="policyClaimsData.totalCount > 0" class="grid grid-cols-4 gap-3 mb-4">
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <div class="text-xs text-neutral-600 mb-1">Total Claims</div>
+            <div class="text-lg font-semibold text-neutral-900">{{ policyClaimsData.totalCount }}</div>
+          </div>
+          <div class="bg-neutral-50 rounded-lg p-3">
+            <div class="text-xs text-neutral-600 mb-1">Total Billed</div>
+            <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(policyClaimsData.totalBilled) }}</div>
+          </div>
+          <div class="bg-error-50 rounded-lg p-3">
+            <div class="text-xs text-error-600 mb-1">Denied Claims</div>
+            <div class="text-lg font-semibold text-error-700">{{ policyClaimsData.deniedCount }}</div>
+          </div>
+          <div class="bg-error-50 rounded-lg p-3">
+            <div class="text-xs text-error-600 mb-1">Denied Amount</div>
+            <div class="text-lg font-semibold text-error-700">{{ formatCurrency(policyClaimsData.deniedAmount) }}</div>
+          </div>
+        </div>
+
+        <!-- Claims List -->
+        <div v-if="policyClaimsData.totalCount > 0" class="space-y-2">
+          <div
+            v-for="claim in displayedClaims"
+            :key="claim.id"
+            class="flex items-center justify-between p-3 bg-white border border-neutral-200 rounded-lg cursor-pointer hover:bg-primary-50 hover:border-primary-200 transition-colors"
+            @click="viewClaim(claim.id)"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-mono text-sm font-medium text-primary-600">{{ claim.id }}</span>
+                <span
+                  class="px-2 py-0.5 text-xs font-medium rounded"
+                  :class="getStatusClass(claim.status)"
+                >
+                  {{ claim.status.charAt(0).toUpperCase() + claim.status.slice(1) }}
+                </span>
+              </div>
+              <div class="flex items-center gap-4 text-xs text-neutral-600">
+                <span>{{ claim.patientName }}</span>
+                <span>{{ formatDateLong(claim.dateOfService) }}</span>
+                <span v-if="claim.denialReason" class="text-error-600 truncate max-w-48" :title="claim.denialReason">
+                  {{ claim.denialReason }}
+                </span>
+              </div>
+            </div>
+            <div class="text-right pl-4">
+              <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(claim.billedAmount) }}</div>
+              <div v-if="claim.paidAmount" class="text-xs text-success-600">Paid: {{ formatCurrency(claim.paidAmount) }}</div>
+            </div>
+          </div>
+
+          <!-- Show More/Less Button -->
+          <div v-if="policyClaimsData.totalCount > 5" class="pt-2">
+            <button
+              class="w-full py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+              @click="showAllClaims = !showAllClaims"
+            >
+              {{ showAllClaims ? 'Show Less' : `Show All ${policyClaimsData.totalCount} Claims` }}
+            </button>
+          </div>
+        </div>
+
+        <!-- No Claims Message -->
+        <div v-else class="text-center py-8">
+          <Icon name="heroicons:document-magnifying-glass" class="w-12 h-12 text-neutral-300 mx-auto mb-3" />
+          <p class="text-sm text-neutral-500">No claims have hit this policy yet.</p>
         </div>
       </div>
     </div>
