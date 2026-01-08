@@ -98,14 +98,14 @@
 
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Avg Progress</div>
-          <Icon name="heroicons:academic-cap" class="w-5 h-5 text-neutral-400" />
+          <div class="text-sm text-neutral-600">Total Recoverable</div>
+          <Icon name="heroicons:arrow-path-rounded-square" class="w-5 h-5 text-neutral-400" />
         </div>
         <div class="text-3xl font-semibold text-success-600">
-          {{ patternsStore.avgLearningProgress }}%
+          {{ formatCurrency(patternsStore.totalRecoverable, true) }}
         </div>
         <div class="text-xs text-neutral-500 mt-1">
-          Overall learning progress
+          {{ patternsStore.recoverablePatterns.length }} patterns can be recovered
         </div>
       </div>
     </div>
