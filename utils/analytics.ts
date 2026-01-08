@@ -466,6 +466,7 @@ export function calculateEngagementScore(events: LearningEvent[]): number {
     'code-lookup': 3,
     'policy-viewed': 2,
     'dashboard-viewed': 1,
+    'dashboard-click': 1,
     'action-recorded': 6,
     'code-intel-viewed': 3
   }

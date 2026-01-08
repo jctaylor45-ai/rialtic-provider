@@ -118,6 +118,7 @@ export type EventType =
   | 'code-lookup'
   | 'policy-viewed'
   | 'dashboard-viewed'
+  | 'dashboard-click'  // User clicked an element on the dashboard
   | 'action-recorded'  // User marked action taken on a pattern
   | 'code-intel-viewed'  // User viewed code intelligence modal
 
