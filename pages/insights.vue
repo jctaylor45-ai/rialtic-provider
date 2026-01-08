@@ -112,8 +112,8 @@
 
     <!-- Main Content Area (Active Patterns View) -->
     <div v-if="viewMode === 'active'" class="grid grid-cols-12 gap-6">
-      <!-- Sidebar Filters -->
-      <div class="col-span-3">
+      <!-- Sidebar Filters (hidden when drawer is open) -->
+      <div v-if="!selectedPatternId" class="col-span-3">
         <PatternFilters
           :filters="patternsStore.filters"
           :patterns="patternsStore.patterns"
@@ -121,8 +121,8 @@
         />
       </div>
 
-      <!-- Patterns Grid -->
-      <div class="col-span-9">
+      <!-- Patterns Grid (full width when drawer is open) -->
+      <div :class="selectedPatternId ? 'col-span-12' : 'col-span-9'">
         <!-- Sort & View Options -->
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
