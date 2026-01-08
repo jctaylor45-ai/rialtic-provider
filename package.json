@@ -10,7 +10,12 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "lint": "oxlint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx server/database/seed.ts"
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.9",
@@ -32,8 +37,10 @@
     "@vueuse/core": "^11.2.0",
     "@vueuse/nuxt": "^11.2.0",
     "a11y-dialog": "^8.1.4",
+    "better-sqlite3": "^12.5.0",
     "chart.js": "^4.4.6",
     "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.1",
     "numeral": "^2.0.6",
     "nuxt": "^3.16.0",
     "ofetch": "^1.4.1",
@@ -47,14 +54,17 @@
   "devDependencies": {
     "@iconify/vue": "^4.1.2",
     "@nuxt/icon": "^1.9.3",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/numeral": "^2.0.5",
     "@types/papaparse": "^5.5.2",
     "@unocss/nuxt": "^0.64.1",
     "@unocss/preset-web-fonts": "^0.64.1",
     "@unocss/preset-wind": "^0.64.1",
     "@unocss/transformer-directives": "^0.64.1",
+    "drizzle-kit": "^0.31.8",
     "oxlint": "^0.13.1",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "unocss": "^0.64.1",
     "vue-tsc": "^2.2.0"

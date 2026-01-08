@@ -42,3 +42,9 @@ coverage
 # Misc
 .turbo
 console-ui/
+
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
