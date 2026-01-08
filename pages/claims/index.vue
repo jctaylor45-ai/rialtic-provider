@@ -10,6 +10,31 @@
 
     <!-- Content -->
     <div v-else>
+      <!-- Pattern Filter Banner -->
+      <div
+        v-if="patternClaimIds"
+        class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <Icon name="heroicons:funnel" class="w-5 h-5 text-orange-600" />
+          <div>
+            <span class="text-sm font-medium text-orange-900">
+              Viewing {{ patternClaimIds.length }} claims linked to pattern
+            </span>
+            <span class="text-xs text-orange-700 ml-2">
+              From Insights page
+            </span>
+          </div>
+        </div>
+        <button
+          @click="clearPatternFilter"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-700 hover:bg-orange-100 rounded-lg transition-colors"
+        >
+          <Icon name="heroicons:x-mark" class="w-4 h-4" />
+          Clear filter
+        </button>
+      </div>
+
       <!-- Search Bar -->
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
         <div class="flex items-center gap-4 mb-4">
@@ -339,12 +364,27 @@ const {
   hasActiveFilters,
   activeFilterCount,
 } = useUrlParamsState({
-  excludeKeys: ['claim', 'sort'],
+  excludeKeys: ['claim', 'sort', 'ids'],
   defaults: {
     status: 'all',
     dateRange: 'all',
   },
 })
+
+// Pattern-linked claims filter (from insights page)
+const patternClaimIds = computed(() => {
+  const idsParam = route.query.ids
+  if (typeof idsParam === 'string' && idsParam.length > 0) {
+    return idsParam.split(',')
+  }
+  return null
+})
+
+// Clear the pattern filter
+const clearPatternFilter = () => {
+  const { ids, ...rest } = route.query
+  router.replace({ query: rest })
+}
 
 // URL-persisted sort state
 const { sortState, setSortState } = useUrlSortState({
@@ -436,6 +476,11 @@ const sorting = computed<SortingState>(() => {
 // Filter claims based on search params and filters (now using URL-synced refs)
 const filteredClaims = computed(() => {
   let result = [...appStore.claims]
+
+  // Pattern-linked claims filter (highest priority - filters to specific claims from insights)
+  if (patternClaimIds.value && patternClaimIds.value.length > 0) {
+    result = result.filter(c => patternClaimIds.value!.includes(c.id))
+  }
 
   // Search filters
   if (searchClaimId.value) {
