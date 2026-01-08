@@ -1,0 +1,419 @@
+<script setup lang="ts">
+/**
+ * Insight/Pattern details content component
+ * Displays full pattern information inside a drawer
+ * Maintains data parity with original modal view
+ */
+import type { Pattern, ActionType } from '~/types/enhancements'
+import { format } from 'date-fns'
+
+const props = defineProps<{
+  patternId: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'practice', pattern: Pattern): void
+  (e: 'viewClaims', pattern: Pattern): void
+  (e: 'recordAction', pattern: Pattern): void
+}>()
+
+defineOptions({ name: 'InsightDetailsContent' })
+
+// Stores
+const patternsStore = usePatternsStore()
+
+// Composables
+const { formatCurrency } = useAnalytics()
+const { getActionTypeLabel, getActionTypeIcon } = useActions()
+const {
+  getPatternTierColor,
+  getPatternTierBadgeClass,
+  getPatternStatusBadgeClass,
+  getPatternCategoryIcon,
+} = usePatterns()
+const { openCodeIntelligence } = useCodeIntelligence()
+const { trackInsightView } = useTracking()
+
+// Get the pattern from store
+const pattern = computed(() => {
+  return patternsStore.getPatternById(props.patternId)
+})
+
+// Computed properties
+const tierColor = computed(() => pattern.value ? getPatternTierColor(pattern.value.tier) : 'gray')
+const tierBadgeClass = computed(() => pattern.value ? getPatternTierBadgeClass(pattern.value.tier) : '')
+const statusBadgeClass = computed(() => pattern.value ? getPatternStatusBadgeClass(pattern.value.status) : '')
+const categoryIcon = computed(() => pattern.value ? getPatternCategoryIcon(pattern.value.category) : 'heroicons:light-bulb')
+
+const trendIcon = computed(() => {
+  if (!pattern.value) return 'heroicons:minus'
+  const icons = {
+    up: 'heroicons:arrow-trending-up',
+    down: 'heroicons:arrow-trending-down',
+    stable: 'heroicons:minus',
+  }
+  return icons[pattern.value.score.trend]
+})
+
+const trendColor = computed(() => {
+  if (!pattern.value) return 'text-neutral-600'
+  const colors = {
+    up: 'text-error-600',
+    down: 'text-success-600',
+    stable: 'text-neutral-600',
+  }
+  return colors[pattern.value.score.trend]
+})
+
+const progressBarColor = computed(() => {
+  if (!pattern.value) return 'bg-neutral-500'
+  const progress = pattern.value.learningProgress
+  if (progress >= 80) return 'bg-success-500'
+  if (progress >= 50) return 'bg-warning-500'
+  if (progress >= 25) return 'bg-orange-500'
+  return 'bg-error-500'
+})
+
+const progressTextColor = computed(() => {
+  if (!pattern.value) return 'text-neutral-600'
+  const progress = pattern.value.learningProgress
+  if (progress >= 80) return 'text-success-600'
+  if (progress >= 50) return 'text-warning-600'
+  if (progress >= 25) return 'text-orange-600'
+  return 'text-error-600'
+})
+
+// Methods
+const formatDate = (dateString: string) => {
+  return format(new Date(dateString), 'MMM d, yyyy')
+}
+
+const startPractice = () => {
+  if (pattern.value) {
+    emit('practice', pattern.value)
+  }
+}
+
+const viewAffectedClaims = () => {
+  if (pattern.value) {
+    emit('viewClaims', pattern.value)
+  }
+}
+
+const viewCodeIntelligence = (code: string) => {
+  openCodeIntelligence(code)
+}
+
+const openRecordAction = () => {
+  if (pattern.value) {
+    emit('recordAction', pattern.value)
+  }
+}
+
+// Track insight view on mount
+onMounted(() => {
+  if (pattern.value) {
+    trackInsightView(pattern.value.id, pattern.value.category)
+  }
+})
+</script>
+
+<template>
+  <!-- Not Found State -->
+  <div v-if="!pattern" class="flex-1 flex items-center justify-center p-8">
+    <div class="text-center">
+      <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+      <h2 class="text-xl font-semibold text-neutral-900 mb-2">Pattern Not Found</h2>
+      <p class="text-neutral-600 mb-4">The pattern you're looking for doesn't exist.</p>
+      <button
+        @click="emit('close')"
+        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+
+  <!-- Pattern Content -->
+  <div v-else class="flex flex-col h-full">
+    <!-- Header -->
+    <div class="bg-white border-b border-neutral-200 p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="p-2 rounded-lg"
+            :class="`bg-${tierColor}-100`"
+          >
+            <Icon :name="categoryIcon" :class="`text-${tierColor}-600`" class="w-6 h-6" />
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-neutral-900">
+              {{ pattern.title }}
+            </h1>
+            <div class="flex items-center gap-2 mt-1">
+              <span
+                class="px-2 py-0.5 text-xs font-medium rounded-full border"
+                :class="tierBadgeClass"
+              >
+                {{ pattern.tier.toUpperCase() }}
+              </span>
+              <span
+                class="px-2 py-0.5 text-xs font-medium rounded-full border"
+                :class="statusBadgeClass"
+              >
+                {{ pattern.status }}
+              </span>
+              <span class="text-xs text-neutral-500">
+                ID: {{ pattern.id }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <button
+          @click="emit('close')"
+          class="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+        >
+          <Icon name="heroicons:x-mark" class="w-5 h-5 text-neutral-600" />
+        </button>
+      </div>
+      <p class="text-sm text-neutral-600">
+        {{ pattern.description }}
+      </p>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+      <!-- Key Metrics -->
+      <section class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Key Metrics</h3>
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-neutral-50 rounded-lg p-4">
+            <div class="text-xs text-neutral-600 mb-1">Frequency</div>
+            <div class="text-2xl font-bold text-neutral-900">{{ pattern.score.frequency }}</div>
+            <div class="flex items-center gap-1 mt-1 text-xs" :class="trendColor">
+              <Icon :name="trendIcon" class="w-3 h-3" />
+              <span>{{ pattern.score.trend }}</span>
+            </div>
+          </div>
+
+          <div class="bg-neutral-50 rounded-lg p-4">
+            <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
+            <div class="text-2xl font-bold text-neutral-900">
+              {{ formatCurrency(pattern.totalAtRisk) }}
+            </div>
+            <div class="text-xs text-neutral-600 mt-1">
+              {{ formatCurrency(pattern.avgDenialAmount) }} avg
+            </div>
+          </div>
+
+          <div class="bg-neutral-50 rounded-lg p-4">
+            <div class="text-xs text-neutral-600 mb-1">Confidence</div>
+            <div class="text-2xl font-bold text-neutral-900">{{ pattern.score.confidence }}%</div>
+            <div class="text-xs text-neutral-600 mt-1">
+              {{ pattern.score.recency }}d since last
+            </div>
+          </div>
+
+          <div class="bg-neutral-50 rounded-lg p-4">
+            <div class="text-xs text-neutral-600 mb-1">Learning Progress</div>
+            <div class="text-2xl font-bold" :class="progressTextColor">
+              {{ pattern.learningProgress }}%
+            </div>
+            <div class="text-xs text-neutral-600 mt-1">
+              {{ pattern.practiceSessionsCompleted }} sessions
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Learning Progress Bar -->
+      <section class="mb-6">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-semibold text-neutral-900">Learning Progress</h3>
+          <span class="text-xs text-neutral-600">{{ pattern.correctionsApplied }} corrections applied</span>
+        </div>
+        <div class="w-full bg-neutral-200 rounded-full h-3">
+          <div
+            class="h-3 rounded-full transition-all"
+            :class="progressBarColor"
+            :style="{ width: `${pattern.learningProgress}%` }"
+          />
+        </div>
+      </section>
+
+      <!-- Actions Recorded -->
+      <section v-if="pattern.actions && pattern.actions.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Actions Recorded</h3>
+        <div class="space-y-3">
+          <div
+            v-for="action in pattern.actions"
+            :key="action.id"
+            class="flex items-start gap-3 p-3 bg-primary-50 rounded-lg border border-primary-200"
+          >
+            <Icon :name="getActionTypeIcon(action.actionType)" class="w-5 h-5 text-primary-600 mt-0.5" />
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-medium text-primary-900">
+                  {{ getActionTypeLabel(action.actionType) }}
+                </span>
+                <span class="text-xs text-primary-600">
+                  {{ formatDate(action.timestamp) }}
+                </span>
+              </div>
+              <div v-if="action.notes" class="text-xs text-primary-700">
+                {{ action.notes }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Improvements Timeline -->
+      <section v-if="pattern.improvements.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Improvement History</h3>
+        <div class="space-y-3">
+          <div
+            v-for="(improvement, index) in pattern.improvements"
+            :key="index"
+            class="flex items-start gap-3 p-3 bg-success-50 rounded-lg border border-success-200"
+          >
+            <Icon name="heroicons:arrow-trending-down" class="w-5 h-5 text-success-600 mt-0.5" />
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-medium text-success-900">
+                  {{ improvement.metric }}: {{ Math.abs(improvement.percentChange) }}% reduction
+                </span>
+                <span
+                  v-if="improvement.trigger"
+                  class="px-2 py-0.5 text-xs bg-success-100 text-success-700 rounded-full"
+                >
+                  {{ improvement.trigger }}
+                </span>
+              </div>
+              <div class="text-xs text-success-700">
+                From {{ improvement.before }} to {{ improvement.after }}
+                <span class="text-success-600">• {{ formatDate(improvement.date) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Evidence Examples -->
+      <section v-if="pattern.evidence.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Recent Evidence ({{ pattern.evidence.length }} examples)</h3>
+        <div class="space-y-2">
+          <div
+            v-for="(evidence, index) in pattern.evidence.slice(0, 5)"
+            :key="index"
+            class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+          >
+            <div class="flex items-start justify-between mb-1">
+              <NuxtLink
+                :to="`/claims?claim=${evidence.claimId}`"
+                class="text-sm font-medium text-primary-600 hover:text-primary-700 font-mono"
+              >
+                {{ evidence.claimId }}
+              </NuxtLink>
+              <span class="text-xs text-neutral-500">{{ formatDate(evidence.denialDate) }}</span>
+            </div>
+            <p class="text-xs text-neutral-600 mb-2">{{ evidence.denialReason }}</p>
+            <div class="flex items-center gap-4 text-xs text-neutral-600">
+              <span v-if="evidence.procedureCode" class="flex items-center gap-1">
+                Code:
+                <button
+                  @click.stop="viewCodeIntelligence(evidence.procedureCode)"
+                  class="font-mono hover:text-primary-600 hover:underline cursor-pointer"
+                  :title="`Click to view intelligence for ${evidence.procedureCode}`"
+                >
+                  {{ evidence.procedureCode }}
+                </button>
+              </span>
+              <span v-if="evidence.modifier">Modifier: {{ evidence.modifier }}</span>
+              <span class="font-medium">{{ formatCurrency(evidence.billedAmount) }}</span>
+            </div>
+          </div>
+        </div>
+        <button
+          v-if="pattern.evidence.length > 5"
+          @click="viewAffectedClaims"
+          class="mt-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
+        >
+          View all {{ pattern.evidence.length }} affected claims →
+        </button>
+      </section>
+
+      <!-- Suggested Action -->
+      <section class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Suggested Action</h3>
+        <div class="p-4 bg-primary-50 rounded-lg border border-primary-200">
+          <p class="text-sm text-primary-900">{{ pattern.suggestedAction }}</p>
+        </div>
+      </section>
+
+      <!-- Related Policies -->
+      <section v-if="pattern.relatedPolicies.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Related Policies</h3>
+        <div class="flex flex-wrap gap-2">
+          <NuxtLink
+            v-for="policyId in pattern.relatedPolicies"
+            :key="policyId"
+            :to="`/policies?policy=${policyId}`"
+            class="px-3 py-1.5 bg-white border border-neutral-300 rounded-lg text-sm font-mono text-neutral-700 hover:bg-neutral-50 hover:border-primary-300 transition-colors"
+          >
+            {{ policyId }}
+          </NuxtLink>
+        </div>
+      </section>
+
+      <!-- Related Codes -->
+      <section v-if="pattern.relatedCodes && pattern.relatedCodes.length > 0" class="mb-4">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Related Procedure Codes</h3>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="code in pattern.relatedCodes"
+            :key="code"
+            @click="viewCodeIntelligence(code)"
+            class="px-3 py-1.5 bg-neutral-100 border border-neutral-300 rounded-lg text-sm font-mono text-neutral-800 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700 transition-colors cursor-pointer"
+            :title="`Click to view intelligence for ${code}`"
+          >
+            {{ code }}
+          </button>
+        </div>
+      </section>
+
+      <!-- Timestamps -->
+      <div class="text-xs text-neutral-500 mt-6 pt-4 border-t border-neutral-200">
+        First detected: {{ formatDate(pattern.firstDetected) }} •
+        Last updated: {{ formatDate(pattern.lastUpdated) }}
+      </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="border-t border-neutral-200 p-4 bg-neutral-50">
+      <div class="flex items-center gap-3">
+        <button
+          @click="viewAffectedClaims"
+          class="flex-1 py-2.5 border border-neutral-300 text-neutral-700 font-medium rounded-lg hover:bg-white transition-colors text-center text-sm"
+        >
+          View Claims ({{ pattern.affectedClaims.length }})
+        </button>
+        <button
+          @click="openRecordAction"
+          class="px-4 py-2.5 border border-neutral-300 rounded-lg hover:bg-white transition-colors"
+          title="Record Action"
+        >
+          <Icon name="heroicons:clipboard-document-check" class="w-4 h-4" />
+        </button>
+        <button
+          @click="startPractice"
+          class="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors text-center text-sm flex items-center justify-center gap-2"
+        >
+          <Icon name="heroicons:academic-cap" class="w-4 h-4" />
+          Practice This Pattern
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

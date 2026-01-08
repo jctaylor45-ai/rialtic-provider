@@ -1,5 +1,10 @@
 <template>
-  <div class="flex-1 overflow-y-auto p-8">
+  <div class="flex h-full">
+    <!-- Main Content Area -->
+    <div
+      class="flex-1 overflow-y-auto p-8 transition-all duration-300"
+      :class="{ 'mr-[600px]': selectedPatternId }"
+    >
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-semibold text-neutral-900">Pattern Detection & Insights</h1>
@@ -161,8 +166,8 @@
             :key="pattern.id"
             :pattern="pattern"
             @click="openPatternDetail(pattern)"
-            @practice="startPractice(pattern)"
-            @view-claims="viewClaims(pattern)"
+            @practice="handlePracticeFromCard(pattern)"
+            @view-claims="handleViewClaimsFromCard(pattern)"
             @view-details="openPatternDetail(pattern)"
             @record-action="openRecordActionModal(pattern)"
           />
@@ -417,15 +422,6 @@
       </div>
     </div>
 
-    <!-- Pattern Detail Modal -->
-    <PatternDetailModal
-      :pattern="selectedPattern"
-      :is-open="isModalOpen"
-      @close="closeModal"
-      @practice="startPractice"
-      @view-claims="viewClaims"
-    />
-
     <!-- Record Action Modal -->
     <RecordActionModal
       :is-open="isRecordActionModalOpen"
@@ -441,6 +437,32 @@
       @close="closeCodeIntelligence"
       @navigate-to-code="navigateToCode"
     />
+    </div>
+
+    <!-- Slide-out Drawer for Pattern Details -->
+    <Transition name="slide">
+      <div
+        v-if="selectedPatternId"
+        class="fixed top-0 right-0 h-full w-[600px] bg-white shadow-2xl border-l border-neutral-200 z-40 flex flex-col"
+      >
+        <InsightsInsightDetailsContent
+          :pattern-id="selectedPatternId"
+          @close="closeDrawer"
+          @practice="handlePractice"
+          @view-claims="handleViewClaims"
+          @record-action="handleOpenRecordAction"
+        />
+      </div>
+    </Transition>
+
+    <!-- Backdrop -->
+    <Transition name="fade">
+      <div
+        v-if="selectedPatternId"
+        class="fixed inset-0 bg-black/20 z-30"
+        @click="closeDrawer"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -449,6 +471,8 @@ import type { Pattern, ActionType } from '~/types/enhancements'
 
 // Stores
 const patternsStore = usePatternsStore()
+const route = useRoute()
+const router = useRouter()
 
 // Composables
 const { formatCurrency } = useAnalytics()
@@ -465,10 +489,14 @@ const {
 // State
 const sortBy = ref<'impact' | 'frequency' | 'progress' | 'recent'>('impact')
 const viewMode = ref<'active' | 'impact'>('active')
-const selectedPattern = ref<Pattern | null>(null)
-const isModalOpen = ref(false)
 const isRecordActionModalOpen = ref(false)
 const selectedPatternForAction = ref<Pattern | null>(null)
+
+// URL-based pattern selection (slide-out drawer)
+const selectedPatternId = computed(() => {
+  const patternParam = route.query.pattern
+  return typeof patternParam === 'string' ? patternParam : null
+})
 
 // Load patterns on mount
 onMounted(async () => {
@@ -488,6 +516,19 @@ onMounted(async () => {
       }
     }
   }
+})
+
+// Close drawer on Escape key
+onMounted(() => {
+  const handleEscape = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && selectedPatternId.value) {
+      closeDrawer()
+    }
+  }
+  window.addEventListener('keydown', handleEscape)
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleEscape)
+  })
 })
 
 // Sorted patterns based on selection
@@ -544,26 +585,43 @@ const calculateSavingsRealized = (pattern: Pattern): number => {
 
 // Methods
 const openPatternDetail = (pattern: Pattern) => {
-  selectedPattern.value = pattern
-  isModalOpen.value = true
+  // Update URL to show pattern in drawer
+  router.push({ query: { ...route.query, pattern: pattern.id } })
 
   // Track insight view
   trackInsightView(pattern.id, pattern.category)
 }
 
-const closeModal = () => {
-  isModalOpen.value = false
-  selectedPattern.value = null
+const closeDrawer = () => {
+  const newQuery = { ...route.query }
+  delete newQuery.pattern
+  router.replace({ query: newQuery })
 }
 
-const startPractice = async (pattern: Pattern) => {
-  closeModal()
+// Handlers for drawer events
+const handlePractice = async (pattern: Pattern) => {
+  closeDrawer()
   await startPracticeSession(pattern)
 }
 
-const viewClaims = (pattern: Pattern) => {
-  closeModal()
+const handleViewClaims = (pattern: Pattern) => {
+  closeDrawer()
+  // Navigate to claims page with filter for this pattern's affected claims
+  const claimIds = pattern.affectedClaims.join(',')
+  navigateTo(`/claims?ids=${claimIds}`)
+}
 
+const handleOpenRecordAction = (pattern: Pattern) => {
+  selectedPatternForAction.value = pattern
+  isRecordActionModalOpen.value = true
+}
+
+// Handlers for PatternCard events (without drawer open)
+const handlePracticeFromCard = async (pattern: Pattern) => {
+  await startPracticeSession(pattern)
+}
+
+const handleViewClaimsFromCard = (pattern: Pattern) => {
   // Navigate to claims page with filter for this pattern's affected claims
   const claimIds = pattern.affectedClaims.join(',')
   navigateTo(`/claims?ids=${claimIds}`)
@@ -593,3 +651,27 @@ const handleRecordAction = async (actionType: ActionType, notes: string) => {
   closeRecordActionModal()
 }
 </script>
+
+<style scoped>
+/* Slide-out drawer transitions */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+}
+
+/* Backdrop fade transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
