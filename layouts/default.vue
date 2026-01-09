@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen bg-gray-50">
     <Sidebar />
-    <main class="ml-64 flex-1 overflow-hidden flex flex-col">
+    <main class="ml-64 flex-1 overflow-y-auto flex flex-col">
       <slot />
     </main>
   </div>
