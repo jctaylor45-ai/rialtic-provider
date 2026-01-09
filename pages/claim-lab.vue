@@ -1,640 +1,773 @@
 <template>
-  <div class="flex-1 flex overflow-hidden">
-    <div v-if="!originalClaim" class="flex-1 p-8">
-      <div class="text-center py-12">
-        <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="flex items-center justify-between border-b border-neutral-200 px-4 py-3 lg:px-7 lg:py-4 bg-white">
+      <div>
+        <h1 class="text-lg font-semibold text-neutral-900 lg:text-2xl">Claim Lab</h1>
+        <p v-if="originalClaim" class="text-xs text-secondary-700 lg:text-sm">
+          {{ originalClaim.id }}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Error Message -->
+        <div v-if="testError" class="text-error-600 text-xs mr-2">
+          {{ testError }}
+        </div>
+
+        <!-- Run Test Button -->
+        <button
+          :disabled="testInProgress"
+          class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          @click="runTest"
+        >
+          <Icon v-if="testInProgress" name="heroicons:arrow-path" class="w-4 h-4 animate-spin" />
+          <Icon v-else name="heroicons:beaker" class="w-4 h-4" />
+          <span class="hidden sm:inline">Run Test</span>
+        </button>
+
+        <!-- Add Claim Line Button -->
+        <div class="relative">
+          <button
+            :disabled="remainingSlots === 0"
+            class="px-4 py-2 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            @click="addClaimLine"
+          >
+            <Icon name="heroicons:plus" class="w-4 h-4" />
+            <span class="hidden sm:inline">Add Line</span>
+          </button>
+          <span
+            class="absolute -top-2 -right-2 px-1.5 py-0.5 text-xs font-medium rounded-full text-white"
+            :class="remainingSlots === 0 ? 'bg-warning-500' : 'bg-success-500'"
+          >
+            {{ remainingSlots }}/{{ MAX_NEW_LINES }}
+          </span>
+        </div>
+
+        <!-- Reset Button -->
+        <button
+          v-if="hasChanges"
+          class="px-4 py-2 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors"
+          @click="resetChanges"
+        >
+          Reset
+        </button>
+      </div>
+    </header>
+
+    <!-- No Claim Selected State -->
+    <div v-if="!originalClaim" class="flex-1 flex items-center justify-center p-8">
+      <div class="text-center">
+        <Icon name="heroicons:beaker" class="w-16 h-16 text-neutral-300 mx-auto mb-4" />
         <h2 class="text-xl font-semibold text-neutral-900 mb-2">No Claim Selected</h2>
-        <p class="text-neutral-600 mb-4">Please select a claim to test in the lab.</p>
+        <p class="text-neutral-600 mb-6">Select a claim to test in the Claim Lab</p>
         <button
           @click="navigateTo('/claims')"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          class="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
         >
           Browse Claims
         </button>
       </div>
     </div>
 
-    <template v-else>
-      <!-- Left Panel: Original Claim & Pattern Context -->
-      <div class="w-[30%] bg-neutral-50 border-r border-neutral-200 p-6 overflow-y-auto">
-        <!-- Pattern Context (if practicing a pattern) -->
-        <div v-if="contextPattern" class="mb-6 bg-primary-50 border border-primary-200 rounded-lg p-4">
-          <div class="flex items-center gap-2 mb-2">
-            <Icon name="heroicons:academic-cap" class="w-5 h-5 text-primary-600" />
-            <h3 class="text-sm font-semibold text-primary-900">Practice Mode</h3>
-          </div>
-          <div class="mb-3">
-            <div class="text-xs text-primary-700 mb-1">Pattern</div>
-            <div class="font-medium text-sm text-primary-900">{{ contextPattern.title }}</div>
-          </div>
-          <div class="bg-white border border-primary-200 rounded p-3">
-            <div class="text-xs text-primary-900 font-medium mb-1">Your Goal:</div>
-            <p class="text-xs text-neutral-700">{{ contextPattern.suggestedAction }}</p>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-xs">
-            <span class="text-primary-700">{{ contextPattern.learningProgress }}% learned</span>
-            <span class="text-primary-600">{{ contextPattern.practiceSessionsCompleted }} sessions</span>
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <h3 class="text-sm font-semibold text-neutral-900 mb-2">Original Submission</h3>
-          <div class="text-xs text-neutral-600 space-y-1">
-            <div>Claim ID: {{ originalClaim.id }}</div>
-            <div>Patient: {{ originalClaim.patientName }}</div>
-            <div>DOS: {{ originalClaim.dateOfService }}</div>
-            <div>Provider: {{ originalClaim.providerName || 'N/A' }}</div>
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <div class="flex items-center gap-2 mb-3">
-            <Icon name="heroicons:x-circle" class="w-4 h-4 text-error-500" />
-            <span class="text-sm font-semibold text-neutral-900">Denied</span>
-          </div>
-          <div class="bg-error-light border border-error-200 rounded p-3">
-            <div class="text-xs text-error-900">{{ originalClaim.denialReason }}</div>
-          </div>
-        </div>
-
-        <!-- Pattern Hints -->
-        <div v-if="contextPattern" class="mb-6 bg-secondary-50 border border-secondary-200 rounded-lg p-3">
-          <div class="flex items-center gap-2 mb-2">
-            <Icon name="heroicons:light-bulb" class="w-4 h-4 text-secondary-600" />
-            <span class="text-xs font-semibold text-secondary-900">Pattern Hints</span>
-          </div>
-          <ul class="text-xs text-secondary-800 space-y-1 list-disc list-inside">
-            <li v-for="(hint, index) in patternHints" :key="index">{{ hint }}</li>
-          </ul>
-        </div>
-
-        <!-- Line Items (read-only) -->
-        <div>
-          <h4 class="text-sm font-semibold text-neutral-900 mb-3">Original Line Items</h4>
-          <div class="space-y-3">
+    <!-- Main Content -->
+    <div v-else class="flex-1 flex overflow-hidden">
+      <!-- Spreadsheet Grid -->
+      <div class="flex-1 overflow-auto" ref="gridContainer">
+        <div class="claim-lab-grid">
+          <!-- Row Labels (Sticky Left Column) -->
+          <div class="row-labels">
             <div
-              v-for="item in originalClaim.lineItems"
-              :key="item.lineNumber"
-              class="bg-white border border-neutral-200 rounded p-3"
+              v-for="(field, index) in rowFields"
+              :key="field.key"
+              class="row-label"
+              :class="{ 'sticky-header': index === 0 }"
             >
-              <div class="flex items-center gap-2 mb-1">
-                <button
-                  v-if="hasCodeIntelligence(item.procedureCode)"
-                  @click="viewCodeIntelligence(item.procedureCode)"
-                  class="font-mono text-xs text-primary-600 hover:text-primary-700 hover:underline cursor-pointer flex items-center gap-1"
-                  :title="`View intelligence for ${item.procedureCode}`"
-                >
-                  {{ item.procedureCode }}
-                  <Icon name="heroicons:information-circle" class="w-3 h-3" />
-                </button>
-                <span v-else class="font-mono text-xs text-neutral-900">{{ item.procedureCode }}</span>
-              </div>
-              <div class="text-xs text-neutral-600">
-                Modifiers: {{ item.modifiers?.join(', ') || 'None' }}
-              </div>
-              <div class="text-xs text-neutral-600">
-                Units: {{ item.units }} • {{ formatCurrency(item.billedAmount) }}
-              </div>
+              {{ field.label }}
+              <span v-if="field.required" class="text-error-600">*</span>
             </div>
+          </div>
+
+          <!-- Claim Line Columns -->
+          <div class="claim-lines-container">
+            <ClaimLabLineColumn
+              v-for="(line, index) in claimLines"
+              :key="line.id"
+              :line="line"
+              :line-number="index + 1"
+              :is-new="line.isNew"
+              :row-fields="rowFields"
+              :existing-status="getExistingStatus(line)"
+              :test-status="getTestStatus(line)"
+              :test-insights="getTestInsights(line)"
+              :has-edits="lineHasEdits(line.id)"
+              @update:field="updateLineField"
+              @remove="removeClaimLine"
+            />
           </div>
         </div>
       </div>
 
-      <!-- Middle Panel: Editable Workspace -->
-      <div class="flex-1 bg-white p-6 overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-lg font-semibold text-neutral-900">Edit & Test</h2>
-            <p class="text-sm text-neutral-600">Make changes to fix the denial</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              v-if="hasChanges"
-              @click="resetChanges"
-              class="px-4 py-2 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
-            >
-              Reset
-            </button>
-            <button
-              :disabled="!hasChanges"
-              @click="runSimulation"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-neutral-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              <Icon name="heroicons:beaker" class="w-4 h-4" />
-              Run Simulation
-            </button>
-          </div>
-        </div>
+      <!-- Status Details Panel -->
+      <ClaimLabStatusPanel
+        v-model:open="statusPanelOpen"
+        :claim-lines="claimLines"
+        :active-line-id="activeLineId"
+        :test-result="testResult"
+        :test-in-progress="testInProgress"
+        :advice="currentAdvice"
+        @select-line="selectLine"
+        @run-test="runTest"
+        @apply-suggestion="applySuggestion"
+      />
+    </div>
 
-        <!-- Changes Summary -->
-        <div v-if="changesSummary.length > 0" class="mb-6 bg-warning-50 border border-warning-200 rounded-lg p-4">
-          <div class="text-sm font-medium text-warning-900 mb-2">Changes Made:</div>
-          <ul class="text-sm text-warning-800 space-y-1">
-            <li v-for="(change, index) in changesSummary" :key="index" class="flex items-start gap-2">
-              <Icon name="heroicons:arrow-right" class="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>{{ change }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Code Intelligence Helper -->
-        <div v-if="selectedCodeForHelp" class="mb-6 bg-secondary-50 border border-secondary-200 rounded-lg p-4">
-          <div class="flex items-start gap-3">
-            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-secondary-600 mt-0.5 flex-shrink-0" />
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-semibold text-secondary-900">Code Intelligence: {{ selectedCodeForHelp.code }}</h4>
-                <button
-                  @click="selectedCodeForHelp = null"
-                  class="text-blue-400 hover:text-secondary-600"
-                >
-                  <Icon name="heroicons:x-mark" class="w-4 h-4" />
-                </button>
-              </div>
-              <p class="text-xs text-secondary-800 mb-3">{{ selectedCodeForHelp.description }}</p>
-
-              <!-- Quick Stats -->
-              <div class="grid grid-cols-2 gap-2 mb-3">
-                <div class="bg-white rounded p-2 border border-secondary-200">
-                  <div class="text-xs text-secondary-700">Your Approval Rate</div>
-                  <div class="text-sm font-semibold text-secondary-900">{{ selectedCodeForHelp.yourApprovalRate.toFixed(1) }}%</div>
-                </div>
-                <div v-if="selectedCodeForHelp.nationalApprovalRate !== undefined" class="bg-white rounded p-2 border border-secondary-200">
-                  <div class="text-xs text-secondary-700">National Avg</div>
-                  <div class="text-sm font-semibold text-secondary-900">{{ selectedCodeForHelp.nationalApprovalRate.toFixed(1) }}%</div>
-                </div>
-              </div>
-
-              <!-- Common Issues -->
-              <div v-if="selectedCodeForHelp.commonDenialReasons && selectedCodeForHelp.commonDenialReasons.length > 0" class="mb-3">
-                <div class="text-xs font-medium text-secondary-900 mb-1">Common Denial Reasons:</div>
-                <ul class="text-xs text-secondary-800 space-y-0.5 list-disc list-inside">
-                  <li v-for="(reason, idx) in selectedCodeForHelp.commonDenialReasons.slice(0, 2)" :key="idx">
-                    {{ reason }}
-                  </li>
-                </ul>
-              </div>
-
-              <!-- Required Modifiers -->
-              <div v-if="selectedCodeForHelp.requiredModifiers && selectedCodeForHelp.requiredModifiers.length > 0" class="mb-2">
-                <div class="text-xs font-medium text-secondary-900 mb-1">Required Modifiers:</div>
-                <div class="flex flex-wrap gap-1">
-                  <span
-                    v-for="mod in selectedCodeForHelp.requiredModifiers"
-                    :key="mod.code"
-                    class="px-2 py-0.5 bg-error-100 text-error-800 rounded text-xs font-mono border border-error-300"
-                    :title="mod.description"
-                  >
-                    {{ mod.code }}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                @click="openCodeIntelligence(selectedCodeForHelp.code)"
-                class="text-xs text-secondary-600 hover:text-secondary-700 font-medium"
-              >
-                View full details →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Edit Form -->
-        <div class="space-y-6">
-          <div
-            v-for="(item, index) in editedLineItems"
-            :key="index"
-            class="bg-neutral-50 border border-neutral-200 rounded-lg p-4"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <h4 class="text-sm font-semibold text-neutral-900">Line {{ index + 1 }}</h4>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="text-xs text-neutral-600">Procedure Code</label>
-                  <button
-                    v-if="hasCodeIntelligence(item.procedureCode)"
-                    @click="showCodeHelp(item.procedureCode)"
-                    class="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
-                  >
-                    <Icon name="heroicons:information-circle" class="w-3 h-3" />
-                    Help
-                  </button>
-                </div>
-                <input
-                  v-model="item.procedureCode"
-                  type="text"
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono text-sm"
-                  @blur="checkCodeIntelligence(item.procedureCode)"
-                />
-              </div>
-
-              <div>
-                <label class="text-xs text-neutral-600 mb-1 block">Units</label>
-                <input
-                  v-model.number="item.units"
-                  type="number"
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div class="col-span-2">
-                <label class="text-xs text-neutral-600 mb-1 block">Modifiers (comma-separated)</label>
-                <input
-                  v-model="item.modifiersInput"
-                  type="text"
-                  placeholder="e.g., 25, 59"
-                  class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  @input="detectChanges"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Panel: Results -->
-      <div class="w-[30%] bg-neutral-50 border-l border-neutral-200 p-6 overflow-y-auto">
-        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Simulation Results</h3>
-
-        <div v-if="!simulationResults" class="text-center py-12">
-          <Icon name="heroicons:beaker" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-          <p class="text-sm text-neutral-600">Run a simulation to see results</p>
-        </div>
-
-        <div v-else class="space-y-4">
-          <div class="bg-white border rounded-lg p-4">
-            <div
-              class="flex items-center gap-2 mb-3"
-              :class="{
-                'text-success-700': simulationResults.outcome === 'approved',
-                'text-error-700': simulationResults.outcome === 'denied',
-              }"
-            >
-              <Icon
-                :name="simulationResults.outcome === 'approved' ? 'heroicons:check-circle' : 'heroicons:x-circle'"
-                class="w-6 h-6"
-              />
-              <span class="font-semibold text-lg">{{ simulationResults.outcome === 'approved' ? 'Approved' : 'Denied' }}</span>
-            </div>
-
-            <div class="text-sm text-neutral-700 space-y-2">
-              <div v-if="simulationResults.outcome === 'approved'">
-                <div class="text-xs text-neutral-600 mb-1">Estimated Payment</div>
-                <div class="text-2xl font-semibold text-success-600">
-                  {{ formatCurrency(simulationResults.estimatedPayment) }}
-                </div>
-              </div>
-              <div v-else class="bg-error-light border border-error-200 rounded p-3">
-                <div class="text-xs text-error-900 font-medium mb-1">Denial Reason:</div>
-                <div class="text-sm text-error-800">{{ simulationResults.reason }}</div>
-              </div>
-            </div>
-
-            <!-- Corrections Applied -->
-            <div v-if="simulationResults.correctionsApplied && simulationResults.correctionsApplied.length > 0" class="mt-4 pt-4 border-t border-neutral-200">
-              <div class="text-xs font-medium text-neutral-900 mb-2">Corrections Applied:</div>
-              <div class="space-y-1">
-                <div
-                  v-for="(correction, index) in simulationResults.correctionsApplied"
-                  :key="index"
-                  class="flex items-start gap-2 text-xs text-neutral-700"
-                >
-                  <Icon name="heroicons:check" class="w-3 h-3 text-success-600 mt-0.5 flex-shrink-0" />
-                  <span>{{ correction }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Success Actions -->
-          <div v-if="simulationResults.outcome === 'approved'" class="space-y-2">
-            <button
-              @click="saveLearning"
-              class="w-full py-3 bg-success-600 text-white font-medium rounded-lg hover:bg-success-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Icon name="heroicons:check-circle" class="w-5 h-5" />
-              Save Learning
-            </button>
-
-            <div class="bg-success-50 border border-success-200 rounded-lg p-3">
-              <div class="text-xs text-success-900">
-                <strong>Great job!</strong> Your corrections would likely result in approval.
-                {{ contextPattern ? 'This practice session will count towards your learning progress.' : '' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Try Again -->
-          <button
-            v-else
-            @click="simulationResults = null"
-            class="w-full py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-
-        <!-- Pattern Progress -->
-        <div v-if="contextPattern && simulationResults?.outcome === 'approved'" class="mt-6 pt-6 border-t border-neutral-200">
-          <h4 class="text-sm font-semibold text-neutral-900 mb-3">Pattern Progress</h4>
-          <div class="bg-white border border-neutral-200 rounded-lg p-3">
-            <div class="text-xs text-neutral-600 mb-2">{{ contextPattern.title }}</div>
-            <div class="w-full bg-neutral-200 rounded-full h-2 mb-2">
-              <div
-                class="bg-success-500 h-2 rounded-full transition-all"
-                :style="{ width: `${contextPattern.learningProgress}%` }"
-              />
-            </div>
-            <div class="text-xs text-neutral-600">
-              {{ contextPattern.learningProgress }}% learned
-            </div>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- Code Intelligence Modal -->
-    <CodeIntelligenceModal
-      :code="selectedCode"
-      :is-open="isCodeIntelModalOpen"
-      @close="closeCodeIntelligence"
-      @navigate-to-code="navigateToCode"
-    />
+    <!-- Keyboard Shortcuts Hint -->
+    <div class="border-t border-neutral-200 bg-neutral-50 px-4 py-2 text-xs text-neutral-500 flex items-center gap-4">
+      <span><kbd class="px-1.5 py-0.5 bg-neutral-200 rounded text-neutral-700">⌘</kbd> + <kbd class="px-1.5 py-0.5 bg-neutral-200 rounded text-neutral-700">Enter</kbd> Run Test</span>
+      <span><kbd class="px-1.5 py-0.5 bg-neutral-200 rounded text-neutral-700">Esc</kbd> Close Panel</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { LineItem } from '~/types'
-import type { Pattern, ProcedureCodeIntelligence } from '~/types/enhancements'
+import type { Claim, LineItem } from '~/types'
 
 const route = useRoute()
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
-const eventsStore = useEventsStore()
-const analyticsStore = useAnalyticsStore()
 
 // Composables
 const { formatCurrency } = useAnalytics()
-const { completePracticeSession, recordCorrection } = usePatterns()
-const { trackPracticeStart, trackPracticeCompletion, trackCorrection } = useTracking()
-const {
-  isModalOpen: isCodeIntelModalOpen,
-  selectedCode,
-  openCodeIntelligence,
-  closeCodeIntelligence,
-  navigateToCode,
-  hasIntelligence,
-} = useCodeIntelligence()
 
-// Code intelligence helper state
-const selectedCodeForHelp = ref<ProcedureCodeIntelligence | null>(null)
+// Constants
+const MAX_NEW_LINES = 3
 
-const claimId = route.query.claim as string | undefined
-const patternId = route.query.pattern as string | undefined
+// Route params
+const claimId = computed(() => route.query.claim as string | undefined)
+const patternId = computed(() => route.query.pattern as string | undefined)
 
-// Session start time for tracking
-const sessionStartTime = ref(Date.now())
+// State
+const gridContainer = ref<HTMLElement | null>(null)
+const statusPanelOpen = ref(false)
+const activeLineId = ref<string | null>(null)
+const testInProgress = ref(false)
+const testError = ref('')
+const testResult = ref<TestResult | null>(null)
+const newLineCounter = ref(0)
 
+// Place of service options (defined before use)
+const placeOfServiceOptions = [
+  { value: '11', label: '11 - Office' },
+  { value: '21', label: '21 - Inpatient Hospital' },
+  { value: '22', label: '22 - Outpatient Hospital' },
+  { value: '23', label: '23 - Emergency Room' },
+  { value: '24', label: '24 - Ambulatory Surgical Center' },
+  { value: '31', label: '31 - Skilled Nursing Facility' },
+  { value: '32', label: '32 - Nursing Facility' },
+  { value: '81', label: '81 - Independent Laboratory' },
+]
+
+// Row field definitions
+const rowFields = ref<RowField[]>([
+  { key: 'lineNumber', label: 'Line', required: false, editable: false, type: 'display' },
+  { key: 'existingStatus', label: 'Existing Status', required: false, editable: false, type: 'status' },
+  { key: 'testStatus', label: 'Test Status', required: false, editable: false, type: 'status' },
+  { key: 'dateOfServiceFrom', label: 'Date of Service (From)', required: true, editable: true, type: 'date' },
+  { key: 'dateOfServiceTo', label: 'Date of Service (To)', required: true, editable: true, type: 'date' },
+  { key: 'procedureCode', label: 'CPT/HCPCS', required: true, editable: true, type: 'code', codeType: 'procedure' },
+  { key: 'ndcCode', label: 'NDC Code', required: false, editable: true, type: 'text' },
+  { key: 'placeOfService', label: 'Place of Service', required: true, editable: true, type: 'select', options: placeOfServiceOptions },
+  { key: 'units', label: 'Units', required: true, editable: true, type: 'number' },
+  { key: 'modifier1', label: 'Modifier 1', required: false, editable: true, type: 'code', codeType: 'modifier' },
+  { key: 'modifier2', label: 'Modifier 2', required: false, editable: true, type: 'code', codeType: 'modifier' },
+  { key: 'modifier3', label: 'Modifier 3', required: false, editable: true, type: 'code', codeType: 'modifier' },
+  { key: 'modifier4', label: 'Modifier 4', required: false, editable: true, type: 'code', codeType: 'modifier' },
+  { key: 'diagnosisCode1', label: 'Diagnosis 1', required: true, editable: true, type: 'code', codeType: 'diagnosis' },
+  { key: 'diagnosisCode2', label: 'Diagnosis 2', required: false, editable: true, type: 'code', codeType: 'diagnosis' },
+  { key: 'diagnosisCode3', label: 'Diagnosis 3', required: false, editable: true, type: 'code', codeType: 'diagnosis' },
+  { key: 'diagnosisCode4', label: 'Diagnosis 4', required: false, editable: true, type: 'code', codeType: 'diagnosis' },
+  { key: 'renderingProviderNpi', label: 'Rendering Provider NPI', required: true, editable: true, type: 'text' },
+  { key: 'billedAmount', label: 'Billed Amount', required: false, editable: false, type: 'currency' },
+  { key: 'patientName', label: 'Patient Name', required: false, editable: false, type: 'display' },
+  { key: 'memberId', label: 'Member ID', required: false, editable: false, type: 'display' },
+  { key: 'patientDob', label: 'Patient DOB', required: false, editable: false, type: 'display' },
+  { key: 'priorAuthNumber', label: 'Prior Auth #', required: false, editable: false, type: 'display' },
+])
+
+// Get original claim
 const originalClaim = computed(() => {
-  if (claimId) {
-    const found = appStore.getClaimById(claimId)
-    return found ? ensureLineItems(found) : null
+  if (claimId.value) {
+    return appStore.getClaimById(claimId.value) || null
   }
   // Default to first denied claim
-  const firstDenied = appStore.deniedClaims[0]
-  return firstDenied ? ensureLineItems(firstDenied) : null
+  return appStore.deniedClaims[0] || null
 })
 
-// Get pattern context if practicing a specific pattern
+// Get pattern context
 const contextPattern = computed(() => {
-  if (patternId) {
-    return patternsStore.getPatternById(patternId)
-  }
-  // If no pattern specified but claim has matching patterns, use primary
-  if (originalClaim.value) {
-    const matchingPatterns = patternsStore.getPatternsByClaim(originalClaim.value.id)
-    if (matchingPatterns.length > 0) {
-      const tierPriority = { critical: 4, high: 3, medium: 2, low: 1 }
-      return matchingPatterns.sort((a, b) =>
-        tierPriority[b.tier] - tierPriority[a.tier]
-      )[0]
-    }
+  if (patternId.value) {
+    return patternsStore.getPatternById(patternId.value)
   }
   return null
 })
 
-// Pattern-specific hints
-const patternHints = computed(() => {
-  if (!contextPattern.value) return []
+// Claim lines (editable state)
+const claimLines = ref<ClaimLabLine[]>([])
 
-  const hints: string[] = []
-  const category = contextPattern.value.category
-
-  if (category === 'modifier-missing') {
-    hints.push('Check if E&M codes need modifier 25')
-    hints.push('Look for same-day procedures')
-    hints.push('Add modifiers in comma-separated format')
-  } else if (category === 'authorization') {
-    hints.push('Verify prior authorization requirements')
-    hints.push('Check for high-value procedures')
-  } else if (category === 'documentation') {
-    hints.push('Ensure all fields are properly documented')
-    hints.push('Check diagnosis code specificity')
-  } else if (category === 'code-mismatch') {
-    hints.push('Review CCI bundling edits')
-    hints.push('Check for unbundling violations')
-  }
-
-  return hints
-})
-
-const editedLineItems = ref<Array<LineItem & { modifiersInput: string }>>([])
-const simulationResults = ref<any>(null)
-const correctionsCount = ref(0)
-
+// Initialize claim lines from original claim
 watch(originalClaim, (claim) => {
-  if (claim?.lineItems) {
-    editedLineItems.value = claim.lineItems.map(item => ({
-      ...JSON.parse(JSON.stringify(item)),
-      modifiersInput: item.modifiers?.join(', ') || '',
-    }))
+  if (claim) {
+    initializeClaimLines(claim)
   }
 }, { immediate: true })
 
-// Track practice session start
-onMounted(() => {
-  if (contextPattern.value) {
-    trackPracticeStart(contextPattern.value.id)
-  }
-})
+function initializeClaimLines(claim: Claim) {
+  claimLines.value = (claim.lineItems || []).map((item, index) => ({
+    id: `line-${index + 1}`,
+    isNew: false,
+    originalData: { ...item },
+    editedData: {
+      lineNumber: index + 1,
+      dateOfServiceFrom: claim.dateOfService,
+      dateOfServiceTo: claim.dateOfService,
+      procedureCode: item.procedureCode,
+      ndcCode: '',
+      placeOfService: '11',
+      units: item.units,
+      modifier1: item.modifiers?.[0] || '',
+      modifier2: item.modifiers?.[1] || '',
+      modifier3: item.modifiers?.[2] || '',
+      modifier4: item.modifiers?.[3] || '',
+      diagnosisCode1: claim.diagnosisCodes?.[0] || '',
+      diagnosisCode2: claim.diagnosisCodes?.[1] || '',
+      diagnosisCode3: claim.diagnosisCodes?.[2] || '',
+      diagnosisCode4: claim.diagnosisCodes?.[3] || '',
+      renderingProviderNpi: claim.billingProviderNPI || '',
+      billedAmount: item.billedAmount,
+      patientName: claim.patientName,
+      memberId: claim.memberId || '',
+      patientDob: claim.patientDOB || '',
+      priorAuthNumber: claim.priorAuthNumber || '',
+    },
+    existingInsights: claim.status === 'denied' ? [{
+      type: 'denial' as const,
+      reason: claim.denialReason || 'Unknown denial reason',
+      code: 'DENIAL',
+    }] : [],
+    testInsights: [],
+  }))
+
+  // Reset state
+  newLineCounter.value = 0
+  testResult.value = null
+  testError.value = ''
+}
+
+// Computed
+const remainingSlots = computed(() => MAX_NEW_LINES - claimLines.value.filter(l => l.isNew).length)
 
 const hasChanges = computed(() => {
-  if (!originalClaim.value) return false
-  return JSON.stringify(originalClaim.value.lineItems) !== JSON.stringify(editedLineItems.value.map(i => {
-    const { modifiersInput, ...rest } = i
-    return { ...rest, modifiers: modifiersInput.split(',').map(m => m.trim()).filter(Boolean) }
-  }))
-})
-
-// Track what changes were made
-const changesSummary = computed(() => {
-  if (!originalClaim.value || !hasChanges.value) return []
-
-  const changes: string[] = []
-  editedLineItems.value.forEach((edited, index) => {
-    const original = originalClaim.value?.lineItems?.[index]
-    if (!original) return
-
-    if (edited.procedureCode !== original.procedureCode) {
-      changes.push(`Line ${index + 1}: Changed code from ${original.procedureCode} to ${edited.procedureCode}`)
-    }
-
-    const originalMods = original.modifiers?.join(', ') || ''
-    if (edited.modifiersInput !== originalMods) {
-      changes.push(`Line ${index + 1}: Updated modifiers to "${edited.modifiersInput}"`)
-    }
-
-    if (edited.units !== original.units) {
-      changes.push(`Line ${index + 1}: Changed units from ${original.units} to ${edited.units}`)
-    }
+  return claimLines.value.some(line => {
+    if (line.isNew) return true
+    return JSON.stringify(line.originalData) !== JSON.stringify(getOriginalLineData(line))
   })
-
-  return changes
 })
 
-function detectChanges() {
-  // Real-time change detection for UX feedback
+// Methods
+function getOriginalLineData(line: ClaimLabLine) {
+  const original = originalClaim.value?.lineItems?.find(
+    (_, i) => `line-${i + 1}` === line.id
+  )
+  return original || null
+}
+
+function addClaimLine() {
+  if (remainingSlots.value <= 0) return
+
+  newLineCounter.value++
+  const newLineNumber = claimLines.value.length + 1
+
+  claimLines.value.push({
+    id: `new-line-${newLineCounter.value}`,
+    isNew: true,
+    originalData: null,
+    editedData: {
+      lineNumber: newLineNumber,
+      dateOfServiceFrom: originalClaim.value?.dateOfService || '',
+      dateOfServiceTo: originalClaim.value?.dateOfService || '',
+      procedureCode: '',
+      ndcCode: '',
+      placeOfService: '11',
+      units: 1,
+      modifier1: '',
+      modifier2: '',
+      modifier3: '',
+      modifier4: '',
+      diagnosisCode1: originalClaim.value?.diagnosisCodes?.[0] || '',
+      diagnosisCode2: '',
+      diagnosisCode3: '',
+      diagnosisCode4: '',
+      renderingProviderNpi: originalClaim.value?.billingProviderNPI || '',
+      billedAmount: 0,
+      patientName: originalClaim.value?.patientName || '',
+      memberId: originalClaim.value?.memberId || '',
+      patientDob: originalClaim.value?.patientDOB || '',
+      priorAuthNumber: originalClaim.value?.priorAuthNumber || '',
+    },
+    existingInsights: [],
+    testInsights: [],
+  })
+}
+
+function removeClaimLine(lineId: string) {
+  const index = claimLines.value.findIndex(l => l.id === lineId)
+  if (index === -1) return
+
+  const line = claimLines.value[index]
+  if (!line || !line.isNew) return // Can only remove new lines
+
+  claimLines.value.splice(index, 1)
+
+  // Renumber lines
+  claimLines.value.forEach((l, i) => {
+    l.editedData.lineNumber = i + 1
+  })
+}
+
+function updateLineField(lineId: string, fieldKey: string, value: any) {
+  const line = claimLines.value.find(l => l.id === lineId)
+  if (line) {
+    (line.editedData as any)[fieldKey] = value
+  }
+}
+
+function lineHasEdits(lineId: string): boolean {
+  const line = claimLines.value.find(l => l.id === lineId)
+  if (!line) return false
+  if (line.isNew) return true
+
+  // Compare with original
+  const original = getOriginalLineData(line)
+  if (!original) return false
+
+  return line.editedData.procedureCode !== original.procedureCode ||
+    line.editedData.units !== original.units ||
+    line.editedData.modifier1 !== (original.modifiers?.[0] || '') ||
+    line.editedData.modifier2 !== (original.modifiers?.[1] || '') ||
+    line.editedData.modifier3 !== (original.modifiers?.[2] || '') ||
+    line.editedData.modifier4 !== (original.modifiers?.[3] || '')
 }
 
 function resetChanges() {
-  if (originalClaim.value?.lineItems) {
-    editedLineItems.value = originalClaim.value.lineItems.map(item => ({
-      ...JSON.parse(JSON.stringify(item)),
-      modifiersInput: item.modifiers?.join(', ') || '',
-    }))
-  }
-  simulationResults.value = null
-  correctionsCount.value = 0
-}
-
-function runSimulation() {
-  if (!originalClaim.value) return
-
-  const correctionsApplied: string[] = []
-  let outcome: 'approved' | 'denied' = 'denied'
-  let reason = originalClaim.value.denialReason || 'Policy violation'
-
-  // Check for modifier 25 correction
-  const hasModifier25 = editedLineItems.value.some(item =>
-    item.modifiersInput.toLowerCase().includes('25')
-  )
-
-  if (originalClaim.value.denialReason?.includes('Modifier 25') && hasModifier25) {
-    outcome = 'approved'
-    correctionsApplied.push('Added modifier 25 to E&M service')
-    correctionsCount.value++
-  }
-
-  // Check for prior authorization (simulated)
-  if (originalClaim.value.denialReason?.includes('Authorization') ||
-      originalClaim.value.denialReason?.includes('Prior Auth')) {
-    // In real scenario, would check if auth was obtained
-    reason = 'Prior authorization required - would need to obtain before resubmission'
-  }
-
-  // Check for documentation improvements
-  if (originalClaim.value.denialReason?.includes('Documentation')) {
-    const hasDetailedCodes = editedLineItems.value.every(item => item.procedureCode.length >= 5)
-    if (hasDetailedCodes) {
-      outcome = 'approved'
-      correctionsApplied.push('Improved documentation specificity')
-      correctionsCount.value++
-    }
-  }
-
-  // Check for bundling corrections
-  if (originalClaim.value.denialReason?.includes('Bundling') ||
-      originalClaim.value.denialReason?.includes('Unbundling')) {
-    // Simplified check - removed problematic bundled codes
-    if (originalClaim.value.lineItems && editedLineItems.value.length < originalClaim.value.lineItems.length) {
-      outcome = 'approved'
-      correctionsApplied.push('Removed bundled procedure codes')
-      correctionsCount.value++
-    }
-  }
-
-  simulationResults.value = {
-    outcome,
-    estimatedPayment: outcome === 'approved' ? originalClaim.value.billedAmount * 0.85 : 0,
-    reason: outcome === 'denied' ? reason : undefined,
-    correctionsApplied,
+  if (originalClaim.value) {
+    initializeClaimLines(originalClaim.value)
   }
 }
 
-function saveLearning() {
-  if (!originalClaim.value || !simulationResults.value) return
+function applySuggestion(lineId: string, field: string, value: string) {
+  const line = claimLines.value.find(l => l.id === lineId)
+  if (line) {
+    (line.editedData as any)[field] = value
+  }
+}
 
-  const duration = Date.now() - sessionStartTime.value
+function selectLine(lineId: string) {
+  activeLineId.value = lineId
+  statusPanelOpen.value = true
 
-  // Save learning marker
-  appStore.addLearningMarker({
-    userId: 'user-1',
-    type: 'claim_corrected',
-    category: contextPattern.value?.category || 'Coding Error',
-    description: `Corrected claim ${originalClaim.value.id}${contextPattern.value ? ` - ${contextPattern.value.title}` : ''}`,
-    originalClaim: originalClaim.value,
-    simulationResult: simulationResults.value,
-  })
+  // Scroll to line
+  const index = claimLines.value.findIndex(l => l.id === lineId)
+  if (index > 0 && gridContainer.value) {
+    gridContainer.value.scrollLeft = index * 160
+  }
+}
 
-  // Track practice completion
-  if (contextPattern.value) {
-    completePracticeSession(
-      contextPattern.value.id,
-      duration,
-      correctionsCount.value
-    )
+function getExistingStatus(line: ClaimLabLine): 'approved' | 'denied' | 'pending' | 'new' {
+  if (line.isNew) return 'new'
+  if (line.existingInsights.some(i => i.type === 'denial')) return 'denied'
+  return originalClaim.value?.status === 'approved' ? 'approved' : 'pending'
+}
 
-    trackPracticeCompletion(
-      contextPattern.value.id,
-      duration,
-      correctionsCount.value
-    )
+function getTestStatus(line: ClaimLabLine): 'approved' | 'denied' | 'untested' | 'improved' {
+  if (!testResult.value) return 'untested'
 
-    // Record each correction
-    changesSummary.value.forEach(change => {
-      recordCorrection(contextPattern.value!.id, originalClaim.value!.id, change)
-      trackCorrection(originalClaim.value!.id, contextPattern.value!.id, change)
+  const lineResult = testResult.value.lineResults.find(r => r.lineId === line.id)
+  if (!lineResult) return 'untested'
+
+  if (lineResult.status === 'approved') {
+    // Check if it improved from denied
+    if (getExistingStatus(line) === 'denied') return 'improved'
+    return 'approved'
+  }
+  return 'denied'
+}
+
+function getTestInsights(line: ClaimLabLine) {
+  if (!testResult.value) return []
+  const lineResult = testResult.value.lineResults.find(r => r.lineId === line.id)
+  return lineResult?.insights || []
+}
+
+// Advice engine
+const currentAdvice = computed(() => {
+  if (!testResult.value) return null
+  return testResult.value.advice
+})
+
+// Run test simulation
+async function runTest() {
+  if (testInProgress.value || !originalClaim.value) return
+
+  testInProgress.value = true
+  testError.value = ''
+
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Run the test simulation
+    testResult.value = simulateClaimTest(claimLines.value)
+
+    // Open status panel to show results
+    statusPanelOpen.value = true
+
+    // Select first line with issues
+    const lineWithIssue = testResult.value.lineResults.find(r => r.status === 'denied')
+    if (lineWithIssue) {
+      activeLineId.value = lineWithIssue.lineId
+    } else {
+      const firstLine = claimLines.value[0]
+      if (firstLine) {
+        activeLineId.value = firstLine.id
+      }
+    }
+  } catch (error) {
+    testError.value = 'Test failed. Please check the data and try again.'
+  } finally {
+    testInProgress.value = false
+  }
+}
+
+// Test simulation logic with advice generation
+function simulateClaimTest(lines: ClaimLabLine[]): TestResult {
+  const lineResults: LineTestResult[] = []
+  const overallAdvice: AdviceItem[] = []
+  let overallStatus: 'approved' | 'denied' = 'approved'
+
+  for (const line of lines) {
+    const insights: TestInsight[] = []
+    let lineStatus: 'approved' | 'denied' = 'approved'
+
+    const data = line.editedData
+
+    // Check for missing modifier 25 on E&M with same-day procedure
+    if (isEMCode(data.procedureCode) && hasOtherProcedures(lines, line.id)) {
+      const hasModifier25 = [data.modifier1, data.modifier2, data.modifier3, data.modifier4]
+        .some(m => m === '25')
+
+      if (!hasModifier25) {
+        lineStatus = 'denied'
+        insights.push({
+          type: 'denial',
+          code: 'MOD-25',
+          reason: 'E&M service billed on same day as procedure requires modifier 25',
+          severity: 'high',
+        })
+        overallAdvice.push({
+          lineId: line.id,
+          action: 'Add modifier 25 to the E&M code',
+          explanation: 'When an E&M service (99201-99215) is billed on the same day as a procedure, modifier 25 is required to indicate the E&M was a separately identifiable service.',
+          field: 'modifier1',
+          suggestedValue: '25',
+        })
+      }
+    }
+
+    // Check for modifier 59 on potentially bundled procedures
+    if (isProcedurePotentiallyBundled(data.procedureCode, lines, line.id)) {
+      const hasModifier59 = [data.modifier1, data.modifier2, data.modifier3, data.modifier4]
+        .some(m => m === '59' || m === 'XE' || m === 'XP' || m === 'XS' || m === 'XU')
+
+      if (!hasModifier59) {
+        lineStatus = 'denied'
+        insights.push({
+          type: 'denial',
+          code: 'BUNDLE',
+          reason: 'Procedure may be bundled with another service on this claim',
+          severity: 'medium',
+        })
+        overallAdvice.push({
+          lineId: line.id,
+          action: 'Consider adding modifier 59 or appropriate X modifier',
+          explanation: 'This procedure may be bundled with another service. If the services were distinct, add modifier 59 (or XE, XP, XS, XU) to indicate they were separate and identifiable.',
+          field: 'modifier1',
+          suggestedValue: '59',
+        })
+      }
+    }
+
+    // Check for prior authorization requirement
+    if (requiresPriorAuth(data.procedureCode) && !data.priorAuthNumber) {
+      lineStatus = 'denied'
+      insights.push({
+        type: 'denial',
+        code: 'AUTH',
+        reason: 'Prior authorization required for this procedure',
+        severity: 'high',
+      })
+      overallAdvice.push({
+        lineId: line.id,
+        action: 'Obtain prior authorization before resubmitting',
+        explanation: 'This procedure requires prior authorization. Contact the payer to obtain authorization, then resubmit with the authorization number.',
+        field: 'priorAuthNumber',
+        suggestedValue: null,
+      })
+    }
+
+    // Check for diagnosis code specificity
+    if (data.diagnosisCode1 && !isSpecificDiagnosis(data.diagnosisCode1)) {
+      lineStatus = 'denied'
+      insights.push({
+        type: 'denial',
+        code: 'DX-SPEC',
+        reason: 'Diagnosis code lacks required specificity',
+        severity: 'medium',
+      })
+      overallAdvice.push({
+        lineId: line.id,
+        action: 'Use a more specific diagnosis code',
+        explanation: 'The diagnosis code provided is too general. Review documentation and code to the highest level of specificity supported.',
+        field: 'diagnosisCode1',
+        suggestedValue: null,
+      })
+    }
+
+    // Check for medical necessity (diagnosis-procedure match)
+    if (data.procedureCode && data.diagnosisCode1) {
+      if (!isDiagnosisProcedureMatch(data.diagnosisCode1, data.procedureCode)) {
+        insights.push({
+          type: 'warning',
+          code: 'MED-NEC',
+          reason: 'Diagnosis may not support medical necessity for this procedure',
+          severity: 'low',
+        })
+        overallAdvice.push({
+          lineId: line.id,
+          action: 'Verify diagnosis supports medical necessity',
+          explanation: 'The diagnosis code may not clearly establish medical necessity for this procedure. Review documentation to ensure the diagnosis appropriately supports the service.',
+          field: 'diagnosisCode1',
+          suggestedValue: null,
+        })
+      }
+    }
+
+    // If line was previously denied but now passes all checks
+    if (lineStatus === 'approved' && line.existingInsights.some(i => i.type === 'denial')) {
+      insights.push({
+        type: 'success',
+        code: 'FIXED',
+        reason: 'Previous denial reason has been addressed',
+        severity: 'info',
+      })
+    }
+
+    if (lineStatus === 'denied') {
+      overallStatus = 'denied'
+    }
+
+    lineResults.push({
+      lineId: line.id,
+      status: lineStatus,
+      insights,
     })
   }
 
-  alert(`Learning saved! ${correctionsCount.value} correction(s) applied. ${contextPattern.value ? 'Pattern progress updated.' : ''}`)
-  navigateTo('/')
-}
+  // Calculate estimated payment if approved
+  const estimatedPayment = overallStatus === 'approved'
+    ? lines.reduce((sum, l) => sum + (l.editedData.billedAmount || 0), 0) * 0.85
+    : 0
 
-// Code intelligence helper functions
-const hasCodeIntelligence = (code: string): boolean => {
-  return hasIntelligence(code)
-}
-
-const viewCodeIntelligence = (code: string) => {
-  openCodeIntelligence(code)
-}
-
-const showCodeHelp = (code: string) => {
-  const intelligence = analyticsStore.getCodeIntelligence(code)
-  if (intelligence) {
-    selectedCodeForHelp.value = intelligence
+  return {
+    status: overallStatus,
+    lineResults,
+    advice: overallAdvice,
+    estimatedPayment,
+    summary: overallStatus === 'approved'
+      ? 'All claim lines pass validation. Estimated payment shown.'
+      : `${lineResults.filter(r => r.status === 'denied').length} line(s) have issues that need to be addressed.`,
   }
 }
 
-const checkCodeIntelligence = (code: string) => {
-  // Auto-show help when a code with intelligence is entered
-  if (hasCodeIntelligence(code) && !selectedCodeForHelp.value) {
-    showCodeHelp(code)
+// Helper functions for test simulation
+function isEMCode(code: string): boolean {
+  if (!code) return false
+  const emRanges = [
+    { start: 99201, end: 99215 },
+    { start: 99221, end: 99223 },
+    { start: 99231, end: 99233 },
+    { start: 99281, end: 99285 },
+  ]
+  const numCode = parseInt(code, 10)
+  return emRanges.some(r => numCode >= r.start && numCode <= r.end)
+}
+
+function hasOtherProcedures(lines: ClaimLabLine[], excludeLineId: string): boolean {
+  return lines.some(l => l.id !== excludeLineId && l.editedData.procedureCode && !isEMCode(l.editedData.procedureCode))
+}
+
+function isProcedurePotentiallyBundled(code: string, lines: ClaimLabLine[], excludeLineId: string): boolean {
+  if (!code) return false
+  // Simplified bundling check - in reality would check CCI edits
+  const bundledPairs: Record<string, string[]> = {
+    '36415': ['36416', '99211', '99212'],
+    '99213': ['99214', '99215'],
   }
+  const otherCodes = lines
+    .filter(l => l.id !== excludeLineId)
+    .map(l => l.editedData.procedureCode)
+
+  return bundledPairs[code]?.some(bundled => otherCodes.includes(bundled)) || false
+}
+
+function requiresPriorAuth(code: string): boolean {
+  if (!code) return false
+  // High-value procedures that typically require prior auth
+  const authRequiredCodes = ['27447', '27130', '63030', '22551', '22612', '29881']
+  return authRequiredCodes.includes(code)
+}
+
+function isSpecificDiagnosis(code: string): boolean {
+  if (!code) return false
+  // ICD-10 codes should generally be 4+ characters for specificity
+  return code.length >= 4
+}
+
+function isDiagnosisProcedureMatch(diagnosis: string, procedure: string): boolean {
+  // Simplified check - in reality would use medical necessity edits
+  // For demo, assume match if diagnosis starts with certain prefixes for certain procedures
+  if (!diagnosis || !procedure) return true
+  return true // Simplified for demo
+}
+
+// Keyboard shortcuts
+onKeyStroke('Enter', (e) => {
+  if ((e.metaKey || e.ctrlKey) && !testInProgress.value && originalClaim.value) {
+    e.preventDefault()
+    runTest()
+  }
+})
+
+onKeyStroke('Escape', () => {
+  statusPanelOpen.value = false
+})
+
+// Types
+interface RowField {
+  key: string
+  label: string
+  required: boolean
+  editable: boolean
+  type: 'display' | 'status' | 'text' | 'number' | 'date' | 'select' | 'code' | 'currency'
+  codeType?: 'procedure' | 'diagnosis' | 'modifier'
+  options?: { value: string; label: string }[]
+}
+
+interface ClaimLabLine {
+  id: string
+  isNew: boolean
+  originalData: LineItem | null
+  editedData: ClaimLineData
+  existingInsights: TestInsight[]
+  testInsights: TestInsight[]
+}
+
+interface ClaimLineData {
+  lineNumber: number
+  dateOfServiceFrom: string
+  dateOfServiceTo: string
+  procedureCode: string
+  ndcCode: string
+  placeOfService: string
+  units: number
+  modifier1: string
+  modifier2: string
+  modifier3: string
+  modifier4: string
+  diagnosisCode1: string
+  diagnosisCode2: string
+  diagnosisCode3: string
+  diagnosisCode4: string
+  renderingProviderNpi: string
+  billedAmount: number
+  patientName: string
+  memberId: string
+  patientDob: string
+  priorAuthNumber: string
+}
+
+interface TestInsight {
+  type: 'denial' | 'warning' | 'success' | 'info'
+  code: string
+  reason: string
+  severity?: 'high' | 'medium' | 'low' | 'info'
+}
+
+interface LineTestResult {
+  lineId: string
+  status: 'approved' | 'denied'
+  insights: TestInsight[]
+}
+
+interface AdviceItem {
+  lineId: string
+  action: string
+  explanation: string
+  field: string
+  suggestedValue: string | null
+}
+
+interface TestResult {
+  status: 'approved' | 'denied'
+  lineResults: LineTestResult[]
+  advice: AdviceItem[]
+  estimatedPayment: number
+  summary: string
 }
 </script>
+
+<style scoped>
+.claim-lab-grid {
+  display: grid;
+  grid-template-columns: 200px auto;
+  min-width: fit-content;
+}
+
+.row-labels {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: white;
+  border-right: 1px solid theme('colors.neutral.200');
+}
+
+.row-label {
+  @apply flex items-center px-4 py-2 text-xs text-neutral-700 bg-white border-b border-neutral-200;
+  height: 36px;
+}
+
+.row-label.sticky-header {
+  @apply sticky top-0 z-20 bg-neutral-50 font-medium;
+}
+
+.claim-lines-container {
+  display: flex;
+  overflow-x: auto;
+}
+
+@media (min-width: 1024px) {
+  .claim-lab-grid {
+    grid-template-columns: 220px auto;
+  }
+}
+</style>
