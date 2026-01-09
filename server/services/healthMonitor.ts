@@ -10,6 +10,7 @@ import { claims } from '~/server/database/schema'
 import { count } from 'drizzle-orm'
 import { getCache } from './cacheManager'
 import { getPerformanceMonitor } from './performanceMonitor'
+import { getAppConfig } from '~/config/appConfig'
 
 // =============================================================================
 // TYPES
@@ -56,12 +57,32 @@ export interface HealthCheckResult {
 // =============================================================================
 
 export class HealthMonitor {
-  private degradedResponseTimeThreshold = 500 // ms
-  private unhealthyResponseTimeThreshold = 2000 // ms
-  private degradedMemoryThreshold = 80 // percent
-  private unhealthyMemoryThreshold = 95 // percent
-  private degradedErrorRateThreshold = 5 // percent
-  private unhealthyErrorRateThreshold = 20 // percent
+  // Thresholds are loaded from centralized config
+  private get config() {
+    return getAppConfig().health
+  }
+
+  private get degradedResponseTimeThreshold() {
+    return this.config.responseTime.degraded
+  }
+  private get unhealthyResponseTimeThreshold() {
+    return this.config.responseTime.unhealthy
+  }
+  private get degradedMemoryThreshold() {
+    return this.config.memory.degraded
+  }
+  private get unhealthyMemoryThreshold() {
+    return this.config.memory.unhealthy
+  }
+  private get degradedErrorRateThreshold() {
+    return this.config.errorRate.degraded
+  }
+  private get unhealthyErrorRateThreshold() {
+    return this.config.errorRate.unhealthy
+  }
+  private get cacheHitRateMin() {
+    return this.config.cacheHitRateMin
+  }
 
   /**
    * Perform all health checks
@@ -155,7 +176,7 @@ export class HealthMonitor {
     let status: HealthStatus = 'healthy'
     // If cache is being used but hit rate is low, mark as degraded
     if (cacheStats.hits + cacheStats.misses > 100) {
-      if (hitRateNum < 50) {
+      if (hitRateNum < this.cacheHitRateMin) {
         status = 'degraded'
       }
     }

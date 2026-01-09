@@ -17,6 +17,7 @@ import type {
   MonthlySnapshot,
   SpecialtyType,
 } from '../tools/scenario-types'
+import { getAppConfig } from '~/config/appConfig'
 
 // =============================================================================
 // INPUT TYPES
@@ -648,8 +649,8 @@ export function useScenarioBuilder() {
     const months = getMonthsBetween(input.startDate, endDateStr)
     const engagementConfig = engagementDefaults[input.engagementLevel]
 
-    // Calculate derived metrics
-    const avgClaimValue = 500 // Default average
+    // Calculate derived metrics - use configurable default
+    const avgClaimValue = getAppConfig().financial.defaultAvgClaimValue
     let totalDenied = 0
     let totalDollarsDenied = 0
     let totalAppeals = 0

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction, ActionCategory, RecoveryStatus } from '~/types/enhancements'
+import { getAppConfig } from '~/config/appConfig'
 
 // Types for API response
 interface DbPattern {
@@ -47,7 +48,9 @@ export const usePatternsStore = defineStore('patterns', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const useDatabase = ref(true)
-  const pagination = ref({ total: 0, limit: 50, offset: 0, hasMore: false })
+  // Use configurable pagination limit
+  const paginationLimit = getAppConfig().ui.paginationLimit
+  const pagination = ref({ total: 0, limit: paginationLimit, offset: 0, hasMore: false })
   const filters = ref<PatternFilters>({
     status: [],
     tier: [],

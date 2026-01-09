@@ -4,6 +4,8 @@
  * Similar to console-ui's useUrlParamsState pattern
  */
 
+import { getAppConfig } from '~/config/appConfig'
+
 export interface UrlParamsOptions {
   /** Keys to exclude from URL params */
   excludeKeys?: string[]
@@ -16,8 +18,10 @@ export interface UrlParamsOptions {
 export function useUrlParamsState(options: UrlParamsOptions = {}) {
   const route = useRoute()
   const router = useRouter()
+  const config = getAppConfig()
 
-  const { excludeKeys = ['claim', 'policy'], defaults = {}, debounceMs = 300 } = options
+  // Use config default for debounce if not provided
+  const { excludeKeys = ['claim', 'policy'], defaults = {}, debounceMs = config.ui.debounceMs } = options
 
   // Debounce timer for search inputs
   let debounceTimer: ReturnType<typeof setTimeout> | null = null

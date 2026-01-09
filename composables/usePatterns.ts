@@ -9,6 +9,7 @@ import type { Pattern, PatternStatus, PatternTier } from '~/types/enhancements'
 export function usePatterns() {
   const patternsStore = usePatternsStore()
   const eventsStore = useEventsStore()
+  const appConfig = useAppConfig()
 
   // Get pattern color based on tier
   const getPatternTierColor = (tier: PatternTier): string => {
@@ -69,12 +70,9 @@ export function usePatterns() {
     return icons[category] || 'heroicons:light-bulb'
   }
 
-  // Calculate learning progress percentage
+  // Calculate learning progress percentage (uses configurable thresholds)
   const getLearningProgressClass = (progress: number): string => {
-    if (progress >= 80) return 'bg-green-500'
-    if (progress >= 50) return 'bg-yellow-500'
-    if (progress >= 25) return 'bg-orange-500'
-    return 'bg-red-500'
+    return appConfig.getProgressBgClass(progress)
   }
 
   // Start practice session for a pattern

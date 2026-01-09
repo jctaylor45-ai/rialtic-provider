@@ -15,6 +15,7 @@ import type {
   LearningEvent,
   EventType
 } from '~/types/enhancements'
+import { getAppConfig } from '~/config/appConfig'
 
 // ============================================================================
 // PATTERN SCORING
@@ -22,22 +23,32 @@ import type {
 
 /**
  * Calculate pattern tier based on frequency, impact, and trend
+ * Uses configurable thresholds from appConfig
  */
 export function calculatePatternTier(score: PatternScore, avgDenialAmount: number): PatternTier {
   const { frequency, impact, trend } = score
+  const config = getAppConfig().pattern.tierThresholds
 
   // Critical: High frequency + high impact + upward trend
-  if (frequency >= 15 && impact >= 20000 && trend === 'up') {
+  if (
+    frequency >= config.critical.minFrequency &&
+    impact >= config.critical.minImpact &&
+    (config.critical.requiresUptrend ? trend === 'up' : true)
+  ) {
     return 'critical'
   }
 
   // High: Moderate-high frequency or high impact
-  if (frequency >= 10 || impact >= 15000 || (frequency >= 5 && trend === 'up')) {
+  if (
+    frequency >= config.high.minFrequency ||
+    impact >= config.high.minImpact ||
+    (frequency >= config.high.altFrequencyWithUptrend && trend === 'up')
+  ) {
     return 'high'
   }
 
   // Medium: Moderate frequency or impact
-  if (frequency >= 5 || impact >= 5000) {
+  if (frequency >= config.medium.minFrequency || impact >= config.medium.minImpact) {
     return 'medium'
   }
 
@@ -47,20 +58,25 @@ export function calculatePatternTier(score: PatternScore, avgDenialAmount: numbe
 
 /**
  * Calculate confidence score for pattern detection
+ * Uses configurable weights and normalizers from appConfig
  */
 export function calculatePatternConfidence(
   evidenceCount: number,
   timeSpan: number,  // days
   consistencyScore: number  // 0-1
 ): number {
+  const config = getAppConfig().pattern
+  const { evidence, timeSpan: timeWeight, consistency } = config.confidenceWeights
+  const { maxEvidenceCount, maxTimeSpan } = config.confidenceNormalizers
+
   // More evidence = higher confidence
-  const evidenceScore = Math.min(evidenceCount / 10, 1) * 40
+  const evidenceScore = Math.min(evidenceCount / maxEvidenceCount, 1) * evidence
 
   // Longer time span with consistent pattern = higher confidence
-  const timeScore = Math.min(timeSpan / 90, 1) * 30
+  const timeScore = Math.min(timeSpan / maxTimeSpan, 1) * timeWeight
 
   // Consistency is critical
-  const consistencyWeight = consistencyScore * 30
+  const consistencyWeight = consistencyScore * consistency
 
   return Math.round(evidenceScore + timeScore + consistencyWeight)
 }
@@ -117,9 +133,10 @@ export function calculateTrend(evidence: PatternEvidence[]): 'up' | 'down' | 'st
   ) || 1)
 
   const change = ((secondHalfRate - firstHalfRate) / firstHalfRate) * 100
+  const threshold = getAppConfig().pattern.trendChangeThreshold
 
-  if (change > 20) return 'up'
-  if (change < -20) return 'down'
+  if (change > threshold) return 'up'
+  if (change < -threshold) return 'down'
   return 'stable'
 }
 

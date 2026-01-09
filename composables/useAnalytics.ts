@@ -7,6 +7,7 @@ import type { MetricTrend } from '~/types/enhancements'
 
 export function useAnalytics() {
   const analyticsStore = useAnalyticsStore()
+  const appConfig = useAppConfig()
 
   // Format currency
   const formatCurrency = (amount: number, compact: boolean = false): string => {
@@ -101,10 +102,9 @@ export function useAnalytics() {
 
   // Calculate ROI percentage
   const calculateROI = (savings: number, timeInvested: number): number => {
-    // Assuming hourly rate of $50 for provider time
-    const HOURLY_RATE = 50
+    // Use configurable hourly rate for provider time cost
     const hoursInvested = timeInvested / 60
-    const cost = hoursInvested * HOURLY_RATE
+    const cost = hoursInvested * appConfig.hourlyRate.value
 
     if (cost === 0) return 0
 
@@ -117,12 +117,9 @@ export function useAnalytics() {
     return `${sign}${roi.toFixed(0)}%`
   }
 
-  // Get savings color based on amount
+  // Get savings color based on amount (uses configurable thresholds)
   const getSavingsColor = (amount: number): string => {
-    if (amount >= 10000) return 'text-green-700'
-    if (amount >= 5000) return 'text-green-600'
-    if (amount >= 1000) return 'text-green-500'
-    return 'text-gray-600'
+    return appConfig.getSavingsColorClass(amount)
   }
 
   // Calculate time to payback
@@ -142,20 +139,14 @@ export function useAnalytics() {
     return `${Math.round(months)} months`
   }
 
-  // Get color for learning progress
+  // Get color for learning progress (uses configurable thresholds)
   const getProgressColor = (progress: number): string => {
-    if (progress >= 80) return 'green'
-    if (progress >= 50) return 'yellow'
-    if (progress >= 25) return 'orange'
-    return 'red'
+    return appConfig.getProgressColor(progress)
   }
 
-  // Get progress ring color class
+  // Get progress ring color class (uses configurable thresholds)
   const getProgressRingClass = (progress: number): string => {
-    if (progress >= 80) return 'text-green-600'
-    if (progress >= 50) return 'text-yellow-600'
-    if (progress >= 25) return 'text-orange-600'
-    return 'text-red-600'
+    return appConfig.getProgressColorClass(progress)
   }
 
   // Calculate score (0-100) from multiple factors
@@ -165,25 +156,14 @@ export function useAnalytics() {
     return Math.round((sum / values.length) * 100) / 100
   }
 
-  // Get letter grade from score
+  // Get letter grade from score (uses configurable thresholds)
   const getLetterGrade = (score: number): string => {
-    if (score >= 90) return 'A'
-    if (score >= 80) return 'B'
-    if (score >= 70) return 'C'
-    if (score >= 60) return 'D'
-    return 'F'
+    return appConfig.getLetterGrade(score)
   }
 
-  // Get grade color
+  // Get grade color (uses configurable thresholds)
   const getGradeColor = (grade: string): string => {
-    const colors: Record<string, string> = {
-      A: 'text-green-600',
-      B: 'text-blue-600',
-      C: 'text-yellow-600',
-      D: 'text-orange-600',
-      F: 'text-red-600',
-    }
-    return colors[grade] || 'text-gray-600'
+    return appConfig.getGradeColorClass(grade)
   }
 
   return {
