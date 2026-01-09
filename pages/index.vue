@@ -436,6 +436,15 @@ const filteredDeniedAmount = computed(() => {
   return filteredDeniedClaims.value.reduce((sum, claim) => sum + claim.billedAmount, 0)
 })
 
+// Previous period denied claims and amount (for Revenue Recovered calculation)
+const previousPeriodDeniedClaims = computed(() => {
+  return previousPeriodClaims.value.filter(c => c.status === 'denied')
+})
+
+const previousPeriodDeniedAmount = computed(() => {
+  return previousPeriodDeniedClaims.value.reduce((sum, claim) => sum + claim.billedAmount, 0)
+})
+
 const filteredDenialRate = computed(() => {
   if (filteredClaims.value.length === 0) return 0
   return (filteredDeniedClaims.value.length / filteredClaims.value.length) * 100
@@ -496,12 +505,10 @@ const patternsRegressing = computed(() => {
   return patternsStore.patterns.filter(p => p.score.trend === 'up').length
 })
 
-// Revenue Recovered - hardcoded for now
-// TODO: This value will be calculated from Impact tab aggregate.
-// When Impact tab is reworked to do baseline vs current period comparison,
-// this should pull from that calculation.
+// Revenue Recovered = Previous Period Denied $ - Current Period Denied $
+// A positive value means we're denying less money now compared to the previous period
 const revenueRecovered = computed(() => {
-  return 127500 // Hardcoded placeholder
+  return previousPeriodDeniedAmount.value - filteredDeniedAmount.value
 })
 
 // =============================================================================
