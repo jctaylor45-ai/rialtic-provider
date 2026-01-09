@@ -3,9 +3,11 @@
  * Claim details content component
  * Displays full claim information inside a drawer
  * Maintains data parity with original full-page view
+ * Enhanced with line-level denial analysis and recovery status
  */
 import { format, parseISO } from 'date-fns'
 import type { Pattern } from '~/types/enhancements'
+import { useClaimRecovery } from '~/composables/useClaimRecovery'
 
 const props = defineProps<{
   claimId: string
@@ -20,6 +22,16 @@ defineOptions({ name: 'ClaimDetailsContent' })
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const analyticsStore = useAnalyticsStore()
+
+// Recovery status composable
+const {
+  computeLineRecovery,
+  getPolicyDetails,
+  getRecoveryStatusColor,
+  getRecoveryStatusBgColor,
+  getRecoveryStatusLabel,
+  getRecoveryStatusIcon,
+} = useClaimRecovery()
 
 // Composables
 const { getPatternCategoryIcon, getPatternTierBadgeClass, startPracticeSession } = usePatterns()
@@ -47,6 +59,80 @@ const claim = computed(() => {
   const foundClaim = appStore.getClaimById(props.claimId)
   return foundClaim ? ensureLineItems(foundClaim) : null
 })
+
+// Track expanded lines
+const expandedLines = ref<number[]>([])
+
+// Auto-expand denied lines on claim load
+watch(() => claim.value, (newClaim) => {
+  if (newClaim?.lineItems) {
+    expandedLines.value = newClaim.lineItems
+      .filter(line => line.status === 'denied')
+      .map(line => line.lineNumber)
+  }
+}, { immediate: true })
+
+// Toggle line expansion
+const toggleLineExpansion = (lineNumber: number) => {
+  const index = expandedLines.value.indexOf(lineNumber)
+  if (index === -1) {
+    expandedLines.value.push(lineNumber)
+  } else {
+    expandedLines.value.splice(index, 1)
+  }
+}
+
+const isLineExpanded = (lineNumber: number) => expandedLines.value.includes(lineNumber)
+
+// Compute enriched line items with policy details and recovery
+const enrichedLineItems = computed(() => {
+  if (!claim.value?.lineItems) return []
+
+  return claim.value.lineItems.map(line => {
+    const policyDetails = getPolicyDetails(line.policiesTriggered || [])
+    const recovery = computeLineRecovery(
+      line.policiesTriggered || [],
+      line.editsFired || []
+    )
+
+    return {
+      ...line,
+      policyDetails,
+      recovery,
+    }
+  })
+})
+
+// Summary stats for denied lines
+const lineSummary = computed(() => {
+  const lines = enrichedLineItems.value
+  const deniedLines = lines.filter(l => l.status === 'denied')
+  const deniedAmount = deniedLines.reduce((sum, l) => sum + (l.billedAmount || 0), 0)
+  const recoverableAmount = deniedLines
+    .filter(l => l.recovery.status !== 'not_recoverable')
+    .reduce((sum, l) => sum + (l.billedAmount || 0), 0)
+
+  return {
+    total: lines.length,
+    denied: deniedLines.length,
+    deniedAmount,
+    recoverableAmount,
+    notRecoverableAmount: deniedAmount - recoverableAmount,
+  }
+})
+
+// Navigate to Claim Lab with line focus
+const testLineInClaimLab = (lineNumber: number) => {
+  const patternId = matchingPatterns.value[0]?.id
+  navigateTo({
+    path: '/claim-lab',
+    query: {
+      claim: claim.value?.id,
+      pattern: patternId || undefined,
+      focusLine: lineNumber.toString(),
+    },
+  })
+}
 
 // Get patterns that match this claim
 const matchingPatterns = computed(() => {
@@ -302,115 +388,207 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Line Items -->
-      <div class="p-6">
-        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Line Items</h2>
-        <div class="space-y-4">
-          <div
-            v-for="item in claim.lineItems"
-            :key="item.lineNumber"
-            class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden"
-          >
-            <!-- Line Header -->
-            <div class="bg-neutral-50 px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="text-sm font-semibold text-neutral-900">Line {{ item.lineNumber }}</span>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono text-sm font-medium text-primary-700">{{ item.procedureCode }}</span>
-                  <button
-                    v-if="codeIntelligence.has(item.procedureCode)"
-                    @click="showCodeIntelligence(item.procedureCode)"
-                    class="p-1 hover:bg-gray-200 rounded transition-colors"
-                    title="View code intelligence"
-                  >
-                    <Icon name="heroicons:information-circle" class="w-4 h-4 text-primary-600" />
-                  </button>
-                </div>
+      <!-- Line-Level Analysis Summary -->
+      <div v-if="claim.status === 'denied' && lineSummary.denied > 0" class="px-6 pb-6">
+        <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-neutral-900 mb-3">LINE-BY-LINE ANALYSIS</h3>
+
+          <div class="flex items-center gap-6 text-sm">
+            <div>
+              <span class="text-neutral-600">Lines Denied:</span>
+              <span class="font-semibold text-error-600 ml-1">
+                {{ lineSummary.denied }} of {{ lineSummary.total }}
+              </span>
+            </div>
+            <div>
+              <span class="text-neutral-600">Amount at Risk:</span>
+              <span class="font-semibold text-neutral-900 ml-1">
+                {{ formatCurrency(lineSummary.deniedAmount) }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 text-success-600">
+                <Icon name="heroicons:check-circle" class="w-4 h-4" />
+                {{ formatCurrency(lineSummary.recoverableAmount) }} recoverable
+              </span>
+              <span v-if="lineSummary.notRecoverableAmount > 0" class="inline-flex items-center gap-1 text-error-600">
+                <Icon name="heroicons:x-circle" class="w-4 h-4" />
+                {{ formatCurrency(lineSummary.notRecoverableAmount) }} not recoverable
+              </span>
+            </div>
+          </div>
+
+          <p class="text-xs text-neutral-500 mt-2">
+            Expand each line below to see policy failures and recovery guidance
+          </p>
+        </div>
+      </div>
+
+      <!-- Line Items with Expandable Rows -->
+      <div class="px-6 pb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-neutral-900">Line Items</h3>
+          <span class="text-sm text-neutral-500">{{ enrichedLineItems.length }} lines</span>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+          <!-- Header Row -->
+          <div class="grid grid-cols-12 gap-2 px-4 py-3 bg-neutral-50 border-b border-neutral-200 text-xs font-medium text-neutral-600 uppercase tracking-wide">
+            <div class="col-span-1">Ln</div>
+            <div class="col-span-2">Code</div>
+            <div class="col-span-1">Mod</div>
+            <div class="col-span-3">Diagnosis</div>
+            <div class="col-span-1 text-center">Units</div>
+            <div class="col-span-2 text-right">Charge</div>
+            <div class="col-span-2 text-center">Status</div>
+          </div>
+
+          <!-- Line Item Rows -->
+          <div v-for="line in enrichedLineItems" :key="line.lineNumber" class="border-b border-neutral-100 last:border-b-0">
+            <!-- Main Row (always visible) -->
+            <div
+              class="grid grid-cols-12 gap-2 px-4 py-3 items-center cursor-pointer hover:bg-neutral-50 transition-colors"
+              :class="{ 'bg-error-50/30': line.status === 'denied' }"
+              @click="toggleLineExpansion(line.lineNumber)"
+            >
+              <div class="col-span-1 text-sm text-neutral-600">{{ line.lineNumber }}</div>
+              <div class="col-span-2">
+                <button
+                  @click.stop="showCodeIntelligence(line.procedureCode)"
+                  class="font-mono text-sm text-primary-600 hover:text-primary-700 hover:underline"
+                >
+                  {{ line.procedureCode }}
+                </button>
               </div>
-              <div class="flex items-center gap-4">
-                <span class="text-sm font-semibold text-neutral-900">{{ formatCurrency(item.billedAmount) }}</span>
+              <div class="col-span-1 text-sm text-neutral-600">
+                {{ line.modifiers?.join(', ') || '—' }}
+              </div>
+              <div class="col-span-3 text-sm text-neutral-600 truncate" :title="line.diagnosisCodes?.join(', ')">
+                {{ line.diagnosisCodes?.slice(0, 2).join(', ') || claim.diagnosisCodes?.slice(0, 2).join(', ') }}
+                <span v-if="(line.diagnosisCodes?.length || claim.diagnosisCodes?.length || 0) > 2" class="text-neutral-400">
+                  +{{ (line.diagnosisCodes?.length || claim.diagnosisCodes?.length || 0) - 2 }}
+                </span>
+              </div>
+              <div class="col-span-1 text-sm text-neutral-600 text-center">{{ line.units }}</div>
+              <div class="col-span-2 text-sm font-medium text-neutral-900 text-right">
+                {{ formatCurrency(line.billedAmount) }}
+              </div>
+              <div class="col-span-2 flex items-center justify-center gap-2">
                 <span
-                  class="px-2 py-1 text-xs font-medium rounded"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
                   :class="{
-                    'bg-success-100 text-success-700': (item.status || claim.status) === 'approved' || (item.status || claim.status) === 'paid',
-                    'bg-error-100 text-error-700': (item.status || claim.status) === 'denied',
-                    'bg-warning-100 text-warning-700': (item.status || claim.status) === 'pending',
+                    'bg-success-100 text-success-700': line.status === 'approved' || line.status === 'paid',
+                    'bg-error-100 text-error-700': line.status === 'denied',
+                    'bg-warning-100 text-warning-700': line.status === 'pending',
                   }"
                 >
-                  {{ ((item.status || claim.status).charAt(0).toUpperCase() + (item.status || claim.status).slice(1)) }}
+                  <Icon
+                    :name="line.status === 'denied' ? 'heroicons:x-circle' : 'heroicons:check-circle'"
+                    class="w-3 h-3"
+                  />
+                  {{ line.status }}
                 </span>
+                <Icon
+                  :name="isLineExpanded(line.lineNumber) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+                  class="w-4 h-4 text-neutral-400"
+                />
               </div>
             </div>
 
-            <!-- Line Details Grid -->
-            <div class="p-4">
-              <div class="grid grid-cols-6 gap-x-6 gap-y-3 text-sm">
-                <!-- Row 1 -->
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Date(s) of service</div>
-                  <div class="text-neutral-900 font-medium">
-                    {{ formatDateLong(item.dateOfService || claim.dateOfService) }}{{ item.dateOfServiceEnd && item.dateOfServiceEnd !== item.dateOfService ? ' – ' + formatDateLong(item.dateOfServiceEnd) : '' }}
+            <!-- Expanded Detail (conditional) -->
+            <div
+              v-if="isLineExpanded(line.lineNumber)"
+              class="px-4 py-4 bg-neutral-50 border-t border-neutral-200"
+            >
+              <!-- Policy Failures (stacked cards) -->
+              <div v-if="line.policyDetails && line.policyDetails.length > 0" class="mb-4">
+                <h4 class="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-2">
+                  Policy Failures ({{ line.policyDetails.length }})
+                </h4>
+                <div class="space-y-2">
+                  <div
+                    v-for="policy in line.policyDetails"
+                    :key="policy.policyId"
+                    class="bg-white border border-neutral-200 rounded-lg p-3"
+                  >
+                    <div class="flex items-start justify-between mb-2">
+                      <div>
+                        <span class="text-xs font-mono text-neutral-500">{{ policy.policyId }}</span>
+                        <h5 class="text-sm font-medium text-neutral-900">{{ policy.policyName }}</h5>
+                      </div>
+                      <span class="text-xs px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded">
+                        {{ policy.logicType }}
+                      </span>
+                    </div>
+                    <p class="text-sm text-neutral-600 mb-2">{{ policy.description }}</p>
+                    <button
+                      @click="viewPolicy(appStore.policies.find(p => p.id === policy.policyId))"
+                      class="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      View Full Policy →
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">CPT®/HCPCS</div>
-                  <div class="text-neutral-900 font-medium font-mono">{{ item.procedureCode }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">NDC</div>
-                  <div class="text-neutral-900 font-medium font-mono">{{ item.ndcCode || '–' }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Days or units</div>
-                  <div class="text-neutral-900 font-medium">{{ item.units || 1 }} {{ item.unitsType || 'UN' }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Charges</div>
-                  <div class="text-neutral-900 font-medium">{{ formatCurrency(item.billedAmount) }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Place of service</div>
-                  <div class="text-neutral-900 font-medium">{{ item.placeOfService || '–' }}</div>
-                </div>
+              </div>
 
-                <!-- Row 2 -->
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Modifier</div>
-                  <div class="text-neutral-900 font-medium font-mono">{{ item.modifiers?.join(', ') || '–' }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Diagnosis 1</div>
-                  <div class="text-neutral-900 font-medium font-mono">{{ item.diagnosisCodes?.[0] || claim.diagnosisCodes?.[0] || '–' }}</div>
-                </div>
-                <div class="col-span-2">
-                  <div class="text-neutral-500 text-xs mb-1">Additional diagnoses</div>
-                  <div class="text-neutral-900 font-medium font-mono">
-                    {{ (item.diagnosisCodes?.slice(1) || claim.diagnosisCodes?.slice(1))?.join(' ,  ') || '–' }}
+              <!-- Edits Fired (fallback if no policy details) -->
+              <div v-else-if="line.editsFired && line.editsFired.length > 0" class="mb-4">
+                <h4 class="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-2">
+                  Denial Reasons
+                </h4>
+                <ul class="space-y-1">
+                  <li v-for="(edit, idx) in line.editsFired" :key="idx" class="flex items-start gap-2 text-sm text-neutral-700">
+                    <Icon name="heroicons:exclamation-triangle" class="w-4 h-4 text-warning-500 mt-0.5 flex-shrink-0" />
+                    {{ edit }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Recovery Status -->
+              <div v-if="line.status === 'denied'" class="mb-4">
+                <h4 class="text-xs font-semibold text-neutral-700 uppercase tracking-wide mb-2">
+                  Recovery Status
+                </h4>
+                <div
+                  class="flex items-start gap-3 p-3 rounded-lg border"
+                  :class="getRecoveryStatusBgColor(line.recovery.status)"
+                >
+                  <Icon
+                    :name="getRecoveryStatusIcon(line.recovery.status)"
+                    class="w-5 h-5 flex-shrink-0"
+                    :class="getRecoveryStatusColor(line.recovery.status)"
+                  />
+                  <div>
+                    <div class="font-medium" :class="getRecoveryStatusColor(line.recovery.status)">
+                      {{ getRecoveryStatusLabel(line.recovery.status) }}
+                    </div>
+                    <p class="text-sm text-neutral-700 mt-1">{{ line.recovery.guidance }}</p>
                   </div>
                 </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Par indicator</div>
-                  <div class="text-neutral-900 font-medium">{{ item.parIndicator === true ? 'Yes' : item.parIndicator === false ? 'No' : '–' }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Bypass code</div>
-                  <div class="text-neutral-900 font-medium">{{ item.bypassCode || '–' }}</div>
-                </div>
+              </div>
 
-                <!-- Row 3 - Rendering Provider -->
-                <div class="col-span-3">
-                  <div class="text-neutral-500 text-xs mb-1">Rendering provider ID</div>
-                  <div class="text-neutral-900 font-medium">{{ item.renderingProviderName || 'No Name' }}</div>
-                  <div v-if="item.renderingProviderNPI" class="text-xs text-neutral-600 mt-0.5">NPI: {{ item.renderingProviderNPI }}</div>
-                </div>
-                <div class="col-span-2">
-                  <div class="text-neutral-500 text-xs mb-1">Rendering provider taxonomy</div>
-                  <div class="text-neutral-900 font-medium">{{ item.renderingProviderTaxonomy || 'None provided' }}</div>
-                </div>
-                <div>
-                  <div class="text-neutral-500 text-xs mb-1">Paid</div>
-                  <div class="text-neutral-900 font-medium">{{ formatCurrency(item.paidAmount || 0) }}</div>
-                </div>
+              <!-- Actions -->
+              <div v-if="line.status === 'denied'" class="flex items-center gap-3">
+                <button
+                  @click="testLineInClaimLab(line.lineNumber)"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  <Icon name="heroicons:beaker" class="w-4 h-4" />
+                  Test This Line in Claim Lab
+                </button>
+                <button
+                  v-if="primaryPattern"
+                  @click="navigateTo(`/insights?pattern=${primaryPattern.id}`)"
+                  class="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors"
+                >
+                  View Pattern →
+                </button>
+              </div>
+
+              <!-- Approved line message -->
+              <div v-if="line.status !== 'denied'" class="text-sm text-success-600 flex items-center gap-2">
+                <Icon name="heroicons:check-circle" class="w-5 h-5" />
+                This line has no policy failures
               </div>
             </div>
           </div>

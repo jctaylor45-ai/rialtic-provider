@@ -193,6 +193,10 @@ const MAX_NEW_LINES = 3
 // Route params
 const claimId = computed(() => route.query.claim as string | undefined)
 const patternId = computed(() => route.query.pattern as string | undefined)
+const focusLineNumber = computed(() => {
+  const param = route.query.focusLine
+  return param ? parseInt(param as string, 10) : null
+})
 
 // State
 const gridContainer = ref<HTMLElement | null>(null)
@@ -268,6 +272,30 @@ const claimLines = ref<ClaimLabLine[]>([])
 watch(originalClaim, (claim) => {
   if (claim) {
     initializeClaimLines(claim)
+  }
+}, { immediate: true })
+
+// Handle focusLine parameter to scroll to and highlight specific line
+watch([focusLineNumber, () => claimLines.value.length], ([lineNum, linesCount]) => {
+  if (lineNum && linesCount > 0) {
+    // Find the line index
+    const lineIndex = claimLines.value.findIndex(l => l.editedData.lineNumber === lineNum)
+    if (lineIndex !== -1) {
+      const targetLine = claimLines.value[lineIndex]
+      if (targetLine) {
+        // Set as active line
+        activeLineId.value = targetLine.id
+        statusPanelOpen.value = true
+
+        // Scroll to line after DOM update
+        nextTick(() => {
+          if (gridContainer.value) {
+            const lineWidth = 160 // approximate width of each line column
+            gridContainer.value.scrollLeft = lineIndex * lineWidth
+          }
+        })
+      }
+    }
   }
 }, { immediate: true })
 

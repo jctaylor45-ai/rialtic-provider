@@ -522,6 +522,23 @@ const getClaimPatterns = (claimId: string): Pattern[] => {
   return patternsStore.getPatternsByClaim(claimId)
 }
 
+// Get pattern info for sorting and display
+const getClaimPatternInfo = (claimId: string) => {
+  const patterns = patternsStore.getPatternsByClaim(claimId)
+  if (patterns.length === 0) return { display: null, sortValue: '', patterns: [] as Pattern[] }
+  const firstPattern = patterns[0]
+  if (patterns.length === 1 && firstPattern) return {
+    display: firstPattern.title,
+    sortValue: firstPattern.title,
+    patterns,
+  }
+  return {
+    display: `${patterns.length} patterns`,
+    sortValue: patterns.map(p => p.title).sort().join(', '),
+    patterns,
+  }
+}
+
 // Get pattern tier badge class
 const getPatternBadgeClass = (tier: string) => {
   const classes = {
@@ -607,16 +624,36 @@ const columns: ColumnDef<Claim>[] = [
   },
   {
     id: 'patterns',
+    accessorFn: (row) => getClaimPatternInfo(row.id).sortValue,
     header: 'Patterns',
     size: 150,
-    enableSorting: false,
+    enableSorting: true,
+    sortingFn: 'alphanumeric',
     cell: ({ row }) => {
-      const patterns = getClaimPatterns(row.original.id)
-      if (patterns.length === 0) {
+      const info = getClaimPatternInfo(row.original.id)
+      if (!info.display) {
         return h('div', { class: 'text-xs text-neutral-400' }, '—')
       }
+
+      // Single pattern - show full title
+      const firstPattern = info.patterns[0]
+      if (info.patterns.length === 1 && firstPattern) {
+        return h('button', {
+          class: `inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${getPatternBadgeClass(firstPattern.tier)}`,
+          title: firstPattern.title,
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            viewPattern(firstPattern)
+          },
+        }, [
+          h(resolveComponent('Icon'), { name: getPatternCategoryIcon(firstPattern.category), class: 'w-3 h-3' }),
+          h('span', {}, firstPattern.tier.charAt(0).toUpperCase() + firstPattern.tier.slice(1)),
+        ])
+      }
+
+      // Multiple patterns - show count with tooltip
       return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...patterns.slice(0, 2).map(pattern =>
+        ...info.patterns.slice(0, 2).map(pattern =>
           h('button', {
             class: `inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${getPatternBadgeClass(pattern.tier)}`,
             title: pattern.title,
@@ -629,11 +666,11 @@ const columns: ColumnDef<Claim>[] = [
             h('span', {}, pattern.tier.charAt(0).toUpperCase() + pattern.tier.slice(1)),
           ])
         ),
-        patterns.length > 2
+        info.patterns.length > 2
           ? h('span', {
               class: 'inline-flex items-center px-2 py-0.5 text-xs text-neutral-600',
-              title: `+${patterns.length - 2} more pattern(s)`,
-            }, `+${patterns.length - 2}`)
+              title: info.patterns.slice(2).map(p => p.title).join('\n'),
+            }, `+${info.patterns.length - 2}`)
           : null,
       ])
     },
@@ -641,12 +678,15 @@ const columns: ColumnDef<Claim>[] = [
   {
     id: 'denialReason',
     accessorKey: 'denialReason',
-    header: 'Reason',
+    header: 'Denial Reason',
     size: 200,
-    enableSorting: false,
-    cell: ({ row }) => row.original.denialReason
-      ? h('div', { class: 'text-sm text-neutral-700' }, row.original.denialReason)
-      : null,
+    enableSorting: true,
+    sortingFn: 'alphanumeric',
+    cell: ({ row }) => {
+      const reason = row.original.denialReason
+      if (!reason) return h('span', { class: 'text-neutral-400' }, '—')
+      return h('span', { class: 'text-sm text-neutral-700' }, reason)
+    },
   },
 ]
 
