@@ -208,12 +208,6 @@ const showCodeIntelligence = (code: string) => {
         <div class="flex-1 pr-4">
           <div class="flex items-center gap-3 mb-2">
             <h1 class="text-xl font-semibold text-neutral-900">{{ policy.name }}</h1>
-            <span
-              class="px-2 py-1 text-xs font-medium rounded"
-              :class="getModeClass(policy.mode)"
-            >
-              {{ policy.mode }}
-            </span>
             <Icon
               v-if="policy.trend"
               :name="getTrendIcon(policy.trend)"
@@ -338,10 +332,6 @@ const showCodeIntelligence = (code: string) => {
           <div>
             <div class="text-neutral-500 text-xs mb-1">Effective Date</div>
             <div class="text-neutral-900 font-medium">{{ formatDateLong(policy.effectiveDate) }}</div>
-          </div>
-          <div>
-            <div class="text-neutral-500 text-xs mb-1">Learning Markers</div>
-            <div class="text-neutral-900 font-medium">{{ policy.learningMarkersCount }}</div>
           </div>
           <div>
             <div class="text-neutral-500 text-xs mb-1">Trend</div>

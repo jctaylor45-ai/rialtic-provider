@@ -19,26 +19,18 @@
       />
 
       <div class="flex items-center gap-4">
-        <select v-model="filterMode" class="form-input">
-          <option value="all">All Modes</option>
-          <option value="Edit">Edit</option>
-          <option value="Informational">Informational</option>
-          <option value="Pay & Advise">Pay & Advise</option>
-        </select>
-
         <select v-model="filterTopic" class="form-input">
           <option value="all">All Topics</option>
-          <option value="Modifiers">Modifiers</option>
-          <option value="Bundling">Bundling</option>
-          <option value="Medical Necessity">Medical Necessity</option>
-          <option value="Frequency">Frequency</option>
+          <option v-for="topic in uniqueTopics" :key="topic" :value="topic">
+            {{ topic }}
+          </option>
         </select>
 
         <select v-model="filterSource" class="form-input">
           <option value="all">All Sources</option>
-          <option value="CMS">CMS</option>
-          <option value="Payer">Payer</option>
-          <option value="State">State</option>
+          <option v-for="source in uniqueSources" :key="source" :value="source">
+            {{ source }}
+          </option>
         </select>
 
         <!-- Clear Filters Button -->
@@ -278,11 +270,10 @@ const hasSelection = computed(() => selectedCount.value > 0)
 const handleExportSelected = () => {
   const policies = selectedPolicies.value
   // Create CSV content
-  const headers = ['Policy ID', 'Name', 'Mode', 'Topic', 'Source', 'Hit Rate', 'Denial Rate', 'Impact']
+  const headers = ['Policy ID', 'Name', 'Topic', 'Source', 'Hit Rate', 'Denial Rate', 'Impact']
   const rows = policies.map(p => [
     p.id,
     p.name,
-    p.mode,
     p.topic,
     p.source,
     (p.hitRate * 100).toFixed(1) + '%',
@@ -318,7 +309,6 @@ const {
 } = useUrlParamsState({
   excludeKeys: ['policy', 'sort'],
   defaults: {
-    mode: 'all',
     topic: 'all',
     source: 'all',
   },
@@ -332,14 +322,12 @@ const { sortState, setSortState } = useUrlSortState({
 
 // Local refs for input fields (synced with URL via watchers)
 const searchQuery = ref('')
-const filterMode = ref('all')
 const filterTopic = ref('all')
 const filterSource = ref('all')
 
 // Sync URL params to local refs on mount and route changes
 const syncFromUrl = () => {
   searchQuery.value = normalizedParams.value.search || ''
-  filterMode.value = normalizedParams.value.mode || 'all'
   filterTopic.value = normalizedParams.value.topic || 'all'
   filterSource.value = normalizedParams.value.source || 'all'
 }
@@ -349,7 +337,6 @@ watch(() => route.query, syncFromUrl, { immediate: true })
 
 // Watch local refs and sync to URL
 watch(searchQuery, (val) => setUrlParamDebounced('search', val || null))
-watch(filterMode, (val) => setUrlParam('mode', val === 'all' ? null : val))
 watch(filterTopic, (val) => setUrlParam('topic', val === 'all' ? null : val))
 watch(filterSource, (val) => setUrlParam('source', val === 'all' ? null : val))
 
@@ -376,7 +363,6 @@ const closeDrawer = () => {
 // Clear all filters
 const handleClearFilters = () => {
   searchQuery.value = ''
-  filterMode.value = 'all'
   filterTopic.value = 'all'
   filterSource.value = 'all'
   clearUrlParams()
@@ -390,6 +376,17 @@ const sorting = computed<SortingState>(() => {
   return [{ id: 'impact', desc: true }]
 })
 
+// Dynamic filter options from policy data
+const uniqueTopics = computed(() => {
+  const topics = new Set(appStore.policies.map(p => p.topic).filter(Boolean))
+  return Array.from(topics).sort()
+})
+
+const uniqueSources = computed(() => {
+  const sources = new Set(appStore.policies.map(p => p.source).filter(Boolean))
+  return Array.from(sources).sort()
+})
+
 // Filter policies based on search and filters (now using URL-synced refs)
 const filteredPolicies = computed(() => {
   let result = appStore.policies
@@ -401,10 +398,6 @@ const filteredPolicies = computed(() => {
       p.id.toLowerCase().includes(query) ||
       p.description.toLowerCase().includes(query)
     )
-  }
-
-  if (filterMode.value !== 'all') {
-    result = result.filter(p => p.mode === filterMode.value)
   }
 
   if (filterTopic.value !== 'all') {
@@ -449,16 +442,6 @@ const viewPattern = (pattern: Pattern) => {
   router.push('/insights')
 }
 
-// Mode badge styles
-const getModeClass = (mode: string) => {
-  const classes = {
-    'Edit': 'bg-error-100 text-error-700',
-    'Informational': 'bg-secondary-100 text-secondary-700',
-    'Pay & Advise': 'bg-warning-100 text-warning-700',
-  }
-  return classes[mode as keyof typeof classes] || 'bg-neutral-100 text-neutral-700'
-}
-
 // Column definitions for TanStack Table
 const columns: ColumnDef<Policy>[] = [
   // Selection checkbox column
@@ -492,16 +475,6 @@ const columns: ColumnDef<Policy>[] = [
       h('div', { class: 'font-medium text-sm text-neutral-900' }, row.original.name),
       h('div', { class: 'text-xs text-neutral-500' }, row.original.id),
     ]),
-  },
-  {
-    id: 'mode',
-    accessorKey: 'mode',
-    header: 'Mode',
-    size: 120,
-    enableSorting: false,
-    cell: ({ row }) => h('span', {
-      class: `px-2 py-1 text-xs font-medium rounded ${getModeClass(row.original.mode)}`,
-    }, row.original.mode),
   },
   {
     id: 'topic',
