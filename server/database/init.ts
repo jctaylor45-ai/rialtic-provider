@@ -23,6 +23,21 @@ const db = drizzle(sqlite)
 
 // Create all tables
 const statements = `
+-- Scenarios table (must be created first as other tables reference it)
+CREATE TABLE IF NOT EXISTS scenarios (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  is_active INTEGER DEFAULT 0,
+  timeline_start TEXT NOT NULL,
+  timeline_end TEXT NOT NULL,
+  config TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_scenarios_active ON scenarios (is_active);
+
 -- Claims table
 CREATE TABLE IF NOT EXISTS claims (
   id TEXT PRIMARY KEY NOT NULL,
@@ -305,6 +320,40 @@ CREATE TABLE IF NOT EXISTS learning_events (
 
 CREATE INDEX IF NOT EXISTS idx_learning_events_timestamp ON learning_events (timestamp);
 CREATE INDEX IF NOT EXISTS idx_learning_events_type ON learning_events (type);
+
+-- Pattern snapshots (time-series data for trend charts)
+CREATE TABLE IF NOT EXISTS pattern_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  pattern_id TEXT NOT NULL REFERENCES patterns(id) ON DELETE CASCADE,
+  snapshot_date TEXT NOT NULL,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  claim_count INTEGER DEFAULT 0,
+  denied_count INTEGER DEFAULT 0,
+  denial_rate REAL,
+  dollars_denied REAL DEFAULT 0,
+  dollars_at_risk REAL DEFAULT 0,
+  appeal_count INTEGER DEFAULT 0,
+  appeal_rate REAL
+);
+
+CREATE INDEX IF NOT EXISTS idx_pattern_snapshots_pattern_date ON pattern_snapshots (pattern_id, snapshot_date);
+
+-- Claim appeals (appeal tracking for ROI calculations)
+CREATE TABLE IF NOT EXISTS claim_appeals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  claim_id TEXT NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
+  line_number INTEGER,
+  appeal_filed INTEGER DEFAULT 0,
+  appeal_date TEXT,
+  appeal_reason TEXT,
+  appeal_outcome TEXT CHECK(appeal_outcome IN ('pending', 'upheld', 'overturned')),
+  outcome_date TEXT,
+  outcome_notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_claim_appeals_claim ON claim_appeals (claim_id);
+CREATE INDEX IF NOT EXISTS idx_claim_appeals_outcome ON claim_appeals (appeal_outcome);
 `
 
 // Execute each statement
@@ -318,6 +367,67 @@ for (const stmt of stmts) {
       console.error('Error executing:', stmt.substring(0, 50) + '...')
       console.error(err)
     }
+  }
+}
+
+// ALTER TABLE statements to add new columns to existing tables
+// These handle the case where the database already exists with old schema
+const alterStatements = [
+  // Add scenario_id to claims
+  `ALTER TABLE claims ADD COLUMN scenario_id TEXT REFERENCES scenarios(id) ON DELETE CASCADE`,
+
+  // Add scenario_id and baseline/current metrics to patterns
+  `ALTER TABLE patterns ADD COLUMN scenario_id TEXT REFERENCES scenarios(id) ON DELETE CASCADE`,
+  `ALTER TABLE patterns ADD COLUMN baseline_start TEXT`,
+  `ALTER TABLE patterns ADD COLUMN baseline_end TEXT`,
+  `ALTER TABLE patterns ADD COLUMN baseline_claim_count INTEGER`,
+  `ALTER TABLE patterns ADD COLUMN baseline_denied_count INTEGER`,
+  `ALTER TABLE patterns ADD COLUMN baseline_denial_rate REAL`,
+  `ALTER TABLE patterns ADD COLUMN baseline_dollars_denied REAL`,
+  `ALTER TABLE patterns ADD COLUMN current_start TEXT`,
+  `ALTER TABLE patterns ADD COLUMN current_end TEXT`,
+  `ALTER TABLE patterns ADD COLUMN current_claim_count INTEGER`,
+  `ALTER TABLE patterns ADD COLUMN current_denied_count INTEGER`,
+  `ALTER TABLE patterns ADD COLUMN current_denial_rate REAL`,
+  `ALTER TABLE patterns ADD COLUMN current_dollars_denied REAL`,
+
+  // Add scenario_id to providers
+  `ALTER TABLE providers ADD COLUMN scenario_id TEXT REFERENCES scenarios(id) ON DELETE CASCADE`,
+
+  // Add scenario_id to learning_events
+  `ALTER TABLE learning_events ADD COLUMN scenario_id TEXT REFERENCES scenarios(id) ON DELETE CASCADE`,
+]
+
+console.log('\nApplying schema migrations...')
+for (const stmt of alterStatements) {
+  try {
+    sqlite.exec(stmt)
+    console.log('  ✓', stmt.substring(0, 60) + '...')
+  } catch (err) {
+    // Ignore "duplicate column name" errors - column already exists
+    if (err instanceof Error && err.message.includes('duplicate column')) {
+      // Column already exists, skip silently
+    } else {
+      console.error('  ✗ Error:', stmt.substring(0, 50) + '...')
+      console.error('   ', err instanceof Error ? err.message : err)
+    }
+  }
+}
+
+// Create indexes for new columns (these use IF NOT EXISTS so they're safe to re-run)
+const indexStatements = [
+  `CREATE INDEX IF NOT EXISTS idx_claims_scenario ON claims (scenario_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_patterns_scenario ON patterns (scenario_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_providers_scenario ON providers (scenario_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_events_scenario ON learning_events (scenario_id)`,
+]
+
+console.log('\nCreating indexes...')
+for (const stmt of indexStatements) {
+  try {
+    sqlite.exec(stmt)
+  } catch (err) {
+    console.error('Error creating index:', err instanceof Error ? err.message : err)
   }
 }
 

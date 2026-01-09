@@ -1,127 +1,67 @@
 <template>
   <div class="flex-1 overflow-auto p-8">
     <!-- Header -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-900">Learning Impact & ROI Dashboard</h1>
-          <p class="text-sm text-neutral-600 mt-1">
-            Measure the return on your practice sessions and pattern learning
-          </p>
-        </div>
-
-        <!-- View Toggle -->
-        <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-          <button
-            @click="activeView = 'provider'"
-            class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="{
-              'bg-white text-neutral-900 shadow-sm': activeView === 'provider',
-              'text-neutral-600 hover:text-neutral-900': activeView !== 'provider'
-            }"
-          >
-            ROI Metrics
-          </button>
-          <button
-            @click="activeView = 'network'"
-            class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="{
-              'bg-white text-neutral-900 shadow-sm': activeView === 'network',
-              'text-neutral-600 hover:text-neutral-900': activeView !== 'network'
-            }"
-          >
-            Trend Analysis
-          </button>
-          <button
-            @click="activeView = 'achievements'"
-            class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-            :class="{
-              'bg-white text-neutral-900 shadow-sm': activeView === 'achievements',
-              'text-neutral-600 hover:text-neutral-900': activeView !== 'achievements'
-            }"
-          >
-            Pattern Progress
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Provider View -->
-    <div v-if="activeView === 'provider'">
-    <!-- Executive Summary -->
-    <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg shadow-sm border border-primary-200 p-6 mb-6">
-      <h2 class="text-lg font-semibold text-primary-900 mb-4 flex items-center gap-2">
-        <Icon name="heroicons:chart-bar-square" class="w-5 h-5" />
-        Executive Summary
-      </h2>
-      <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-        <p class="text-sm text-neutral-700 leading-relaxed">
-          Since adopting this tool, your practice has:
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-semibold text-neutral-900">Impact & ROI</h1>
+        <p class="text-sm text-neutral-600 mt-1">
+          Track your claims performance outcomes and measure improvement
         </p>
-        <ul class="mt-3 space-y-2">
-          <li class="flex items-start gap-2 text-sm">
-            <Icon name="heroicons:check-circle" class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" />
-            <span>
-              Reduced denial rate by <strong>{{ denialRateReduction.toFixed(1) }}%</strong>
-              ({{ baselineMetrics.denialRate.toFixed(1) }}% → {{ currentMetrics.denialRate.toFixed(1) }}%)
-            </span>
-          </li>
-          <li class="flex items-start gap-2 text-sm">
-            <Icon name="heroicons:check-circle" class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" />
-            <span>
-              Addressed <strong>{{ roi.patternsResolved + roi.patternsImproving }} of {{ patternsStore.totalPatternsDetected }}</strong> identified patterns
-              ({{ Math.round(((roi.patternsResolved + roi.patternsImproving) / patternsStore.totalPatternsDetected) * 100) }}%)
-            </span>
-          </li>
-          <li class="flex items-start gap-2 text-sm">
-            <Icon name="heroicons:check-circle" class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" />
-            <span>
-              Reduced appeals by <strong>{{ appealReduction }}%</strong> through proactive corrections
-            </span>
-          </li>
-          <li class="flex items-start gap-2 text-sm">
-            <Icon name="heroicons:check-circle" class="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" />
-            <span>
-              Saved an estimated <strong>{{ formatCurrency(adminSavings) }}</strong> in administrative costs
-            </span>
-          </li>
-        </ul>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- View Toggle -->
+        <div class="flex bg-neutral-100 rounded-lg p-1">
+          <button
+            @click="setView('trend')"
+            class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+            :class="activeView === 'trend'
+              ? 'bg-white text-neutral-900 shadow-sm'
+              : 'text-neutral-600 hover:text-neutral-900'"
+          >
+            Trend View
+          </button>
+          <button
+            @click="setView('network')"
+            class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+            :class="activeView === 'network'
+              ? 'bg-white text-neutral-900 shadow-sm'
+              : 'text-neutral-600 hover:text-neutral-900'"
+          >
+            Network View
+          </button>
+        </div>
+
+        <!-- Time Period Selector -->
+        <select
+          v-model="selectedPeriod"
+          class="px-4 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        >
+          <option value="30d">Last 30 days</option>
+          <option value="60d">Last 60 days</option>
+          <option value="90d">Last 90 days</option>
+          <option value="180d">Last 180 days</option>
+          <option value="360d">Last 360 days</option>
+        </select>
       </div>
     </div>
 
-    <!-- Settings / Configuration -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-      <h2 class="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-        <Icon name="heroicons:cog-6-tooth" class="w-5 h-5" />
+    <!-- Settings Section (Collapsible) -->
+    <div class="mb-6">
+      <button
+        @click="showSettings = !showSettings"
+        class="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900"
+      >
+        <Icon name="heroicons:cog-6-tooth" class="w-4 h-4" />
         Settings
-      </h2>
-
-      <div class="grid grid-cols-2 gap-6">
-        <!-- Measurement Window -->
-        <div>
-          <label class="block text-sm font-medium text-neutral-700 mb-3">Measurement Window</label>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="window in measurementWindows"
-              :key="window.value"
-              @click="selectedWindow = window.value"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
-              :class="{
-                'bg-primary-600 text-white border-primary-600': selectedWindow === window.value,
-                'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50': selectedWindow !== window.value
-              }"
-            >
-              {{ window.label }}
-            </button>
-          </div>
-          <p class="text-xs text-neutral-500 mt-2">
-            Comparing last {{ selectedWindow }} days vs previous {{ selectedWindow }} days
-          </p>
-        </div>
-
-        <!-- Admin Cost Per Appeal -->
-        <div>
-          <label class="block text-sm font-medium text-neutral-700 mb-3">Admin Cost Per Appeal</label>
+        <Icon
+          :name="showSettings ? 'heroicons:chevron-up' : 'heroicons:chevron-down'"
+          class="w-4 h-4"
+        />
+      </button>
+      <div v-if="showSettings" class="mt-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+        <div class="flex items-center gap-4">
+          <label class="text-sm text-neutral-700">Admin Cost Per Appeal:</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">$</span>
             <input
@@ -129,1259 +69,1595 @@
               type="number"
               min="0"
               step="10"
-              class="w-full pl-8 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              class="w-32 pl-8 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
-          <p class="text-xs text-neutral-500 mt-2">
-            Used in administrative savings calculations
+          <span class="text-xs text-neutral-500">Used for payer ROI calculations</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TREND VIEW -->
+    <div v-if="activeView === 'trend'">
+      <!-- Practice Performance Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Practice Performance</h2>
+
+        <!-- Edge Case: No Data -->
+        <div v-if="!hasClaimsData" class="bg-neutral-50 rounded-lg border border-neutral-200 p-8 text-center">
+          <Icon name="heroicons:chart-bar" class="w-12 h-12 text-neutral-400 mx-auto mb-3" />
+          <h3 class="text-lg font-medium text-neutral-900 mb-1">No Claims Data Available</h3>
+          <p class="text-sm text-neutral-600">
+            No claims data found for the selected time period. Try expanding your date range.
           </p>
         </div>
-      </div>
-    </div>
 
-    <!-- Top ROI Metrics -->
-    <div class="grid grid-cols-5 gap-6 mb-6">
-      <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-sm border border-success-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-success-700 font-medium">Total Savings</div>
-          <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-success-600" />
-        </div>
-        <div class="text-3xl font-semibold text-success-900">
-          {{ formatCurrency(roi.estimatedSavings, true) }}
-        </div>
-        <div class="text-xs text-success-700 mt-1">
-          From {{ roi.patternsResolved + roi.patternsImproving }} patterns
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Practice Sessions</div>
-          <Icon name="heroicons:academic-cap" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">{{ roi.totalPracticeSessions }}</div>
-        <div class="text-xs text-neutral-500 mt-1">
-          {{ roi.streakDays }}-day streak
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Time Invested</div>
-          <Icon name="heroicons:clock" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">
-          {{ Math.round(roi.totalTimeInvested) }}<span class="text-lg text-neutral-600">m</span>
-        </div>
-        <div class="text-xs text-neutral-500 mt-1">
-          ~{{ roi.avgSessionDuration }}m per session
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Savings/Hour</div>
-          <Icon name="heroicons:arrow-trending-up" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">
-          {{ formatCurrency(savingsPerHour, true) }}
-        </div>
-        <div class="text-xs text-neutral-500 mt-1">
-          ROI efficiency metric
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Corrections</div>
-          <Icon name="heroicons:check-badge" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">{{ roi.totalCorrectionsApplied }}</div>
-        <div class="text-xs text-neutral-500 mt-1">
-          {{ roi.avgCorrectionRate }}% avg rate
-        </div>
-      </div>
-    </div>
-
-    <!-- Key Performance Indicators -->
-    <div class="grid grid-cols-4 gap-6 mb-6">
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Denial Rate</div>
-          <Icon name="heroicons:x-circle" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-3xl font-semibold text-neutral-900">
-            {{ dashboardMetrics.denialRate.toFixed(1) }}%
-          </div>
-          <div class="flex items-center gap-1">
-            <Icon
-              :name="dashboardMetrics.trends.denialRate.trend === 'down' ? 'heroicons:arrow-down' : dashboardMetrics.trends.denialRate.trend === 'up' ? 'heroicons:arrow-up' : 'heroicons:minus'"
-              class="w-4 h-4"
-              :class="{
-                'text-success-600': dashboardMetrics.trends.denialRate.trend === 'down',
-                'text-error-600': dashboardMetrics.trends.denialRate.trend === 'up',
-                'text-neutral-400': dashboardMetrics.trends.denialRate.trend === 'stable'
-              }"
-            />
-            <span
-              class="text-xs font-medium"
-              :class="{
-                'text-success-600': dashboardMetrics.trends.denialRate.trend === 'down',
-                'text-error-600': dashboardMetrics.trends.denialRate.trend === 'up',
-                'text-neutral-400': dashboardMetrics.trends.denialRate.trend === 'stable'
-              }"
-            >
-              {{ Math.abs(dashboardMetrics.trends.denialRate.percentChange).toFixed(1) }}%
-            </span>
-          </div>
-        </div>
-        <div class="text-xs text-neutral-500 mt-1">vs previous 30 days</div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Approval Rate</div>
-          <Icon name="heroicons:check-circle" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div class="text-3xl font-semibold text-neutral-900">
-            {{ dashboardMetrics.approvalRate.toFixed(1) }}%
-          </div>
-          <div class="flex items-center gap-1">
-            <Icon
-              :name="dashboardMetrics.trends.approvalRate.trend === 'up' ? 'heroicons:arrow-up' : dashboardMetrics.trends.approvalRate.trend === 'down' ? 'heroicons:arrow-down' : 'heroicons:minus'"
-              class="w-4 h-4"
-              :class="{
-                'text-success-600': dashboardMetrics.trends.approvalRate.trend === 'up',
-                'text-error-600': dashboardMetrics.trends.approvalRate.trend === 'down',
-                'text-neutral-400': dashboardMetrics.trends.approvalRate.trend === 'stable'
-              }"
-            />
-            <span
-              class="text-xs font-medium"
-              :class="{
-                'text-success-600': dashboardMetrics.trends.approvalRate.trend === 'up',
-                'text-error-600': dashboardMetrics.trends.approvalRate.trend === 'down',
-                'text-neutral-400': dashboardMetrics.trends.approvalRate.trend === 'stable'
-              }"
-            >
-              {{ Math.abs(dashboardMetrics.trends.approvalRate.percentChange).toFixed(1) }}%
-            </span>
-          </div>
-        </div>
-        <div class="text-xs text-neutral-500 mt-1">vs previous 30 days</div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Patterns Resolved</div>
-          <Icon name="heroicons:sparkles" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">{{ roi.patternsResolved }}</div>
-        <div class="text-xs text-neutral-500 mt-1">
-          {{ roi.patternsImproving }} improving
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Denials Avoided</div>
-          <Icon name="heroicons:shield-check" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-neutral-900">{{ roi.avoidedDenials }}</div>
-        <div class="text-xs text-neutral-500 mt-1">
-          From resolved patterns
-        </div>
-      </div>
-    </div>
-
-    <!-- Time Series Charts -->
-    <div class="grid grid-cols-2 gap-6 mb-6">
-      <!-- Denial Rate Over Time -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-neutral-900">Denial Rate Trend</h2>
-          <Icon name="heroicons:chart-bar" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div v-if="roi.denialRateOverTime.length > 0" class="space-y-3">
-          <div
-            v-for="point in roi.denialRateOverTime"
-            :key="point.date"
-            class="flex items-center gap-3"
-          >
-            <div class="text-xs text-neutral-600 w-20">{{ point.label }}</div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <div class="flex-1 bg-neutral-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    class="h-full bg-gradient-to-r from-error-500 to-error-600 rounded-full transition-all"
-                    :style="{ width: `${Math.min(point.value * 5, 100)}%` }"
-                  ></div>
-                </div>
-                <div class="text-sm font-medium text-neutral-900 w-12 text-right">
-                  {{ point.value.toFixed(1) }}%
-                </div>
-              </div>
+        <!-- Metric Cards -->
+        <div v-else class="grid grid-cols-3 gap-6 mb-6">
+          <!-- Denial Rate Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-neutral-600 font-medium">Denial Rate</div>
+              <Icon name="heroicons:x-circle" class="w-5 h-5 text-neutral-400" />
             </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-8 text-neutral-500">
-          <Icon name="heroicons:chart-bar" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-          <p class="text-sm">No data available yet</p>
-        </div>
-      </div>
-
-      <!-- Savings Over Time -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-neutral-900">Savings Accumulation</h2>
-          <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div v-if="roi.savingsOverTime.length > 0" class="space-y-3">
-          <div
-            v-for="point in roi.savingsOverTime"
-            :key="point.date"
-            class="flex items-center gap-3"
-          >
-            <div class="text-xs text-neutral-600 w-20">{{ point.label }}</div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <div class="flex-1 bg-neutral-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    class="h-full bg-gradient-to-r from-success-500 to-success-600 rounded-full transition-all"
-                    :style="{ width: `${Math.min((point.value / maxSavings) * 100, 100)}%` }"
-                  ></div>
-                </div>
-                <div class="text-sm font-medium text-neutral-900 w-16 text-right">
-                  {{ formatCurrency(point.value, true) }}
-                </div>
-              </div>
+            <div class="text-3xl font-semibold text-neutral-900 mb-2">
+              {{ formatPercentage(currentMetrics.denialRate) }}
             </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-8 text-neutral-500">
-          <Icon name="heroicons:currency-dollar" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-          <p class="text-sm">No savings data yet</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Practice Activity Over Time -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-neutral-900">Practice Activity</h2>
-        <Icon name="heroicons:academic-cap" class="w-5 h-5 text-neutral-400" />
-      </div>
-      <div v-if="roi.practiceActivityOverTime.length > 0" class="space-y-3">
-        <div
-          v-for="point in roi.practiceActivityOverTime"
-          :key="point.date"
-          class="flex items-center gap-3"
-        >
-          <div class="text-xs text-neutral-600 w-20">{{ point.label }}</div>
-          <div class="flex-1">
-            <div class="flex items-center gap-2">
-              <div class="flex-1 bg-neutral-100 rounded-full h-3 overflow-hidden">
-                <div
-                  class="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all"
-                  :style="{ width: `${Math.min((point.value / maxActivity) * 100, 100)}%` }"
-                ></div>
-              </div>
-              <div class="text-sm font-medium text-neutral-900 w-12 text-right">
-                {{ point.value }}
-              </div>
+            <!-- Sparkline -->
+            <div class="h-10 mb-3">
+              <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient :id="'sparklineGradient-denial'" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" :stop-color="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
+                    <stop offset="100%" :stop-color="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  :d="denialRateSparklineFill"
+                  :fill="`url(#sparklineGradient-denial)`"
+                />
+                <path
+                  :d="denialRateSparklinePath"
+                  fill="none"
+                  :stroke="denialRateTrend.isImproving ? '#10B981' : '#EF4444'"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </div>
-          </div>
-        </div>
-      </div>
-      <div v-else class="text-center py-8 text-neutral-500">
-        <Icon name="heroicons:academic-cap" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-        <p class="text-sm">No practice activity yet</p>
-        <p class="text-xs text-neutral-400 mt-1">Start practicing in the Claim Lab</p>
-      </div>
-    </div>
-
-    <!-- Pattern Performance Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-neutral-900">Pattern Performance</h2>
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-neutral-600">Sort by:</label>
-          <select
-            v-model="sortBy"
-            class="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="savings">Savings Realized</option>
-            <option value="denials">Denials Reduced</option>
-            <option value="recent">Recently Practiced</option>
-          </select>
-        </div>
-      </div>
-
-      <div v-if="sortedPatternImpact.length > 0" class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b border-neutral-200">
-              <th class="text-left text-xs font-medium text-neutral-600 pb-3 pr-4">Pattern</th>
-              <th class="text-left text-xs font-medium text-neutral-600 pb-3 pr-4">Category</th>
-              <th class="text-right text-xs font-medium text-neutral-600 pb-3 pr-4">Denials Before</th>
-              <th class="text-right text-xs font-medium text-neutral-600 pb-3 pr-4">Denials After</th>
-              <th
-                class="text-right text-xs font-medium text-neutral-600 pb-3 pr-4 cursor-pointer hover:text-neutral-900 select-none"
-                @click="togglePatternSort('denials')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Reduction
-                  <Icon :name="getPatternSortIcon('denials')" class="w-4 h-4" :class="sortBy === 'denials' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-              <th
-                class="text-right text-xs font-medium text-neutral-600 pb-3 cursor-pointer hover:text-neutral-900 select-none"
-                @click="togglePatternSort('savings')"
-              >
-                <div class="flex items-center justify-end gap-1">
-                  Savings Realized
-                  <Icon :name="getPatternSortIcon('savings')" class="w-4 h-4" :class="sortBy === 'savings' ? 'text-primary-600' : 'text-neutral-400'" />
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="impact in sortedPatternImpact"
-              :key="impact.patternId"
-              class="border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer"
-              @click="navigateToPattern(impact.patternId)"
-            >
-              <td class="py-3 pr-4">
-                <div class="text-sm font-medium text-neutral-900">{{ impact.patternTitle }}</div>
-                <div class="text-xs text-neutral-500">{{ impact.patternId }}</div>
-              </td>
-              <td class="py-3 pr-4">
-                <span class="px-2 py-1 text-xs bg-neutral-100 text-neutral-700 rounded">
-                  {{ formatCategory(impact.category) }}
+            <!-- Trend Info -->
+            <div class="space-y-1">
+              <div class="flex items-center gap-1">
+                <Icon
+                  :name="denialRateTrend.isImproving ? 'heroicons:arrow-down' : 'heroicons:arrow-up'"
+                  class="w-4 h-4"
+                  :class="denialRateTrend.isImproving ? 'text-success-600' : 'text-error-600'"
+                />
+                <span
+                  class="text-sm font-medium"
+                  :class="denialRateTrend.isImproving ? 'text-success-600' : 'text-error-600'"
+                >
+                  {{ Math.abs(denialRateTrend.pointChange).toFixed(1) }} pts
                 </span>
-              </td>
-              <td class="py-3 pr-4 text-right text-sm text-neutral-900">{{ impact.denialsBefore }}</td>
-              <td class="py-3 pr-4 text-right text-sm text-neutral-900">{{ impact.denialsAfter }}</td>
-              <td class="py-3 pr-4 text-right">
-                <div class="flex items-center justify-end gap-1">
+              </div>
+              <div class="text-xs text-neutral-500">
+                from {{ formatPercentage(baselineMetrics.denialRate) }}
+              </div>
+              <div class="text-xs text-neutral-500">
+                ({{ Math.abs(denialRateTrend.percentChange).toFixed(0) }}% {{ denialRateTrend.isImproving ? 'reduction' : 'increase' }})
+              </div>
+            </div>
+          </div>
+
+          <!-- Appeal Rate Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-neutral-600 font-medium">Appeal Rate</div>
+              <Icon name="heroicons:arrow-path" class="w-5 h-5 text-neutral-400" />
+            </div>
+            <template v-if="hasAppealData">
+              <div class="text-3xl font-semibold text-neutral-900 mb-2">
+                {{ formatPercentage(currentMetrics.appealRate) }}
+              </div>
+              <!-- Sparkline -->
+              <div class="h-10 mb-3">
+                <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient :id="'sparklineGradient-appeal'" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" :stop-color="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
+                      <stop offset="100%" :stop-color="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    :d="appealRateSparklineFill"
+                    :fill="`url(#sparklineGradient-appeal)`"
+                  />
+                  <path
+                    :d="appealRateSparklinePath"
+                    fill="none"
+                    :stroke="appealRateTrend.isImproving ? '#10B981' : '#EF4444'"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <!-- Trend Info -->
+              <div class="space-y-1">
+                <div class="flex items-center gap-1">
                   <Icon
-                    name="heroicons:arrow-down"
+                    :name="appealRateTrend.isImproving ? 'heroicons:arrow-down' : 'heroicons:arrow-up'"
                     class="w-4 h-4"
-                    :class="{
-                      'text-success-600': impact.denialsBefore > impact.denialsAfter,
-                      'text-neutral-400': impact.denialsBefore === impact.denialsAfter
-                    }"
+                    :class="appealRateTrend.isImproving ? 'text-success-600' : 'text-error-600'"
                   />
                   <span
                     class="text-sm font-medium"
-                    :class="{
-                      'text-success-600': impact.denialsBefore > impact.denialsAfter,
-                      'text-neutral-600': impact.denialsBefore === impact.denialsAfter
-                    }"
+                    :class="appealRateTrend.isImproving ? 'text-success-600' : 'text-error-600'"
                   >
-                    {{ impact.denialsBefore - impact.denialsAfter }}
+                    {{ Math.abs(appealRateTrend.pointChange).toFixed(1) }} pts
                   </span>
                 </div>
-              </td>
-              <td class="py-3 text-right text-sm font-semibold text-success-700">
-                {{ formatCurrency(impact.savingsRealized) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-else class="text-center py-8 text-neutral-500">
-        <Icon name="heroicons:chart-bar" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-        <p class="text-sm">No pattern performance data yet</p>
-        <p class="text-xs text-neutral-400 mt-1">Practice patterns to see their impact</p>
-      </div>
-    </div>
-
-    <!-- Recent Practice Activity -->
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-      <h2 class="text-lg font-semibold text-neutral-900 mb-4">Recent Practice Sessions</h2>
-      <div v-if="recentPracticeSessions.length > 0" class="space-y-3">
-        <div
-          v-for="session in recentPracticeSessions"
-          :key="session.id"
-          class="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
-        >
-          <div class="flex items-center gap-4">
-            <div
-              class="w-10 h-10 rounded-full flex items-center justify-center"
-              :class="{
-                'bg-success-100': (session.metadata.correctionsCount || 0) > 0,
-                'bg-neutral-100': (session.metadata.correctionsCount || 0) === 0
-              }"
-            >
-              <Icon
-                name="heroicons:academic-cap"
-                class="w-5 h-5"
-                :class="{
-                  'text-success-600': (session.metadata.correctionsCount || 0) > 0,
-                  'text-neutral-600': (session.metadata.correctionsCount || 0) === 0
-                }"
-              />
-            </div>
-            <div>
-              <div class="text-sm font-medium text-neutral-900">
-                {{ getPatternTitle(session.metadata.patternId) }}
+                <div class="text-xs text-neutral-500">
+                  from {{ formatPercentage(baselineMetrics.appealRate) }}
+                </div>
+                <div class="text-xs text-neutral-500">
+                  ({{ Math.abs(appealRateTrend.percentChange).toFixed(0) }}% {{ appealRateTrend.isImproving ? 'reduction' : 'increase' }})
+                </div>
               </div>
-              <div class="text-xs text-neutral-500">
-                {{ formatRelativeTime(session.timestamp) }}
+            </template>
+            <template v-else>
+              <div class="text-center py-4">
+                <Icon name="heroicons:clock" class="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                <p class="text-sm text-neutral-500">Appeal tracking coming soon</p>
               </div>
-            </div>
+            </template>
           </div>
-          <div class="flex items-center gap-6">
-            <div class="text-right">
-              <div class="text-xs text-neutral-600">Duration</div>
-              <div class="text-sm font-medium text-neutral-900">
-                {{ formatDuration(session.metadata.duration) }}
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-xs text-neutral-600">Corrections</div>
-              <div class="text-sm font-medium text-neutral-900">
-                {{ session.metadata.correctionsCount || 0 }}
-              </div>
-            </div>
-            <button
-              @click="navigateToPattern(session.metadata.patternId)"
-              class="px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
-            >
-              View Pattern
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div v-else class="text-center py-8 text-neutral-500">
-        <Icon name="heroicons:academic-cap" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-        <p class="text-sm">No practice sessions yet</p>
-        <p class="text-xs text-neutral-400 mt-1">Complete practice sessions to see your activity</p>
-        <NuxtLink
-          to="/claim-lab"
-          class="inline-block mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-        >
-          Start Practicing
-        </NuxtLink>
-      </div>
-    </div>
-    </div><!-- End Provider View -->
-
-    <!-- Network View (Payer Aggregate) -->
-    <div v-else>
-      <div class="bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-lg shadow-sm border border-secondary-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-secondary-900 mb-4 flex items-center gap-2">
-          <Icon name="heroicons:building-office-2" class="w-5 h-5" />
-          Network Impact Summary
-        </h2>
-        <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-          <div class="grid grid-cols-4 gap-4">
-            <div>
-              <div class="text-xs text-neutral-600 mb-1">Providers Using Tool</div>
-              <div class="text-2xl font-bold text-neutral-900">{{ networkMetrics.providersCount }}</div>
+          <!-- Denied Dollars Card -->
+          <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-neutral-600 font-medium">Denied Dollars</div>
+              <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-neutral-400" />
             </div>
-            <div>
-              <div class="text-xs text-neutral-600 mb-1">Avg Denial Rate Improvement</div>
-              <div class="text-2xl font-bold text-success-600">{{ networkMetrics.avgImprovement }}%</div>
+            <div class="text-3xl font-semibold text-neutral-900 mb-2">
+              {{ formatCurrency(currentMetrics.deniedDollars) }}
             </div>
-            <div>
-              <div class="text-xs text-neutral-600 mb-1">Total Appeals Avoided</div>
-              <div class="text-2xl font-bold text-neutral-900">{{ networkMetrics.totalAppealsAvoided }}</div>
+            <!-- Sparkline -->
+            <div class="h-10 mb-3">
+              <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient :id="'sparklineGradient-dollars'" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" :stop-color="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
+                    <stop offset="100%" :stop-color="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <path
+                  :d="deniedDollarsSparklineFill"
+                  :fill="`url(#sparklineGradient-dollars)`"
+                />
+                <path
+                  :d="deniedDollarsSparklinePath"
+                  fill="none"
+                  :stroke="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </div>
-            <div>
-              <div class="text-xs text-neutral-600 mb-1">Total Admin Savings</div>
-              <div class="text-2xl font-bold text-success-600">{{ formatCurrency(networkMetrics.totalSavings) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Provider Breakdown Table -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-        <h3 class="text-lg font-semibold text-neutral-900 mb-4">Provider Performance</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-neutral-200">
-                <th
-                  class="text-left text-xs font-medium text-neutral-600 pb-3 pr-4 cursor-pointer hover:text-neutral-900 select-none"
-                  @click="toggleProviderSort('name')"
+            <!-- Trend Info -->
+            <div class="space-y-1">
+              <div class="flex items-center gap-1">
+                <Icon
+                  :name="deniedDollarsTrend.isImproving ? 'heroicons:arrow-down' : 'heroicons:arrow-up'"
+                  class="w-4 h-4"
+                  :class="deniedDollarsTrend.isImproving ? 'text-success-600' : 'text-error-600'"
+                />
+                <span
+                  class="text-sm font-medium"
+                  :class="deniedDollarsTrend.isImproving ? 'text-success-600' : 'text-error-600'"
                 >
-                  <div class="flex items-center gap-1">
-                    Provider
-                    <Icon :name="getProviderSortIcon('name')" class="w-4 h-4" :class="providerSortBy === 'name' ? 'text-primary-600' : 'text-neutral-400'" />
-                  </div>
-                </th>
-                <th
-                  class="text-center text-xs font-medium text-neutral-600 pb-3 pr-4 cursor-pointer hover:text-neutral-900 select-none"
-                  @click="toggleProviderSort('engagement')"
-                >
-                  <div class="flex items-center justify-center gap-1">
-                    Engagement Level
-                    <Icon :name="getProviderSortIcon('engagement')" class="w-4 h-4" :class="providerSortBy === 'engagement' ? 'text-primary-600' : 'text-neutral-400'" />
-                  </div>
-                </th>
-                <th
-                  class="text-right text-xs font-medium text-neutral-600 pb-3 pr-4 cursor-pointer hover:text-neutral-900 select-none"
-                  @click="toggleProviderSort('improvement')"
-                >
-                  <div class="flex items-center justify-end gap-1">
-                    Denial Rate Improvement
-                    <Icon :name="getProviderSortIcon('improvement')" class="w-4 h-4" :class="providerSortBy === 'improvement' ? 'text-primary-600' : 'text-neutral-400'" />
-                  </div>
-                </th>
-                <th
-                  class="text-right text-xs font-medium text-neutral-600 pb-3 pr-4 cursor-pointer hover:text-neutral-900 select-none"
-                  @click="toggleProviderSort('sessions')"
-                >
-                  <div class="flex items-center justify-end gap-1">
-                    Practice Sessions
-                    <Icon :name="getProviderSortIcon('sessions')" class="w-4 h-4" :class="providerSortBy === 'sessions' ? 'text-primary-600' : 'text-neutral-400'" />
-                  </div>
-                </th>
-                <th class="text-center text-xs font-medium text-neutral-600 pb-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="provider in sortedNetworkProviders"
-                :key="provider.id"
-                class="border-b border-neutral-100 hover:bg-neutral-50 transition-colors"
-              >
-                <td class="py-3 pr-4">
-                  <div class="text-sm font-medium text-neutral-900">{{ provider.name }}</div>
-                  <div class="text-xs text-neutral-500">{{ provider.specialty }}</div>
-                </td>
-                <td class="py-3 pr-4 text-center">
-                  <span
-                    class="px-2 py-1 text-xs font-medium rounded-full"
-                    :class="{
-                      'bg-success-100 text-success-700': provider.engagementLevel === 'high',
-                      'bg-warning-100 text-warning-700': provider.engagementLevel === 'medium',
-                      'bg-error-100 text-error-700': provider.engagementLevel === 'low'
-                    }"
-                  >
-                    {{ provider.engagementLevel.charAt(0).toUpperCase() + provider.engagementLevel.slice(1) }}
-                  </span>
-                </td>
-                <td class="py-3 pr-4 text-right">
-                  <div class="flex items-center justify-end gap-1">
-                    <Icon
-                      :name="provider.improvement > 0 ? 'heroicons:arrow-down' : 'heroicons:arrow-up'"
-                      class="w-4 h-4"
-                      :class="{
-                        'text-success-600': provider.improvement > 0,
-                        'text-error-600': provider.improvement < 0
-                      }"
-                    />
-                    <span
-                      class="text-sm font-medium"
-                      :class="{
-                        'text-success-600': provider.improvement > 0,
-                        'text-error-600': provider.improvement < 0
-                      }"
-                    >
-                      {{ Math.abs(provider.improvement).toFixed(1) }}%
-                    </span>
-                  </div>
-                </td>
-                <td class="py-3 pr-4 text-right text-sm text-neutral-900">
-                  {{ provider.practiceSessions }}
-                </td>
-                <td class="py-3 text-center">
-                  <span
-                    class="px-2 py-1 text-xs font-medium rounded-full"
-                    :class="{
-                      'bg-success-100 text-success-700': provider.status === 'active',
-                      'bg-neutral-100 text-neutral-700': provider.status === 'inactive'
-                    }"
-                  >
-                    {{ provider.status.charAt(0).toUpperCase() + provider.status.slice(1) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Correlation Proof -->
-      <div class="grid grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-          <h3 class="text-lg font-semibold text-neutral-900 mb-4">Engagement → Outcome Correlation</h3>
-          <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-success-50 rounded-lg border border-success-200">
-              <div>
-                <div class="text-sm font-medium text-success-900">High Engagement Providers</div>
-                <div class="text-xs text-success-700 mt-1">{{ networkMetrics.highEngagementCount }} providers</div>
-              </div>
-              <div class="text-2xl font-bold text-success-600">{{ networkMetrics.highEngagementImprovement }}%</div>
-            </div>
-            <div class="flex items-center justify-between p-4 bg-error-light rounded-lg border border-error-200">
-              <div>
-                <div class="text-sm font-medium text-error-900">Low Engagement Providers</div>
-                <div class="text-xs text-error-700 mt-1">{{ networkMetrics.lowEngagementCount }} providers</div>
-              </div>
-              <div class="text-2xl font-bold text-error-600">{{ networkMetrics.lowEngagementImprovement }}%</div>
-            </div>
-            <div class="pt-4 border-t border-neutral-200">
-              <div class="flex items-center gap-2 text-sm text-neutral-700">
-                <Icon name="heroicons:light-bulb" class="w-5 h-5 text-yellow-500" />
-                <span>
-                  High engagement providers show
-                  <strong>{{ (networkMetrics.highEngagementImprovement - networkMetrics.lowEngagementImprovement).toFixed(1) }}%</strong>
-                  better improvement
+                  {{ formatCurrency(Math.abs(deniedDollarsTrend.dollarChange)) }}
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-          <h3 class="text-lg font-semibold text-neutral-900 mb-4">Network-Wide Patterns</h3>
-          <div class="space-y-3">
-            <div class="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-              <div class="text-sm text-neutral-700">Total Patterns Identified</div>
-              <div class="text-lg font-semibold text-neutral-900">{{ networkMetrics.totalPatterns }}</div>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-              <div class="text-sm text-neutral-700">Patterns Resolved</div>
-              <div class="text-lg font-semibold text-success-600">{{ networkMetrics.patternsResolved }}</div>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-              <div class="text-sm text-neutral-700">Currently In Progress</div>
-              <div class="text-lg font-semibold text-warning-600">{{ networkMetrics.patternsInProgress }}</div>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-secondary-50 rounded-lg border border-secondary-200">
-              <div class="text-sm text-secondary-900 font-medium">Resolution Rate</div>
-              <div class="text-lg font-bold text-secondary-600">
-                {{ Math.round((networkMetrics.patternsResolved / networkMetrics.totalPatterns) * 100) }}%
+              <div class="text-xs text-neutral-500">
+                from {{ formatCurrency(baselineMetrics.deniedDollars) }}
+              </div>
+              <div class="text-xs text-neutral-500">
+                ({{ Math.abs(deniedDollarsTrend.percentChange).toFixed(0) }}% {{ deniedDollarsTrend.isImproving ? 'reduction' : 'increase' }})
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div><!-- End Network View -->
 
-    <!-- Achievement History View -->
-    <div v-if="activeView === 'achievements'">
-      <!-- Achievement Summary -->
-      <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-sm border border-success-200 p-8 mb-6">
-        <div class="flex items-start gap-6">
-          <div class="p-4 bg-white rounded-full shadow-sm">
-            <Icon name="heroicons:trophy" class="w-12 h-12 text-success-600" />
-          </div>
-          <div class="flex-1">
-            <h2 class="text-2xl font-bold text-success-900 mb-2">Your Impact & Achievements</h2>
-            <p class="text-success-800 mb-4">
-              Track your progress in resolving denial patterns and improving claim acceptance rates.
-            </p>
-            <div class="grid grid-cols-4 gap-4">
-              <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-                <div class="text-xs text-neutral-600 mb-1">Patterns Resolved</div>
-                <div class="text-3xl font-bold text-success-600">{{ patternsStore.resolvedPatterns.length }}</div>
-                <div class="text-xs text-neutral-500 mt-1">Total achievements</div>
+        <!-- Recovered Revenue Banner -->
+        <div
+          v-if="hasClaimsData"
+          class="rounded-lg p-6 mb-8"
+          :class="recoveredRevenue >= 0
+            ? 'bg-success-50 border border-success-200'
+            : 'bg-error-light border border-error-300'"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold mb-1"
+                :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+              >
+                Recovered Revenue
+              </h3>
+              <p class="text-sm" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                Additional approved revenue vs. baseline
+              </p>
+            </div>
+            <div class="text-right">
+              <div
+                class="text-4xl font-bold"
+                :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+              >
+                {{ recoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrency(recoveredRevenue) }}
               </div>
-              <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-                <div class="text-xs text-neutral-600 mb-1">Patterns Improving</div>
-                <div class="text-3xl font-bold text-warning-600">{{ patternsStore.improvingPatterns.length }}</div>
-                <div class="text-xs text-neutral-500 mt-1">In progress</div>
-              </div>
-              <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-                <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
-                <div class="text-3xl font-bold text-neutral-900">{{ formatCurrency(totalResolvedImpact, true) }}</div>
-                <div class="text-xs text-neutral-500 mt-1">Savings realized</div>
-              </div>
-              <div class="bg-white/80 backdrop-blur rounded-lg p-4">
-                <div class="text-xs text-neutral-600 mb-1">Success Rate</div>
-                <div class="text-3xl font-bold text-success-600">{{ achievementSuccessRate }}%</div>
-                <div class="text-xs text-neutral-500 mt-1">Patterns resolved</div>
-              </div>
+              <p class="text-sm mt-1" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                {{ recoveredRevenue >= 0
+                  ? "This is money you're now collecting that was previously denied."
+                  : "Denied dollars have increased compared to baseline."
+                }}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Resolved Patterns Grid -->
-      <div class="mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-neutral-900">Resolved Patterns</h3>
-          <span class="text-sm text-neutral-600">{{ patternsStore.resolvedPatterns.length }} total</span>
-        </div>
+      <!-- Pattern Performance Section -->
+      <div v-if="hasClaimsData">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Pattern Performance</h2>
 
-        <div v-if="patternsStore.resolvedPatterns.length > 0" class="grid grid-cols-2 gap-4">
-          <div
-            v-for="pattern in patternsStore.resolvedPatterns"
-            :key="pattern.id"
-            class="bg-white rounded-lg border border-success-200 p-6 hover:border-success-400 transition-colors cursor-pointer"
-            @click="navigateToPattern(pattern.id)"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-success-100 rounded-lg">
-                  <Icon :name="getPatternCategoryIcon(pattern.category)" class="w-5 h-5 text-success-600" />
-                </div>
-                <div>
-                  <h4 class="font-medium text-neutral-900">{{ pattern.title }}</h4>
-                  <p class="text-xs text-neutral-600 mt-0.5">{{ formatCategory(pattern.category) }}</p>
-                </div>
-              </div>
-              <div class="px-2 py-1 bg-success-100 text-success-700 text-xs font-medium rounded-full flex items-center gap-1">
-                <Icon name="heroicons:check-circle" class="w-3 h-3" />
-                Resolved
-              </div>
-            </div>
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+          <div v-if="patternPerformance.length > 0" class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th class="text-left text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Pattern
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denial Rate
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Appeal Rate
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denied $
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-100">
+                <template v-for="pattern in patternPerformance" :key="pattern.id">
+                  <tr
+                    class="hover:bg-neutral-50 cursor-pointer transition-colors"
+                    @click="togglePatternExpand(pattern.id)"
+                  >
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-2">
+                        <Icon
+                          :name="expandedPatternId === pattern.id ? 'heroicons:chevron-down' : 'heroicons:chevron-right'"
+                          class="w-4 h-4 text-neutral-400"
+                        />
+                        <div>
+                          <div class="text-sm font-medium text-neutral-900">{{ pattern.title }}</div>
+                          <div class="text-xs text-neutral-500">{{ pattern.claimsCount }} claims affected</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <span class="text-sm text-neutral-600">
+                          {{ formatPercentage(pattern.baseline.denialRate) }}
+                        </span>
+                        <Icon name="heroicons:arrow-right" class="w-3 h-3 text-neutral-400" />
+                        <span class="text-sm font-medium text-neutral-900">
+                          {{ formatPercentage(pattern.current.denialRate) }}
+                        </span>
+                        <Icon
+                          :name="pattern.denialRateImproving ? 'heroicons:arrow-down' : pattern.denialRateWorsening ? 'heroicons:arrow-up' : 'heroicons:minus'"
+                          class="w-4 h-4"
+                          :class="{
+                            'text-success-600': pattern.denialRateImproving,
+                            'text-error-600': pattern.denialRateWorsening,
+                            'text-neutral-400': !pattern.denialRateImproving && !pattern.denialRateWorsening
+                          }"
+                        />
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div v-if="hasAppealData" class="flex items-center justify-end gap-2">
+                        <span class="text-sm text-neutral-600">
+                          {{ formatPercentage(pattern.baseline.appealRate) }}
+                        </span>
+                        <Icon name="heroicons:arrow-right" class="w-3 h-3 text-neutral-400" />
+                        <span class="text-sm font-medium text-neutral-900">
+                          {{ formatPercentage(pattern.current.appealRate) }}
+                        </span>
+                        <Icon
+                          :name="pattern.appealRateImproving ? 'heroicons:arrow-down' : pattern.appealRateWorsening ? 'heroicons:arrow-up' : 'heroicons:minus'"
+                          class="w-4 h-4"
+                          :class="{
+                            'text-success-600': pattern.appealRateImproving,
+                            'text-error-600': pattern.appealRateWorsening,
+                            'text-neutral-400': !pattern.appealRateImproving && !pattern.appealRateWorsening
+                          }"
+                        />
+                      </div>
+                      <span v-else class="text-sm text-neutral-400">—</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <span
+                        class="text-sm font-medium"
+                        :class="pattern.deniedDollarsChange < 0 ? 'text-success-600' : pattern.deniedDollarsChange > 0 ? 'text-error-600' : 'text-neutral-600'"
+                      >
+                        {{ pattern.deniedDollarsChange < 0 ? '' : pattern.deniedDollarsChange > 0 ? '+' : '' }}{{ formatCurrencyCompact(pattern.deniedDollarsChange) }}
+                      </span>
+                    </td>
+                  </tr>
 
-            <p class="text-sm text-neutral-700 mb-4 line-clamp-2">{{ pattern.description }}</p>
+                  <!-- Expanded Pattern Detail -->
+                  <tr v-if="expandedPatternId === pattern.id">
+                    <td colspan="4" class="px-6 py-6 bg-neutral-50">
+                      <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-semibold text-neutral-900">{{ pattern.title }}</h4>
+                        <button
+                          @click.stop="navigateToPattern(pattern.id)"
+                          class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+                        >
+                          View Insight
+                          <Icon name="heroicons:arrow-right" class="w-4 h-4" />
+                        </button>
+                      </div>
 
-            <!-- Before/After Metrics -->
-            <div class="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-neutral-200">
-              <div>
-                <div class="text-xs text-neutral-600 mb-1">Before</div>
-                <div class="text-sm font-semibold text-error-600">{{ pattern.score.frequency }} denials</div>
-                <div class="text-xs text-neutral-500">{{ formatCurrency(pattern.totalAtRisk) }} at risk</div>
-              </div>
-              <div>
-                <div class="text-xs text-neutral-600 mb-1">After</div>
-                <div class="text-sm font-semibold text-success-600">{{ calculateAfterDenials(pattern) }} denials</div>
-                <div class="text-xs text-neutral-500">{{ formatCurrency(calculateSavingsRealized(pattern)) }} saved</div>
-              </div>
-            </div>
+                      <!-- Trend Charts -->
+                      <div class="grid grid-cols-3 gap-6 mb-4">
+                        <div class="bg-white rounded-lg border border-neutral-200 p-4">
+                          <div class="text-xs text-neutral-600 mb-2">Denial Rate</div>
+                          <div class="text-lg font-semibold text-neutral-900 mb-2">
+                            {{ formatPercentage(pattern.baseline.denialRate) }} → {{ formatPercentage(pattern.current.denialRate) }}
+                          </div>
+                          <div class="h-16">
+                            <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
+                              <path
+                                :d="generatePatternTrendPath(pattern.trendData?.denialRate || [])"
+                                fill="none"
+                                :stroke="pattern.denialRateImproving ? '#10B981' : '#EF4444'"
+                                stroke-width="2"
+                              />
+                            </svg>
+                          </div>
+                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                        </div>
 
-            <!-- Improvement Metrics -->
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-neutral-600">
-                <strong class="text-neutral-900">{{ pattern.learningProgress }}%</strong> improvement
-              </span>
-              <span class="text-neutral-600">
-                <strong class="text-neutral-900">{{ pattern.practiceSessionsCompleted }}</strong> sessions
-              </span>
-              <span class="text-neutral-600">
-                <strong class="text-neutral-900">{{ pattern.correctionsApplied }}</strong> corrections
-              </span>
-            </div>
+                        <div class="bg-white rounded-lg border border-neutral-200 p-4">
+                          <div class="text-xs text-neutral-600 mb-2">Appeal Rate</div>
+                          <template v-if="hasAppealData">
+                            <div class="text-lg font-semibold text-neutral-900 mb-2">
+                              {{ formatPercentage(pattern.baseline.appealRate) }} → {{ formatPercentage(pattern.current.appealRate) }}
+                            </div>
+                            <div class="h-16">
+                              <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
+                                <path
+                                  :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])"
+                                  fill="none"
+                                  :stroke="pattern.appealRateImproving ? '#10B981' : '#EF4444'"
+                                  stroke-width="2"
+                                />
+                              </svg>
+                            </div>
+                            <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                          </template>
+                          <template v-else>
+                            <div class="text-sm text-neutral-400 text-center py-4">Coming soon</div>
+                          </template>
+                        </div>
+
+                        <div class="bg-white rounded-lg border border-neutral-200 p-4">
+                          <div class="text-xs text-neutral-600 mb-2">Denied Dollars</div>
+                          <div class="text-lg font-semibold text-neutral-900 mb-2">
+                            {{ formatCurrencyCompact(pattern.baseline.deniedDollars) }} → {{ formatCurrencyCompact(pattern.current.deniedDollars) }}
+                          </div>
+                          <div class="h-16">
+                            <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
+                              <path
+                                :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])"
+                                fill="none"
+                                :stroke="pattern.deniedDollarsChange < 0 ? '#10B981' : '#EF4444'"
+                                stroke-width="2"
+                              />
+                            </svg>
+                          </div>
+                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                        </div>
+                      </div>
+
+                      <!-- Additional Info -->
+                      <div class="flex items-center gap-6 text-sm text-neutral-600">
+                        <span>
+                          <strong class="text-neutral-900">{{ pattern.baseline.claimsCount }}</strong> → <strong class="text-neutral-900">{{ pattern.current.claimsCount }}</strong> claims affected
+                          <span v-if="pattern.claimsReductionPercent" class="text-success-600 ml-1">({{ pattern.claimsReductionPercent }}% reduction)</span>
+                        </span>
+                        <span v-if="pattern.firstImprovementDate">
+                          First improvement observed: <strong class="text-neutral-900">{{ formatDate(pattern.firstImprovementDate) }}</strong>
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else class="text-center py-8 text-neutral-500">
+            <Icon name="heroicons:chart-bar" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
+            <p class="text-sm">Only one pattern detected in your claims</p>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div v-else class="text-center py-12 bg-neutral-50 rounded-lg">
-          <Icon name="heroicons:flag" class="w-12 h-12 text-neutral-400 mx-auto mb-3" />
-          <h3 class="text-lg font-medium text-neutral-900 mb-1">No Patterns Resolved Yet</h3>
-          <p class="text-sm text-neutral-600 mb-4">
-            Keep working on active patterns to see your achievements here
+    <!-- NETWORK VIEW -->
+    <div v-else-if="activeView === 'network'">
+      <!-- Provider Comparison Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Provider Comparison</h2>
+
+        <!-- Edge Case: No Providers -->
+        <div v-if="providers.length <= 1" class="bg-neutral-50 rounded-lg border border-neutral-200 p-8 text-center">
+          <Icon name="heroicons:user-group" class="w-12 h-12 text-neutral-400 mx-auto mb-3" />
+          <h3 class="text-lg font-medium text-neutral-900 mb-1">Network Comparison Unavailable</h3>
+          <p class="text-sm text-neutral-600">
+            Network comparison requires multiple providers. Currently only {{ providers.length }} provider detected.
           </p>
-          <NuxtLink
-            to="/insights"
-            class="inline-block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
-          >
-            View Active Patterns
-          </NuxtLink>
-        </div>
-      </div>
-
-      <!-- Improving Patterns -->
-      <div v-if="patternsStore.improvingPatterns.length > 0" class="mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-neutral-900">Patterns In Progress</h3>
-          <span class="text-sm text-neutral-600">{{ patternsStore.improvingPatterns.length }} improving</span>
         </div>
 
-        <div class="grid grid-cols-3 gap-4">
-          <div
-            v-for="pattern in patternsStore.improvingPatterns"
-            :key="pattern.id"
-            class="bg-white rounded-lg border border-warning-200 p-4 hover:border-warning-400 transition-colors cursor-pointer"
-            @click="navigateToPattern(pattern.id)"
-          >
-            <div class="flex items-center gap-2 mb-3">
-              <Icon :name="getPatternCategoryIcon(pattern.category)" class="w-4 h-4 text-warning-600" />
-              <span class="text-sm font-medium text-neutral-900">{{ pattern.title }}</span>
-            </div>
-
-            <div class="mb-3">
-              <div class="flex items-center justify-between text-xs text-neutral-600 mb-1">
-                <span>Progress</span>
-                <span class="font-medium text-neutral-900">{{ pattern.learningProgress }}%</span>
-              </div>
-              <div class="w-full bg-neutral-200 rounded-full h-2">
-                <div
-                  class="bg-warning-500 h-2 rounded-full transition-all"
-                  :style="{ width: `${pattern.learningProgress}%` }"
-                />
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between text-xs text-neutral-600">
-              <span>{{ pattern.improvements.length }} improvements</span>
-              <span>{{ pattern.practiceSessionsCompleted }} sessions</span>
-            </div>
+        <template v-else>
+          <!-- Provider Selector -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-neutral-700 mb-2">Compare Provider:</label>
+            <select
+              v-model="selectedProviderId"
+              @change="onProviderSelect"
+              class="w-full max-w-md px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option v-for="provider in providers" :key="provider.id" :value="provider.id">
+                {{ provider.name }} (NPI: {{ provider.npi }})
+              </option>
+            </select>
           </div>
-        </div>
-      </div>
 
-      <!-- Overall Progress Timeline -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <h3 class="text-lg font-semibold text-neutral-900 mb-4">Your Journey</h3>
-        <div v-if="patternsStore.patterns.length > 0" class="space-y-4">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 w-24 text-xs text-neutral-600 pt-1">All Patterns</div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
-                <div class="flex-1 bg-neutral-200 rounded-full h-3 overflow-hidden">
-                  <div class="flex h-full">
-                    <div
-                      class="bg-success-500 h-full"
-                      :style="{ width: `${(patternsStore.resolvedPatterns.length / patternsStore.totalPatternsDetected) * 100}%` }"
-                      :title="`${patternsStore.resolvedPatterns.length} resolved`"
-                    />
-                    <div
-                      class="bg-warning-500 h-full"
-                      :style="{ width: `${(patternsStore.improvingPatterns.length / patternsStore.totalPatternsDetected) * 100}%` }"
-                      :title="`${patternsStore.improvingPatterns.length} improving`"
-                    />
-                    <div
-                      class="bg-error-500 h-full"
-                      :style="{ width: `${(patternsStore.activePatterns.length / patternsStore.totalPatternsDetected) * 100}%` }"
-                      :title="`${patternsStore.activePatterns.length} active`"
-                    />
+          <!-- Selected Provider vs Practice Cards -->
+          <div class="mb-6">
+            <h3 class="text-sm font-medium text-neutral-600 uppercase tracking-wider mb-4">
+              Selected Provider vs. Practice
+            </h3>
+
+            <div class="grid grid-cols-3 gap-6 mb-6">
+              <!-- Denial Rate Comparison -->
+              <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <div class="text-sm text-neutral-600 font-medium mb-4">Denial Rate</div>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Selected:</span>
+                    <span class="text-lg font-semibold text-neutral-900">
+                      {{ formatPercentage(selectedProviderMetrics.denialRate) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Practice:</span>
+                    <span class="text-sm text-neutral-700">
+                      {{ formatPercentage(practiceAverageMetrics.denialRate) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Best:</span>
+                    <span class="text-sm text-success-600">
+                      {{ formatPercentage(bestProviderMetrics.denialRate) }}
+                    </span>
                   </div>
                 </div>
-                <span class="text-xs font-medium text-neutral-900">{{ patternsStore.totalPatternsDetected }}</span>
+                <div class="mt-4 pt-4 border-t border-neutral-200">
+                  <div class="text-xs text-neutral-600 mb-2">
+                    Rank: <strong class="text-neutral-900">{{ selectedProviderRank.denialRate }} of {{ providers.length }}</strong>
+                  </div>
+                  <div class="w-full bg-neutral-200 rounded-full h-2">
+                    <div
+                      class="bg-primary-600 h-2 rounded-full"
+                      :style="{ width: `${((providers.length - selectedProviderRank.denialRate + 1) / providers.length) * 100}%` }"
+                    ></div>
+                  </div>
+                </div>
               </div>
-              <div class="flex items-center gap-4 text-xs">
-                <div class="flex items-center gap-1">
-                  <div class="w-3 h-3 bg-success-500 rounded"></div>
-                  <span class="text-neutral-600">{{ patternsStore.resolvedPatterns.length }} Resolved</span>
+
+              <!-- Appeal Rate Comparison -->
+              <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <div class="text-sm text-neutral-600 font-medium mb-4">Appeal Rate</div>
+                <template v-if="hasAppealData">
+                  <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-neutral-600">Selected:</span>
+                      <span class="text-lg font-semibold text-neutral-900">
+                        {{ formatPercentage(selectedProviderMetrics.appealRate) }}
+                      </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-neutral-600">Practice:</span>
+                      <span class="text-sm text-neutral-700">
+                        {{ formatPercentage(practiceAverageMetrics.appealRate) }}
+                      </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-neutral-600">Best:</span>
+                      <span class="text-sm text-success-600">
+                        {{ formatPercentage(bestProviderMetrics.appealRate) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="mt-4 pt-4 border-t border-neutral-200">
+                    <div class="text-xs text-neutral-600 mb-2">
+                      Rank: <strong class="text-neutral-900">{{ selectedProviderRank.appealRate }} of {{ providers.length }}</strong>
+                    </div>
+                    <div class="w-full bg-neutral-200 rounded-full h-2">
+                      <div
+                        class="bg-primary-600 h-2 rounded-full"
+                        :style="{ width: `${((providers.length - selectedProviderRank.appealRate + 1) / providers.length) * 100}%` }"
+                      ></div>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="text-center py-8">
+                    <Icon name="heroicons:clock" class="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                    <p class="text-sm text-neutral-500">Appeal tracking coming soon</p>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Denied Dollars Comparison -->
+              <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <div class="text-sm text-neutral-600 font-medium mb-4">Denied Dollars</div>
+                <div class="space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Selected:</span>
+                    <span class="text-lg font-semibold text-neutral-900">
+                      {{ formatCurrencyCompact(selectedProviderMetrics.deniedDollars) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Practice:</span>
+                    <span class="text-sm text-neutral-700">
+                      {{ formatCurrencyCompact(practiceAverageMetrics.deniedDollars) }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Best:</span>
+                    <span class="text-sm text-success-600">
+                      {{ formatCurrencyCompact(bestProviderMetrics.deniedDollars) }}
+                    </span>
+                  </div>
                 </div>
-                <div class="flex items-center gap-1">
-                  <div class="w-3 h-3 bg-warning-500 rounded"></div>
-                  <span class="text-neutral-600">{{ patternsStore.improvingPatterns.length }} Improving</span>
+                <div class="mt-4 pt-4 border-t border-neutral-200">
+                  <div class="text-xs text-neutral-600 mb-2">
+                    Rank: <strong class="text-neutral-900">{{ selectedProviderRank.deniedDollars }} of {{ providers.length }}</strong>
+                  </div>
+                  <div class="w-full bg-neutral-200 rounded-full h-2">
+                    <div
+                      class="bg-primary-600 h-2 rounded-full"
+                      :style="{ width: `${((providers.length - selectedProviderRank.deniedDollars + 1) / providers.length) * 100}%` }"
+                    ></div>
+                  </div>
                 </div>
-                <div class="flex items-center gap-1">
-                  <div class="w-3 h-3 bg-error-500 rounded"></div>
-                  <span class="text-neutral-600">{{ patternsStore.activePatterns.length }} Active</span>
+              </div>
+            </div>
+
+            <!-- Recovered Revenue for Selected Provider -->
+            <div
+              class="rounded-lg p-6"
+              :class="selectedProviderRecoveredRevenue >= 0
+                ? 'bg-success-50 border border-success-200'
+                : 'bg-error-light border border-error-300'"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold mb-1"
+                    :class="selectedProviderRecoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+                  >
+                    Recovered Revenue (Selected Provider)
+                  </h3>
+                  <p class="text-sm" :class="selectedProviderRecoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                    Additional approved revenue vs. baseline
+                  </p>
+                </div>
+                <div class="text-right">
+                  <div
+                    class="text-3xl font-bold"
+                    :class="selectedProviderRecoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+                  >
+                    {{ selectedProviderRecoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrency(selectedProviderRecoveredRevenue) }}
+                  </div>
+                  <p class="text-sm mt-1" :class="selectedProviderRecoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                    Practice Total: {{ totalRecoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrency(totalRecoveredRevenue) }}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
+        </template>
+      </div>
 
-          <div class="pt-4 border-t border-neutral-200 grid grid-cols-3 gap-4">
-            <div class="text-center p-4 bg-neutral-50 rounded-lg">
-              <div class="text-2xl font-bold text-neutral-900 mb-1">{{ patternsStore.avgLearningProgress }}%</div>
-              <div class="text-xs text-neutral-600">Average Progress</div>
-            </div>
-            <div class="text-center p-4 bg-neutral-50 rounded-lg">
-              <div class="text-2xl font-bold text-neutral-900 mb-1">{{ formatCurrency(totalSavingsRealized, true) }}</div>
-              <div class="text-xs text-neutral-600">Total Savings</div>
-            </div>
-            <div class="text-center p-4 bg-neutral-50 rounded-lg">
-              <div class="text-2xl font-bold text-neutral-900 mb-1">{{ totalPracticeSessions }}</div>
-              <div class="text-xs text-neutral-600">Practice Sessions</div>
-            </div>
+      <!-- All Practice Providers Table -->
+      <div v-if="providers.length > 1" class="mb-8">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">All Practice Providers</h2>
+
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th class="text-left text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Provider
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denial Rate
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Appeal Rate
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denied $
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Recovered
+                  </th>
+                  <th class="text-center text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Trend
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-100">
+                <tr
+                  v-for="provider in sortedProviderMetrics"
+                  :key="provider.id"
+                  class="hover:bg-neutral-50 cursor-pointer transition-colors"
+                  :class="{
+                    'bg-primary-50 border-l-4 border-primary-500': provider.id === selectedProviderId
+                  }"
+                  @click="selectProviderFromTable(provider.id)"
+                >
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <Icon
+                        v-if="provider.id === selectedProviderId"
+                        name="heroicons:chevron-right"
+                        class="w-4 h-4 text-primary-500"
+                      />
+                      <div>
+                        <div class="text-sm font-medium text-neutral-900">{{ provider.name }}</div>
+                        <div class="text-xs text-neutral-500">{{ provider.specialty }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <span class="text-sm font-medium text-neutral-900">
+                        {{ formatPercentage(provider.metrics.denialRate) }}
+                      </span>
+                      <Icon
+                        :name="provider.trends.denialRate === 'improving' ? 'heroicons:arrow-down' : provider.trends.denialRate === 'worsening' ? 'heroicons:arrow-up' : 'heroicons:minus'"
+                        class="w-4 h-4"
+                        :class="{
+                          'text-success-600': provider.trends.denialRate === 'improving',
+                          'text-error-600': provider.trends.denialRate === 'worsening',
+                          'text-neutral-400': provider.trends.denialRate === 'stable'
+                        }"
+                      />
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <template v-if="hasAppealData">
+                      <div class="flex items-center justify-end gap-2">
+                        <span class="text-sm font-medium text-neutral-900">
+                          {{ formatPercentage(provider.metrics.appealRate) }}
+                        </span>
+                        <Icon
+                          :name="provider.trends.appealRate === 'improving' ? 'heroicons:arrow-down' : provider.trends.appealRate === 'worsening' ? 'heroicons:arrow-up' : 'heroicons:minus'"
+                          class="w-4 h-4"
+                          :class="{
+                            'text-success-600': provider.trends.appealRate === 'improving',
+                            'text-error-600': provider.trends.appealRate === 'worsening',
+                            'text-neutral-400': provider.trends.appealRate === 'stable'
+                          }"
+                        />
+                      </div>
+                    </template>
+                    <span v-else class="text-sm text-neutral-400">—</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-medium text-neutral-900">
+                      {{ formatCurrencyCompact(provider.metrics.deniedDollars) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span
+                      class="text-sm font-medium"
+                      :class="provider.recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'"
+                    >
+                      {{ provider.recoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrencyCompact(provider.recoveredRevenue) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <Icon
+                      :name="provider.overallTrend === 'improving' ? 'heroicons:arrow-trending-down' : provider.overallTrend === 'worsening' ? 'heroicons:arrow-trending-up' : 'heroicons:minus'"
+                      class="w-5 h-5"
+                      :class="{
+                        'text-success-600': provider.overallTrend === 'improving',
+                        'text-error-600': provider.overallTrend === 'worsening',
+                        'text-neutral-400': provider.overallTrend === 'stable'
+                      }"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        <div v-else class="text-center py-8 text-neutral-500">
-          <Icon name="heroicons:chart-bar" class="w-12 h-12 text-neutral-400 mx-auto mb-2" />
-          <p class="text-sm">No patterns detected yet</p>
         </div>
       </div>
-    </div><!-- End Achievement History View -->
+
+      <!-- Regional Benchmark Section -->
+      <div v-if="providers.length > 1" class="mb-8">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Regional Benchmark (De-identified)</h2>
+
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+          <p class="text-sm text-neutral-600 mb-6">
+            Compared to <strong>{{ regionalBenchmark.peerCount }}</strong> similar providers in the region:
+          </p>
+
+          <div class="space-y-6">
+            <!-- Denial Rate Percentile -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-neutral-700">Denial Rate:</span>
+                <span class="text-sm font-medium text-neutral-900">
+                  {{ regionalBenchmark.denialRatePercentile }}th percentile
+                  <span class="text-neutral-500">(better than {{ regionalBenchmark.denialRatePercentile }}% of peers)</span>
+                </span>
+              </div>
+              <div class="relative w-full bg-neutral-200 rounded-full h-3">
+                <div
+                  class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-error-400 via-warning-400 to-success-400"
+                  style="width: 100%"
+                ></div>
+                <div
+                  class="absolute top-1/2 -translate-y-1/2 w-0 h-0"
+                  :style="{ left: `${regionalBenchmark.denialRatePercentile}%` }"
+                >
+                  <div class="relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-neutral-900 rounded-full border-2 border-white shadow"></div>
+                    <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-neutral-600 whitespace-nowrap">Selected</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appeal Rate Percentile -->
+            <div v-if="hasAppealData">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-neutral-700">Appeal Rate:</span>
+                <span class="text-sm font-medium text-neutral-900">
+                  {{ regionalBenchmark.appealRatePercentile }}th percentile
+                  <span class="text-neutral-500">(better than {{ regionalBenchmark.appealRatePercentile }}% of peers)</span>
+                </span>
+              </div>
+              <div class="relative w-full bg-neutral-200 rounded-full h-3">
+                <div
+                  class="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-error-400 via-warning-400 to-success-400"
+                  style="width: 100%"
+                ></div>
+                <div
+                  class="absolute top-1/2 -translate-y-1/2 w-0 h-0"
+                  :style="{ left: `${regionalBenchmark.appealRatePercentile}%` }"
+                >
+                  <div class="relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-neutral-900 rounded-full border-2 border-white shadow"></div>
+                    <div class="absolute top-2 left-1/2 -translate-x-1/2 text-xs text-neutral-600 whitespace-nowrap">Selected</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pattern-Level Comparison -->
+      <div v-if="providers.length > 1 && patternPerformance.length > 0">
+        <h2 class="text-lg font-semibold text-neutral-900 mb-4">Pattern-Level Comparison</h2>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-neutral-700 mb-2">Select Pattern:</label>
+          <select
+            v-model="selectedPatternFilter"
+            @change="onPatternFilterChange"
+            class="w-full max-w-md px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+            <option value="">All Patterns</option>
+            <option v-for="pattern in patternPerformance" :key="pattern.id" :value="pattern.id">
+              {{ pattern.title }}
+            </option>
+          </select>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-neutral-50 border-b border-neutral-200">
+                <tr>
+                  <th class="text-left text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Provider
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denial Rate
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Claims Affected
+                  </th>
+                  <th class="text-right text-xs font-medium text-neutral-600 uppercase tracking-wider px-6 py-3">
+                    Denied $
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-100">
+                <tr
+                  v-for="provider in filteredPatternProviders"
+                  :key="provider.id"
+                  class="hover:bg-neutral-50 transition-colors"
+                  :class="{
+                    'bg-primary-50 border-l-4 border-primary-500': provider.id === selectedProviderId
+                  }"
+                >
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-neutral-900">{{ provider.name }}</div>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-medium text-neutral-900">
+                      {{ formatPercentage(provider.patternDenialRate) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm text-neutral-900">{{ provider.patternClaimsAffected }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <span class="text-sm font-medium text-neutral-900">
+                      {{ formatCurrencyCompact(provider.patternDeniedDollars) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { formatRelative } from 'date-fns'
+import { ref, computed, onMounted, watch } from 'vue'
+import { format } from 'date-fns'
+import type { Claim, Provider } from '~/types'
 
 // Stores
-const analyticsStore = useAnalyticsStore()
+const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
-const appStore = useAppStore()
-
-// Composables
-const { formatCurrency } = useAnalytics()
-const { getPatternCategoryIcon } = usePatterns()
 
 // State
-const sortBy = ref<'savings' | 'denials' | 'recent'>('savings')
-const sortDirection = ref<'asc' | 'desc'>('desc')
-const selectedWindow = ref(90) // Default to 90 days
-const adminCostPerAppeal = ref(350) // Default admin cost
-const activeView = ref<'provider' | 'network' | 'achievements'>('provider')
+const activeView = ref<'trend' | 'network'>('trend')
+const selectedPeriod = ref('90d')
+const showSettings = ref(false)
+const adminCostPerAppeal = ref(400)
+const expandedPatternId = ref<string | null>(null)
+const selectedProviderId = ref<string | null>(null)
+const selectedPatternFilter = ref<string>('')
 
-// Column sorting for pattern impact table
-const togglePatternSort = (column: 'savings' | 'denials' | 'recent') => {
-  if (sortBy.value === column) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortBy.value = column
-    sortDirection.value = 'desc'
+// Signal capture helper
+function trackEvent(signal: string, data: Record<string, unknown> = {}) {
+  eventsStore.trackEvent(
+    signal as any,
+    'impact',
+    data as any
+  )
+}
+
+// View change handler
+function setView(view: 'trend' | 'network') {
+  activeView.value = view
+  trackEvent('impact-view-change', { view })
+}
+
+// Period days mapping
+const periodDays = computed(() => {
+  const map: Record<string, number> = {
+    '30d': 30,
+    '60d': 60,
+    '90d': 90,
+    '180d': 180,
+    '360d': 360,
+  }
+  return map[selectedPeriod.value] || 90
+})
+
+const periodLabel = computed(() => {
+  return `${periodDays.value} days`
+})
+
+// Watch period changes
+watch(selectedPeriod, (newPeriod) => {
+  trackEvent('impact-period-change', { period: newPeriod })
+})
+
+// Get claims within a date range
+function getClaimsInRange(claims: Claim[], startDate: Date, endDate: Date): Claim[] {
+  return claims.filter(c => {
+    const claimDate = c.submissionDate ? new Date(c.submissionDate) : null
+    if (!claimDate) return false
+    return claimDate >= startDate && claimDate <= endDate
+  })
+}
+
+// Get line items from claims
+function getLineItems(claims: Claim[]) {
+  const lineItems: Array<{
+    claimId: string
+    lineNumber: number
+    billedAmount: number
+    status: string
+    providerId?: string
+    denialReason?: string
+  }> = []
+
+  for (const claim of claims) {
+    if (claim.lineItems && claim.lineItems.length > 0) {
+      for (const line of claim.lineItems) {
+        lineItems.push({
+          claimId: claim.id,
+          lineNumber: line.lineNumber,
+          billedAmount: line.billedAmount,
+          status: line.status,
+          providerId: claim.providerId,
+          denialReason: claim.denialReason,
+        })
+      }
+    } else {
+      // Treat the whole claim as a single line item
+      lineItems.push({
+        claimId: claim.id,
+        lineNumber: 1,
+        billedAmount: claim.billedAmount,
+        status: claim.status,
+        providerId: claim.providerId,
+        denialReason: claim.denialReason,
+      })
+    }
+  }
+
+  return lineItems
+}
+
+// Calculate metrics from claims
+function calculateMetrics(claims: Claim[]) {
+  const lineItems = getLineItems(claims)
+  const totalLines = lineItems.length
+  const deniedLines = lineItems.filter(l => l.status === 'denied')
+  const deniedCount = deniedLines.length
+  const deniedDollars = deniedLines.reduce((sum, l) => sum + l.billedAmount, 0)
+
+  // Appeal tracking (check if claims have appeal data)
+  const appealsFiledCount = claims.filter(c => c.appealStatus && c.appealStatus !== null).length
+  const hasAppeal = appealsFiledCount > 0
+
+  return {
+    totalLines,
+    deniedCount,
+    denialRate: totalLines > 0 ? (deniedCount / totalLines) * 100 : 0,
+    deniedDollars,
+    appealsFiled: appealsFiledCount,
+    appealRate: deniedCount > 0 ? (appealsFiledCount / deniedCount) * 100 : 0,
+    hasAppealData: hasAppeal,
   }
 }
 
-const getPatternSortIcon = (column: string) => {
-  if (sortBy.value !== column) return 'heroicons:chevron-up-down'
-  return sortDirection.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
-}
-
-// Provider table sorting
-const providerSortBy = ref<'name' | 'engagement' | 'improvement' | 'sessions'>('improvement')
-const providerSortDir = ref<'asc' | 'desc'>('desc')
-
-const toggleProviderSort = (column: typeof providerSortBy.value) => {
-  if (providerSortBy.value === column) {
-    providerSortDir.value = providerSortDir.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    providerSortBy.value = column
-    providerSortDir.value = column === 'name' ? 'asc' : 'desc'
-  }
-}
-
-const getProviderSortIcon = (column: string) => {
-  if (providerSortBy.value !== column) return 'heroicons:chevron-up-down'
-  return providerSortDir.value === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
-}
-
-// Measurement window options
-const measurementWindows = [
-  { value: 30, label: '30d' },
-  { value: 60, label: '60d' },
-  { value: 90, label: '90d' },
-  { value: 180, label: '180d' },
-  { value: 360, label: '360d' },
-]
-
-// Computed data
-const roi = computed(() => analyticsStore.practiceROI)
-const dashboardMetrics = computed(() => analyticsStore.dashboardMetrics)
-
-// Baseline vs Current Metrics (based on selected window)
+// Baseline period: first 30 days of selected window
 const baselineMetrics = computed(() => {
   const now = new Date()
-  const windowStart = new Date(now.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
-  const baselineStart = new Date(windowStart.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
+  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
+  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-  const baselineClaims = appStore.claims.filter(c => {
-    if (!c.submissionDate) return false
-    const date = new Date(c.submissionDate)
-    return date >= baselineStart && date < windowStart
-  })
-
-  const totalClaims = baselineClaims.length
-  const deniedClaims = baselineClaims.filter(c => c.status === 'denied').length
-  const denialRate = totalClaims > 0 ? (deniedClaims / totalClaims) * 100 : 0
-
-  return {
-    totalClaims,
-    deniedClaims,
-    denialRate,
-  }
+  const baselineClaims = getClaimsInRange(appStore.claims, windowStart, baselineEnd)
+  return calculateMetrics(baselineClaims)
 })
 
+// Current period: last 30 days
 const currentMetrics = computed(() => {
   const now = new Date()
-  const windowStart = new Date(now.getTime() - selectedWindow.value * 24 * 60 * 60 * 1000)
+  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const currentClaims = appStore.claims.filter(c => {
-    if (!c.submissionDate) return false
-    const date = new Date(c.submissionDate)
-    return date >= windowStart
+  const currentClaims = getClaimsInRange(appStore.claims, currentStart, now)
+  return calculateMetrics(currentClaims)
+})
+
+// Check if we have claims data
+const hasClaimsData = computed(() => {
+  return appStore.claims.length > 0 && currentMetrics.value.totalLines > 0
+})
+
+// Check if we have appeal data
+const hasAppealData = computed(() => {
+  return baselineMetrics.value.hasAppealData || currentMetrics.value.hasAppealData
+})
+
+// Trend calculations
+const denialRateTrend = computed(() => {
+  const pointChange = currentMetrics.value.denialRate - baselineMetrics.value.denialRate
+  const percentChange = baselineMetrics.value.denialRate > 0
+    ? (pointChange / baselineMetrics.value.denialRate) * 100
+    : 0
+  return {
+    pointChange,
+    percentChange,
+    isImproving: pointChange < 0,
+  }
+})
+
+const appealRateTrend = computed(() => {
+  const pointChange = currentMetrics.value.appealRate - baselineMetrics.value.appealRate
+  const percentChange = baselineMetrics.value.appealRate > 0
+    ? (pointChange / baselineMetrics.value.appealRate) * 100
+    : 0
+  return {
+    pointChange,
+    percentChange,
+    isImproving: pointChange < 0,
+  }
+})
+
+const deniedDollarsTrend = computed(() => {
+  const dollarChange = currentMetrics.value.deniedDollars - baselineMetrics.value.deniedDollars
+  const percentChange = baselineMetrics.value.deniedDollars > 0
+    ? (dollarChange / baselineMetrics.value.deniedDollars) * 100
+    : 0
+  return {
+    dollarChange,
+    percentChange,
+    isImproving: dollarChange < 0,
+  }
+})
+
+// Recovered revenue = Baseline Denied $ - Current Denied $
+const recoveredRevenue = computed(() => {
+  return baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
+})
+
+// Generate sparkline data points
+function generateSparklineData(metric: 'denialRate' | 'deniedDollars' | 'appealRate'): number[] {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
+
+  // Weekly aggregates
+  const weeks = Math.ceil(periodDays.value / 7)
+  const data: number[] = []
+
+  for (let i = 0; i < weeks; i++) {
+    const weekStart = new Date(windowStart.getTime() + i * 7 * 24 * 60 * 60 * 1000)
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    const weekClaims = getClaimsInRange(appStore.claims, weekStart, weekEnd)
+    const metrics = calculateMetrics(weekClaims)
+
+    if (metric === 'denialRate') {
+      data.push(metrics.denialRate)
+    } else if (metric === 'deniedDollars') {
+      data.push(metrics.deniedDollars)
+    } else {
+      data.push(metrics.appealRate)
+    }
+  }
+
+  // If we don't have enough data, generate some demo points
+  if (data.length < 3 || data.every(d => d === 0)) {
+    const baseline = metric === 'denialRate' ? 12 :
+      metric === 'deniedDollars' ? 65000 : 16
+    const current = metric === 'denialRate' ? 8.2 :
+      metric === 'deniedDollars' ? 47200 : 12.1
+
+    return Array.from({ length: Math.min(weeks, 12) }, (_, i) => {
+      const progress = i / (Math.min(weeks, 12) - 1)
+      return baseline - (baseline - current) * progress + (Math.random() - 0.5) * (baseline * 0.1)
+    })
+  }
+
+  return data
+}
+
+// Convert data to SVG path
+function dataToSparklinePath(data: number[]): string {
+  if (data.length < 2) return ''
+
+  const width = 120
+  const height = 40
+  const padding = 2
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
+    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    return { x, y }
   })
 
-  const totalClaims = currentClaims.length
-  const deniedClaims = currentClaims.filter(c => c.status === 'denied').length
-  const denialRate = totalClaims > 0 ? (deniedClaims / totalClaims) * 100 : 0
-
-  return {
-    totalClaims,
-    deniedClaims,
-    denialRate,
-  }
-})
-
-const denialRateReduction = computed(() => {
-  return baselineMetrics.value.denialRate - currentMetrics.value.denialRate
-})
-
-const appealReduction = computed(() => {
-  // Estimate: assume patterns resolved/improving led to reduced appeals
-  // Simplified calculation: % of patterns addressed × historical appeal rate
-  const patternsAddressed = roi.value.patternsResolved + roi.value.patternsImproving
-  const totalPatterns = patternsStore.totalPatternsDetected || 1
-  const reductionRate = (patternsAddressed / totalPatterns) * 100
-
-  return Math.min(Math.round(reductionRate * 0.6), 60) // Cap at 60% reduction
-})
-
-const adminSavings = computed(() => {
-  // Calculate admin savings based on:
-  // (denials avoided) × (% that would have been appealed) × (cost per appeal)
-  const denialsAvoided = roi.value.avoidedDenials
-  const assumedAppealRate = 0.25 // Assume 25% of denials get appealed
-  const appealsAvoided = Math.round(denialsAvoided * assumedAppealRate)
-
-  return appealsAvoided * adminCostPerAppeal.value
-})
-
-// Achievement History computed properties
-const totalResolvedImpact = computed(() => {
-  return patternsStore.resolvedPatterns.reduce((sum, p) => sum + p.totalAtRisk, 0)
-})
-
-const achievementSuccessRate = computed(() => {
-  const total = patternsStore.totalPatternsDetected
-  if (total === 0) return 0
-  return Math.round((patternsStore.resolvedPatterns.length / total) * 100)
-})
-
-const totalSavingsRealized = computed(() => {
-  return patternsStore.resolvedPatterns.reduce((sum, p) => {
-    const resolutionRate = p.learningProgress / 100
-    return sum + (p.totalAtRisk * resolutionRate)
-  }, 0)
-})
-
-const totalPracticeSessions = computed(() => {
-  return patternsStore.patterns.reduce((sum, p) => sum + p.practiceSessionsCompleted, 0)
-})
-
-const calculateAfterDenials = (pattern: any): number => {
-  const reduction = pattern.learningProgress / 100
-  return Math.round(pattern.score.frequency * (1 - reduction))
+  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
 }
 
-const calculateSavingsRealized = (pattern: any): number => {
-  const resolutionRate = pattern.learningProgress / 100
-  return Math.round(pattern.totalAtRisk * resolutionRate)
+function dataToSparklineFill(data: number[]): string {
+  if (data.length < 2) return ''
+
+  const width = 120
+  const height = 40
+  const padding = 2
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
+    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    return { x, y }
+  })
+
+  const firstX = points[0]?.x ?? padding
+  const lastX = points[points.length - 1]?.x ?? (width - padding)
+
+  return `M ${firstX} ${height} ` +
+    points.map((p, i) => `${i === 0 ? 'L' : ''} ${p.x} ${p.y}`).join(' ') +
+    ` L ${lastX} ${height} Z`
 }
 
-// Network-level aggregated metrics (simulated for demo)
-const networkMetrics = computed(() => {
-  // Simulate network data with current provider + fictional providers
-  const currentProviderImprovement = denialRateReduction.value
-  const currentProviderSessions = roi.value.totalPracticeSessions
+// Sparkline paths
+const denialRateSparklineData = computed(() => generateSparklineData('denialRate'))
+const denialRateSparklinePath = computed(() => dataToSparklinePath(denialRateSparklineData.value))
+const denialRateSparklineFill = computed(() => dataToSparklineFill(denialRateSparklineData.value))
 
-  return {
-    providersCount: 12,
-    avgImprovement: 6.8,
-    totalAppealsAvoided: 142,
-    totalSavings: 49700,
-    highEngagementCount: 5,
-    highEngagementImprovement: 9.2,
-    lowEngagementCount: 7,
-    lowEngagementImprovement: 4.1,
-    totalPatterns: 84,
-    patternsResolved: 31,
-    patternsInProgress: 42,
-  }
-})
+const appealRateSparklineData = computed(() => generateSparklineData('appealRate'))
+const appealRateSparklinePath = computed(() => dataToSparklinePath(appealRateSparklineData.value))
+const appealRateSparklineFill = computed(() => dataToSparklineFill(appealRateSparklineData.value))
 
-// Simulated network provider data
-const networkProviders = computed(() => {
-  return [
-    {
-      id: 'p1',
-      name: 'Summit Primary Care',
-      specialty: 'Family Medicine',
-      engagementLevel: 'high',
-      improvement: 8.2,
-      practiceSessions: 45,
-      status: 'active'
-    },
-    {
-      id: 'p2',
-      name: 'Valley Medical Group',
-      specialty: 'Internal Medicine',
-      engagementLevel: 'high',
-      improvement: 11.5,
-      practiceSessions: 67,
-      status: 'active'
-    },
-    {
-      id: 'p3',
-      name: 'Riverside Cardiology',
-      specialty: 'Cardiology',
-      engagementLevel: 'medium',
-      improvement: 5.3,
-      practiceSessions: 28,
-      status: 'active'
-    },
-    {
-      id: 'p4',
-      name: 'Harbor Orthopedics',
-      specialty: 'Orthopedic Surgery',
-      engagementLevel: 'high',
-      improvement: 9.7,
-      practiceSessions: 52,
-      status: 'active'
-    },
-    {
-      id: 'p5',
-      name: 'Coastal Family Health',
-      specialty: 'Family Medicine',
-      engagementLevel: 'low',
-      improvement: 2.8,
-      practiceSessions: 12,
-      status: 'active'
-    },
-    {
-      id: 'p6',
-      name: 'Metro Pediatrics',
-      specialty: 'Pediatrics',
-      engagementLevel: 'medium',
-      improvement: 6.1,
-      practiceSessions: 34,
-      status: 'active'
-    },
-    {
-      id: 'p7',
-      name: 'Lakeside Dermatology',
-      specialty: 'Dermatology',
-      engagementLevel: 'low',
-      improvement: 3.4,
-      practiceSessions: 8,
-      status: 'active'
-    },
-    {
-      id: 'p8',
-      name: 'North Point Surgery',
-      specialty: 'General Surgery',
-      engagementLevel: 'high',
-      improvement: 10.3,
-      practiceSessions: 58,
-      status: 'active'
-    },
-    {
-      id: 'p9',
-      name: 'Eastside Wellness',
-      specialty: 'Family Medicine',
-      engagementLevel: 'low',
-      improvement: 4.2,
-      practiceSessions: 15,
-      status: 'active'
-    },
-    {
-      id: 'p10',
-      name: 'Sunset Radiology',
-      specialty: 'Radiology',
-      engagementLevel: 'medium',
-      improvement: 5.9,
-      practiceSessions: 31,
-      status: 'active'
-    },
-    {
-      id: 'p11',
-      name: 'Greenwood Urgent Care',
-      specialty: 'Emergency Medicine',
-      engagementLevel: 'low',
-      improvement: -1.2,
-      practiceSessions: 5,
-      status: 'inactive'
-    },
-    {
-      id: 'p12',
-      name: 'Hilltop Neurology',
-      specialty: 'Neurology',
-      engagementLevel: 'medium',
-      improvement: 7.4,
-      practiceSessions: 39,
-      status: 'active'
+const deniedDollarsSparklineData = computed(() => generateSparklineData('deniedDollars'))
+const deniedDollarsSparklinePath = computed(() => dataToSparklinePath(deniedDollarsSparklineData.value))
+const deniedDollarsSparklineFill = computed(() => dataToSparklineFill(deniedDollarsSparklineData.value))
+
+// Pattern performance data
+const patternPerformance = computed(() => {
+  const patterns = patternsStore.patterns
+  if (patterns.length === 0) return []
+
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
+  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+  return patterns.map(pattern => {
+    // Get claims affected by this pattern
+    const affectedClaimIds = pattern.affectedClaims || []
+    const allAffectedClaims = appStore.claims.filter(c => affectedClaimIds.includes(c.id))
+
+    const baselineClaims = getClaimsInRange(allAffectedClaims, windowStart, baselineEnd)
+    const currentClaims = getClaimsInRange(allAffectedClaims, currentStart, now)
+
+    const baselineMetrics = calculateMetrics(baselineClaims)
+    const currentMetrics = calculateMetrics(currentClaims)
+
+    const denialRateChange = currentMetrics.denialRate - baselineMetrics.denialRate
+    const appealRateChange = currentMetrics.appealRate - baselineMetrics.appealRate
+    const deniedDollarsChange = currentMetrics.deniedDollars - baselineMetrics.deniedDollars
+
+    const claimsReduction = baselineMetrics.deniedCount - currentMetrics.deniedCount
+    const claimsReductionPercent = baselineMetrics.deniedCount > 0
+      ? Math.round((claimsReduction / baselineMetrics.deniedCount) * 100)
+      : 0
+
+    // Find first improvement date from pattern improvements
+    const firstImprovement = pattern.improvements?.[0]
+    const firstImprovementDate = firstImprovement?.date
+
+    return {
+      id: pattern.id,
+      title: pattern.title,
+      category: pattern.category,
+      claimsCount: affectedClaimIds.length,
+      baseline: {
+        denialRate: baselineMetrics.denialRate || pattern.score.frequency * 2, // fallback
+        appealRate: baselineMetrics.appealRate || 15,
+        deniedDollars: baselineMetrics.deniedDollars || pattern.totalAtRisk,
+        claimsCount: baselineMetrics.deniedCount || Math.ceil(pattern.score.frequency * 1.5),
+      },
+      current: {
+        denialRate: currentMetrics.denialRate || pattern.score.frequency,
+        appealRate: currentMetrics.appealRate || 10,
+        deniedDollars: currentMetrics.deniedDollars || pattern.totalAtRisk * 0.7,
+        claimsCount: currentMetrics.deniedCount || pattern.score.frequency,
+      },
+      denialRateImproving: denialRateChange < -0.5,
+      denialRateWorsening: denialRateChange > 0.5,
+      appealRateImproving: appealRateChange < -0.5,
+      appealRateWorsening: appealRateChange > 0.5,
+      deniedDollarsChange,
+      claimsReductionPercent: claimsReductionPercent > 0 ? claimsReductionPercent : null,
+      firstImprovementDate,
+      trendData: {
+        denialRate: generateSparklineData('denialRate'),
+        appealRate: generateSparklineData('appealRate'),
+        deniedDollars: generateSparklineData('deniedDollars'),
+      },
     }
-  ]
+  }).sort((a, b) => Math.abs(b.deniedDollarsChange) - Math.abs(a.deniedDollarsChange))
 })
 
-const sortedNetworkProviders = computed(() => {
-  const providers = [...networkProviders.value]
-  const dir = providerSortDir.value === 'asc' ? 1 : -1
-
-  switch (providerSortBy.value) {
-    case 'name':
-      return providers.sort((a, b) => dir * a.name.localeCompare(b.name))
-    case 'engagement':
-      const levels = { high: 3, medium: 2, low: 1 }
-      return providers.sort((a, b) => dir * (levels[a.engagementLevel as keyof typeof levels] - levels[b.engagementLevel as keyof typeof levels]))
-    case 'improvement':
-      return providers.sort((a, b) => dir * (a.improvement - b.improvement))
-    case 'sessions':
-      return providers.sort((a, b) => dir * (a.practiceSessions - b.practiceSessions))
-    default:
-      return providers
+// Pattern expand toggle
+function togglePatternExpand(patternId: string) {
+  if (expandedPatternId.value === patternId) {
+    expandedPatternId.value = null
+  } else {
+    expandedPatternId.value = patternId
+    trackEvent('impact-pattern-expand', { patternId })
   }
-})
-
-const savingsPerHour = computed(() => {
-  const hours = roi.value.totalTimeInvested / 60
-  return hours > 0 ? Math.round(roi.value.estimatedSavings / hours) : 0
-})
-
-const maxSavings = computed(() => {
-  if (roi.value.savingsOverTime.length === 0) return 1
-  return Math.max(...roi.value.savingsOverTime.map(p => p.value))
-})
-
-const maxActivity = computed(() => {
-  if (roi.value.practiceActivityOverTime.length === 0) return 1
-  return Math.max(...roi.value.practiceActivityOverTime.map(p => p.value))
-})
-
-const sortedPatternImpact = computed(() => {
-  const impacts = [...roi.value.patternImpact]
-  const dir = sortDirection.value === 'asc' ? 1 : -1
-
-  switch (sortBy.value) {
-    case 'savings':
-      return impacts.sort((a, b) => dir * (b.savingsRealized - a.savingsRealized))
-    case 'denials':
-      return impacts.sort((a, b) =>
-        dir * ((b.denialsBefore - b.denialsAfter) - (a.denialsBefore - a.denialsAfter))
-      )
-    case 'recent':
-      return impacts.sort((a, b) =>
-        dir * (new Date(b.lastPracticed).getTime() - new Date(a.lastPracticed).getTime())
-      )
-    default:
-      return impacts
-  }
-})
-
-const recentPracticeSessions = computed(() => {
-  return eventsStore.events
-    .filter(e => e.type === 'practice-completed')
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 10)
-})
-
-// Methods
-function formatCategory(category: string): string {
-  return category.split('-').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ')
 }
 
-function formatRelativeTime(timestamp: string): string {
-  return formatRelative(new Date(timestamp), new Date())
-}
-
-function formatDuration(milliseconds?: number): string {
-  if (!milliseconds) return '0m'
-  const minutes = Math.round(milliseconds / 60000)
-  return `${minutes}m`
-}
-
-function getPatternTitle(patternId?: string): string {
-  if (!patternId) return 'Unknown Pattern'
-  const pattern = patternsStore.getPatternById(patternId)
-  return pattern?.title || patternId
-}
-
-function navigateToPattern(patternId?: string) {
-  if (!patternId) return
+function navigateToPattern(patternId: string) {
+  trackEvent('impact-pattern-navigate', { patternId, destination: 'insights' })
   navigateTo(`/insights?pattern=${patternId}`)
 }
+
+// Generate trend path for pattern detail
+function generatePatternTrendPath(data: number[]): string {
+  if (data.length < 2) return 'M 0 30 L 200 30'
+
+  const width = 200
+  const height = 60
+  const padding = 5
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
+    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    return { x, y }
+  })
+
+  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+}
+
+// Providers data
+const providers = computed<Provider[]>(() => {
+  // Extract unique providers from claims
+  const providerMap = new Map<string, Provider>()
+
+  for (const claim of appStore.claims) {
+    if (claim.providerId && !providerMap.has(claim.providerId)) {
+      providerMap.set(claim.providerId, {
+        id: claim.providerId,
+        name: claim.providerName || `Provider ${claim.providerId}`,
+        specialty: 'General Practice',
+        npi: claim.billingProviderNPI || '0000000000',
+      })
+    }
+  }
+
+  // If no providers from claims, try to load from providers store/data
+  if (providerMap.size === 0) {
+    // Fallback demo providers
+    return [
+      { id: 'PRV-001', name: 'Dr. Sarah Smith', specialty: 'Family Medicine', npi: '1234567890' },
+      { id: 'PRV-002', name: 'Dr. Michael Chen', specialty: 'Internal Medicine', npi: '2345678901' },
+      { id: 'PRV-003', name: 'Dr. Jennifer Martinez', specialty: 'Cardiology', npi: '3456789012' },
+      { id: 'PRV-004', name: 'Dr. Robert Johnson', specialty: 'Orthopedic Surgery', npi: '4567890123' },
+    ]
+  }
+
+  return Array.from(providerMap.values())
+})
+
+// Initialize selected provider
+watch(providers, (newProviders) => {
+  if (newProviders.length > 0 && !selectedProviderId.value) {
+    selectedProviderId.value = newProviders[0]?.id ?? null
+  }
+}, { immediate: true })
+
+// Provider metrics calculation
+function calculateProviderMetrics(providerId: string) {
+  const now = new Date()
+  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
+  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+  const providerClaims = appStore.claims.filter(c => c.providerId === providerId)
+
+  const baselineClaims = getClaimsInRange(providerClaims, windowStart, baselineEnd)
+  const currentClaims = getClaimsInRange(providerClaims, currentStart, now)
+
+  const baseline = calculateMetrics(baselineClaims)
+  const current = calculateMetrics(currentClaims)
+
+  const recovered = baseline.deniedDollars - current.deniedDollars
+
+  // Determine trends
+  const denialTrend = current.denialRate < baseline.denialRate - 0.5 ? 'improving' :
+    current.denialRate > baseline.denialRate + 0.5 ? 'worsening' : 'stable'
+  const appealTrend = current.appealRate < baseline.appealRate - 0.5 ? 'improving' :
+    current.appealRate > baseline.appealRate + 0.5 ? 'worsening' : 'stable'
+  const overallTrend = recovered > 0 ? 'improving' : recovered < 0 ? 'worsening' : 'stable'
+
+  return {
+    baseline,
+    current,
+    recoveredRevenue: recovered,
+    trends: {
+      denialRate: denialTrend as 'improving' | 'worsening' | 'stable',
+      appealRate: appealTrend as 'improving' | 'worsening' | 'stable',
+    },
+    overallTrend: overallTrend as 'improving' | 'worsening' | 'stable',
+  }
+}
+
+// Selected provider metrics
+const selectedProviderMetrics = computed(() => {
+  if (!selectedProviderId.value) {
+    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  }
+  const metrics = calculateProviderMetrics(selectedProviderId.value)
+  return metrics.current
+})
+
+const selectedProviderRecoveredRevenue = computed(() => {
+  if (!selectedProviderId.value) return 0
+  const metrics = calculateProviderMetrics(selectedProviderId.value)
+  return metrics.recoveredRevenue
+})
+
+// Practice average metrics
+const practiceAverageMetrics = computed(() => {
+  if (providers.value.length === 0) {
+    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  }
+
+  let totalDenialRate = 0
+  let totalAppealRate = 0
+  let totalDeniedDollars = 0
+
+  for (const provider of providers.value) {
+    const metrics = calculateProviderMetrics(provider.id)
+    totalDenialRate += metrics.current.denialRate
+    totalAppealRate += metrics.current.appealRate
+    totalDeniedDollars += metrics.current.deniedDollars
+  }
+
+  return {
+    denialRate: totalDenialRate / providers.value.length,
+    appealRate: totalAppealRate / providers.value.length,
+    deniedDollars: totalDeniedDollars / providers.value.length,
+  }
+})
+
+// Best provider metrics (lowest denial rate, etc.)
+const bestProviderMetrics = computed(() => {
+  if (providers.value.length === 0) {
+    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  }
+
+  let bestDenialRate = Infinity
+  let bestAppealRate = Infinity
+  let bestDeniedDollars = Infinity
+
+  for (const provider of providers.value) {
+    const metrics = calculateProviderMetrics(provider.id)
+    if (metrics.current.denialRate < bestDenialRate) {
+      bestDenialRate = metrics.current.denialRate
+    }
+    if (metrics.current.appealRate < bestAppealRate) {
+      bestAppealRate = metrics.current.appealRate
+    }
+    if (metrics.current.deniedDollars < bestDeniedDollars) {
+      bestDeniedDollars = metrics.current.deniedDollars
+    }
+  }
+
+  return {
+    denialRate: bestDenialRate === Infinity ? 0 : bestDenialRate,
+    appealRate: bestAppealRate === Infinity ? 0 : bestAppealRate,
+    deniedDollars: bestDeniedDollars === Infinity ? 0 : bestDeniedDollars,
+  }
+})
+
+// Provider rank calculation
+const selectedProviderRank = computed(() => {
+  if (!selectedProviderId.value) {
+    return { denialRate: 1, appealRate: 1, deniedDollars: 1 }
+  }
+
+  const allMetrics = providers.value.map(p => ({
+    id: p.id,
+    ...calculateProviderMetrics(p.id).current,
+  }))
+
+  const selectedMetrics = allMetrics.find(m => m.id === selectedProviderId.value)
+  if (!selectedMetrics) {
+    return { denialRate: 1, appealRate: 1, deniedDollars: 1 }
+  }
+
+  // Lower is better, so rank ascending
+  const denialRateRank = allMetrics.sort((a, b) => a.denialRate - b.denialRate)
+    .findIndex(m => m.id === selectedProviderId.value) + 1
+
+  const appealRateRank = allMetrics.sort((a, b) => a.appealRate - b.appealRate)
+    .findIndex(m => m.id === selectedProviderId.value) + 1
+
+  const deniedDollarsRank = allMetrics.sort((a, b) => a.deniedDollars - b.deniedDollars)
+    .findIndex(m => m.id === selectedProviderId.value) + 1
+
+  return {
+    denialRate: denialRateRank,
+    appealRate: appealRateRank,
+    deniedDollars: deniedDollarsRank,
+  }
+})
+
+// Total recovered revenue for practice
+const totalRecoveredRevenue = computed(() => {
+  let total = 0
+  for (const provider of providers.value) {
+    const metrics = calculateProviderMetrics(provider.id)
+    total += metrics.recoveredRevenue
+  }
+  return total
+})
+
+// Sorted provider metrics for table
+const sortedProviderMetrics = computed(() => {
+  return providers.value.map(provider => {
+    const metrics = calculateProviderMetrics(provider.id)
+    return {
+      id: provider.id,
+      name: provider.name,
+      specialty: provider.specialty,
+      npi: provider.npi,
+      metrics: metrics.current,
+      recoveredRevenue: metrics.recoveredRevenue,
+      trends: metrics.trends,
+      overallTrend: metrics.overallTrend,
+    }
+  }).sort((a, b) => a.metrics.denialRate - b.metrics.denialRate)
+})
+
+// Regional benchmark (simulated)
+const regionalBenchmark = computed(() => {
+  // Simulated regional benchmark data
+  const selectedMetrics = selectedProviderMetrics.value
+
+  // Calculate percentile based on how the provider compares
+  // Lower denial/appeal rate = higher percentile (better)
+  const avgDenialRate = 12.5 // Regional average
+  const avgAppealRate = 18.2
+
+  const denialRatePercentile = Math.min(100, Math.max(0,
+    Math.round((1 - selectedMetrics.denialRate / (avgDenialRate * 2)) * 100)
+  ))
+
+  const appealRatePercentile = Math.min(100, Math.max(0,
+    Math.round((1 - selectedMetrics.appealRate / (avgAppealRate * 2)) * 100)
+  ))
+
+  return {
+    peerCount: 847,
+    denialRatePercentile,
+    appealRatePercentile,
+  }
+})
+
+// Pattern-level comparison for providers
+const filteredPatternProviders = computed(() => {
+  if (!selectedPatternFilter.value) {
+    return sortedProviderMetrics.value.map(p => ({
+      ...p,
+      patternDenialRate: p.metrics.denialRate,
+      patternClaimsAffected: 0,
+      patternDeniedDollars: p.metrics.deniedDollars,
+    }))
+  }
+
+  const pattern = patternsStore.getPatternById(selectedPatternFilter.value)
+  if (!pattern) return []
+
+  const affectedClaimIds = pattern.affectedClaims || []
+
+  return providers.value.map(provider => {
+    const providerClaims = appStore.claims.filter(c =>
+      c.providerId === provider.id && affectedClaimIds.includes(c.id)
+    )
+    const metrics = calculateMetrics(providerClaims)
+
+    return {
+      id: provider.id,
+      name: provider.name,
+      patternDenialRate: metrics.denialRate,
+      patternClaimsAffected: metrics.deniedCount,
+      patternDeniedDollars: metrics.deniedDollars,
+    }
+  }).sort((a, b) => a.patternDenialRate - b.patternDenialRate)
+})
+
+// Event handlers
+function onProviderSelect() {
+  trackEvent('impact-provider-select', { providerId: selectedProviderId.value })
+}
+
+function selectProviderFromTable(providerId: string) {
+  selectedProviderId.value = providerId
+  trackEvent('impact-provider-table-click', { providerId })
+}
+
+function onPatternFilterChange() {
+  trackEvent('impact-pattern-filter', { patternId: selectedPatternFilter.value })
+}
+
+// Formatting helpers
+function formatPercentage(value: number): string {
+  return `${value.toFixed(1)}%`
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+function formatCurrencyCompact(amount: number): string {
+  const absAmount = Math.abs(amount)
+  const sign = amount < 0 ? '-' : ''
+
+  if (absAmount >= 1000000) {
+    return `${sign}$${(absAmount / 1000000).toFixed(1)}M`
+  }
+  if (absAmount >= 1000) {
+    return `${sign}$${(absAmount / 1000).toFixed(0)}K`
+  }
+  return `${sign}$${absAmount.toFixed(0)}`
+}
+
+function formatDate(dateString: string): string {
+  try {
+    return format(new Date(dateString), 'MMM d, yyyy')
+  } catch {
+    return dateString
+  }
+}
+
+// Page load tracking
+onMounted(() => {
+  trackEvent('impact-page-view', {
+    view: activeView.value,
+    period: selectedPeriod.value,
+  })
+})
 </script>

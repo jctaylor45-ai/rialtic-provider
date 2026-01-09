@@ -9,12 +9,38 @@ import { sqliteTable, text, integer, real, primaryKey, index } from 'drizzle-orm
 import { relations } from 'drizzle-orm'
 
 // =============================================================================
+// SCENARIOS
+// =============================================================================
+
+export const scenarios = sqliteTable('scenarios', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  isActive: integer('is_active', { mode: 'boolean' }).default(false),
+  timelineStart: text('timeline_start').notNull(),
+  timelineEnd: text('timeline_end').notNull(),
+  config: text('config', { mode: 'json' }).$type<Record<string, unknown> | null>(),
+  createdAt: text('created_at').default('CURRENT_TIMESTAMP'),
+  updatedAt: text('updated_at').default('CURRENT_TIMESTAMP'),
+}, (table) => ({
+  activeIdx: index('idx_scenarios_active').on(table.isActive),
+}))
+
+export const scenariosRelations = relations(scenarios, ({ many }) => ({
+  claims: many(claims),
+  providers: many(providers),
+  patterns: many(patterns),
+  learningEvents: many(learningEvents),
+}))
+
+// =============================================================================
 // CLAIMS
 // =============================================================================
 
 export const claims = sqliteTable('claims', {
   id: text('id').primaryKey(),
   providerId: text('provider_id').notNull(),
+  scenarioId: text('scenario_id').references(() => scenarios.id, { onDelete: 'cascade' }),
 
   // Claim Type
   claimType: text('claim_type', {
@@ -71,14 +97,20 @@ export const claims = sqliteTable('claims', {
   statusIdx: index('idx_claims_status').on(table.status),
   dateOfServiceIdx: index('idx_claims_date_of_service').on(table.dateOfService),
   providerIdIdx: index('idx_claims_provider_id').on(table.providerId),
+  scenarioIdx: index('idx_claims_scenario').on(table.scenarioId),
 }))
 
-export const claimsRelations = relations(claims, ({ many }) => ({
+export const claimsRelations = relations(claims, ({ one, many }) => ({
+  scenario: one(scenarios, {
+    fields: [claims.scenarioId],
+    references: [scenarios.id],
+  }),
   lineItems: many(claimLineItems),
   diagnosisCodes: many(claimDiagnosisCodes),
   procedureCodes: many(claimProcedureCodes),
   policies: many(claimPolicies),
   patterns: many(patternClaims),
+  appeals: many(claimAppeals),
 }))
 
 // =============================================================================
@@ -372,6 +404,7 @@ export const patterns = sqliteTable('patterns', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   description: text('description'),
+  scenarioId: text('scenario_id').references(() => scenarios.id, { onDelete: 'cascade' }),
   category: text('category', {
     enum: [
       'modifier-missing',
@@ -411,6 +444,22 @@ export const patterns = sqliteTable('patterns', {
   // Guidance
   suggestedAction: text('suggested_action'),
 
+  // Baseline period metrics (captured when pattern first detected)
+  baselineStart: text('baseline_start'),
+  baselineEnd: text('baseline_end'),
+  baselineClaimCount: integer('baseline_claim_count'),
+  baselineDeniedCount: integer('baseline_denied_count'),
+  baselineDenialRate: real('baseline_denial_rate'),
+  baselineDollarsDenied: real('baseline_dollars_denied'),
+
+  // Current period metrics (most recent measurement)
+  currentStart: text('current_start'),
+  currentEnd: text('current_end'),
+  currentClaimCount: integer('current_claim_count'),
+  currentDeniedCount: integer('current_denied_count'),
+  currentDenialRate: real('current_denial_rate'),
+  currentDollarsDenied: real('current_dollars_denied'),
+
   // Timestamps
   firstDetected: text('first_detected'),
   lastSeen: text('last_seen'),
@@ -419,15 +468,21 @@ export const patterns = sqliteTable('patterns', {
   statusIdx: index('idx_patterns_status').on(table.status),
   tierIdx: index('idx_patterns_tier').on(table.tier),
   categoryIdx: index('idx_patterns_category').on(table.category),
+  scenarioIdx: index('idx_patterns_scenario').on(table.scenarioId),
 }))
 
-export const patternsRelations = relations(patterns, ({ many }) => ({
+export const patternsRelations = relations(patterns, ({ one, many }) => ({
+  scenario: one(scenarios, {
+    fields: [patterns.scenarioId],
+    references: [scenarios.id],
+  }),
   claims: many(patternClaims),
   policies: many(patternPolicies),
   relatedCodes: many(patternRelatedCodes),
   evidence: many(patternEvidence),
   improvements: many(patternImprovements),
   actions: many(patternActions),
+  snapshots: many(patternSnapshots),
 }))
 
 // =============================================================================
@@ -559,8 +614,18 @@ export const providers = sqliteTable('providers', {
   npi: text('npi'),
   tin: text('tin'),
   taxonomy: text('taxonomy'),
+  scenarioId: text('scenario_id').references(() => scenarios.id, { onDelete: 'cascade' }),
   createdAt: text('created_at').default('CURRENT_TIMESTAMP'),
-})
+}, (table) => ({
+  scenarioIdx: index('idx_providers_scenario').on(table.scenarioId),
+}))
+
+export const providersRelations = relations(providers, ({ one }) => ({
+  scenario: one(scenarios, {
+    fields: [providers.scenarioId],
+    references: [scenarios.id],
+  }),
+}))
 
 // =============================================================================
 // LEARNING EVENTS (Analytics)
@@ -576,8 +641,73 @@ export const learningEvents = sqliteTable('learning_events', {
   userId: text('user_id'),
   sessionId: text('session_id'),
   deviceType: text('device_type', { enum: ['desktop', 'mobile', 'tablet'] }),
+  scenarioId: text('scenario_id').references(() => scenarios.id, { onDelete: 'cascade' }),
   metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
 }, (table) => ({
   timestampIdx: index('idx_learning_events_timestamp').on(table.timestamp),
   typeIdx: index('idx_learning_events_type').on(table.type),
+  scenarioIdx: index('idx_learning_events_scenario').on(table.scenarioId),
+}))
+
+export const learningEventsRelations = relations(learningEvents, ({ one }) => ({
+  scenario: one(scenarios, {
+    fields: [learningEvents.scenarioId],
+    references: [scenarios.id],
+  }),
+}))
+
+// =============================================================================
+// PATTERN SNAPSHOTS (Time-Series Data)
+// =============================================================================
+
+export const patternSnapshots = sqliteTable('pattern_snapshots', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  patternId: text('pattern_id').notNull().references(() => patterns.id, { onDelete: 'cascade' }),
+  snapshotDate: text('snapshot_date').notNull(),
+  periodStart: text('period_start').notNull(),
+  periodEnd: text('period_end').notNull(),
+  claimCount: integer('claim_count').default(0),
+  deniedCount: integer('denied_count').default(0),
+  denialRate: real('denial_rate'),
+  dollarsDenied: real('dollars_denied').default(0),
+  dollarsAtRisk: real('dollars_at_risk').default(0),
+  appealCount: integer('appeal_count').default(0),
+  appealRate: real('appeal_rate'),
+}, (table) => ({
+  patternDateIdx: index('idx_pattern_snapshots_pattern_date').on(table.patternId, table.snapshotDate),
+}))
+
+export const patternSnapshotsRelations = relations(patternSnapshots, ({ one }) => ({
+  pattern: one(patterns, {
+    fields: [patternSnapshots.patternId],
+    references: [patterns.id],
+  }),
+}))
+
+// =============================================================================
+// CLAIM APPEALS
+// =============================================================================
+
+export const claimAppeals = sqliteTable('claim_appeals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  claimId: text('claim_id').notNull().references(() => claims.id, { onDelete: 'cascade' }),
+  lineNumber: integer('line_number'),
+  appealFiled: integer('appeal_filed', { mode: 'boolean' }).default(false),
+  appealDate: text('appeal_date'),
+  appealReason: text('appeal_reason'),
+  appealOutcome: text('appeal_outcome', {
+    enum: ['pending', 'upheld', 'overturned']
+  }),
+  outcomeDate: text('outcome_date'),
+  outcomeNotes: text('outcome_notes'),
+}, (table) => ({
+  claimIdx: index('idx_claim_appeals_claim').on(table.claimId),
+  outcomeIdx: index('idx_claim_appeals_outcome').on(table.appealOutcome),
+}))
+
+export const claimAppealsRelations = relations(claimAppeals, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claimAppeals.claimId],
+    references: [claims.id],
+  }),
 }))
