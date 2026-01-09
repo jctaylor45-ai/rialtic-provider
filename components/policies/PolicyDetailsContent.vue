@@ -132,16 +132,6 @@ const getPatternBadgeClass = (tier: string) => {
   return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
 }
 
-// Mode badge styles
-const getModeClass = (mode: string) => {
-  const classes = {
-    'Edit': 'bg-error-100 text-error-700',
-    'Informational': 'bg-secondary-100 text-secondary-700',
-    'Pay & Advise': 'bg-warning-100 text-warning-700',
-  }
-  return classes[mode as keyof typeof classes] || 'bg-neutral-100 text-neutral-700'
-}
-
 // Trend icon
 const getTrendIcon = (trend: string) => {
   const icons = {
@@ -669,12 +659,7 @@ const showCodeIntelligence = (code: string) => {
               <div class="text-sm font-medium text-neutral-900">{{ relPolicy.name }}</div>
               <div class="text-xs text-neutral-500">{{ relPolicy.id }}</div>
             </div>
-            <span
-              class="px-2 py-1 text-xs font-medium rounded"
-              :class="getModeClass(relPolicy.mode)"
-            >
-              {{ relPolicy.mode }}
-            </span>
+            <Icon name="heroicons:chevron-right" class="w-4 h-4 text-neutral-400" />
           </div>
         </div>
       </div>
