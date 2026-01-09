@@ -15,10 +15,10 @@
         </div>
 
         <div class="flex-1">
-          <h3 class="text-lg font-semibold text-gray-900 mb-1">
+          <h3 class="text-lg font-semibold text-neutral-900 mb-1">
             {{ pattern.title }}
           </h3>
-          <p class="text-sm text-gray-600 line-clamp-2">
+          <p class="text-sm text-neutral-600 line-clamp-2">
             {{ pattern.description }}
           </p>
         </div>
@@ -48,8 +48,8 @@
     <!-- Metrics Grid -->
     <div class="grid grid-cols-3 gap-4 mb-4">
       <div>
-        <div class="text-xs text-gray-500 mb-1">Frequency</div>
-        <div class="text-lg font-semibold text-gray-900">
+        <div class="text-xs text-neutral-500 mb-1">Frequency</div>
+        <div class="text-lg font-semibold text-neutral-900">
           {{ pattern.score.frequency }}
         </div>
         <div class="flex items-center gap-1 text-xs" :class="trendColor">
@@ -59,79 +59,58 @@
       </div>
 
       <div>
-        <div class="text-xs text-gray-500 mb-1">Impact</div>
-        <div class="text-lg font-semibold text-gray-900">
+        <div class="text-xs text-neutral-500 mb-1">Impact</div>
+        <div class="text-lg font-semibold text-neutral-900">
           {{ formatCurrency(pattern.score.impact) }}
         </div>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-neutral-500">
           ~{{ formatCurrency(pattern.avgDenialAmount) }} avg
         </div>
       </div>
 
       <div>
-        <div class="text-xs text-gray-500 mb-1">Confidence</div>
-        <div class="text-lg font-semibold text-gray-900">
+        <div class="text-xs text-neutral-500 mb-1">Confidence</div>
+        <div class="text-lg font-semibold text-neutral-900">
           {{ pattern.score.confidence }}%
         </div>
-        <div class="text-xs text-gray-500">
+        <div class="text-xs text-neutral-500">
           {{ pattern.score.recency }}d ago
         </div>
       </div>
     </div>
 
-    <!-- Learning Progress -->
-    <div class="mb-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-medium text-gray-700">Learning Progress</span>
-        <span class="text-xs font-semibold" :class="progressTextColor">
-          {{ pattern.learningProgress }}%
-        </span>
-      </div>
-      <div class="w-full bg-gray-200 rounded-full h-2">
-        <div
-          class="h-2 rounded-full transition-all"
-          :class="progressBarColor"
-          :style="{ width: `${pattern.learningProgress}%` }"
-        />
-      </div>
-      <div class="flex items-center gap-4 mt-2 text-xs text-gray-600">
-        <span>{{ pattern.practiceSessionsCompleted }} sessions</span>
-        <span>{{ pattern.correctionsApplied }} corrections</span>
-      </div>
-    </div>
-
     <!-- Improvements Summary -->
-    <div v-if="latestImprovement" class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+    <div v-if="latestImprovement" class="mb-4 p-3 bg-success-50 rounded-lg border border-success-200">
       <div class="flex items-center gap-2 mb-1">
-        <Icon name="heroicons:arrow-trending-down" class="w-4 h-4 text-green-600" />
-        <span class="text-sm font-medium text-green-800">Recent Improvement</span>
+        <Icon name="heroicons:arrow-trending-down" class="w-4 h-4 text-success-600" />
+        <span class="text-sm font-medium text-success-800">Recent Improvement</span>
       </div>
-      <p class="text-xs text-green-700">
+      <p class="text-xs text-success-700">
         {{ latestImprovement.metric }}: {{ Math.abs(latestImprovement.percentChange) }}% reduction
-        <span class="text-green-600">({{ formatDate(latestImprovement.date) }})</span>
+        <span class="text-success-600">({{ formatDate(latestImprovement.date) }})</span>
       </p>
     </div>
 
     <!-- Recent Actions -->
-    <div v-if="pattern.actions && pattern.actions.length > 0" class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+    <div v-if="pattern.actions && pattern.actions.length > 0" class="mb-4 p-3 bg-primary-50 rounded-lg border border-primary-200">
       <div class="flex items-center gap-2 mb-2">
-        <Icon name="heroicons:check-badge" class="w-4 h-4 text-blue-600" />
-        <span class="text-sm font-medium text-blue-800">Actions Recorded</span>
+        <Icon name="heroicons:check-badge" class="w-4 h-4 text-primary-600" />
+        <span class="text-sm font-medium text-primary-800">Actions Recorded</span>
       </div>
       <div class="space-y-1">
         <div
           v-for="action in pattern.actions.slice(-2)"
           :key="action.id"
-          class="text-xs text-blue-700"
+          class="text-xs text-primary-700"
         >
           <span class="font-medium">{{ formatDate(action.timestamp) }}:</span>
           {{ getActionTypeLabel(action.actionType) }}
-          <span v-if="action.notes" class="text-blue-600">- {{ action.notes }}</span>
+          <span v-if="action.notes" class="text-primary-600">- {{ action.notes }}</span>
         </div>
         <button
           v-if="pattern.actions.length > 2"
           @click.stop="$emit('view-details', pattern)"
-          class="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          class="text-xs text-primary-600 hover:text-primary-700 font-medium"
         >
           View all {{ pattern.actions.length }} actions →
         </button>
@@ -142,7 +121,7 @@
     <div class="flex items-center gap-2 mb-3">
       <button
         @click.stop="$emit('view-claims', pattern)"
-        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+        class="flex-1 px-4 py-2 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
       >
         <Icon name="heroicons:document-text" class="w-4 h-4" />
         {{ pattern.affectedClaims.length }} Claims
@@ -160,7 +139,7 @@
     <!-- Mark Action Taken Button -->
     <button
       @click.stop="$emit('record-action', pattern)"
-      class="w-full px-4 py-2 border-2 border-dashed border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center justify-center gap-2"
+      class="w-full px-4 py-2 border-2 border-dashed border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 transition-colors flex items-center justify-center gap-2"
     >
       <Icon name="heroicons:check-circle" class="w-4 h-4" />
       Mark Action Taken
@@ -172,14 +151,14 @@
         v-for="code in pattern.relatedCodes.slice(0, 3)"
         :key="code"
         @click.stop="viewCodeIntelligence(code)"
-        class="px-2 py-1 text-xs font-mono bg-gray-100 text-gray-700 rounded border border-gray-200 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700 transition-colors cursor-pointer"
+        class="px-2 py-1 text-xs font-mono bg-neutral-100 text-neutral-700 rounded border border-neutral-200 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700 transition-colors cursor-pointer"
         :title="`Click to view intelligence for ${code}`"
       >
         {{ code }}
       </button>
       <span
         v-if="pattern.relatedCodes.length > 3"
-        class="px-2 py-1 text-xs text-gray-500"
+        class="px-2 py-1 text-xs text-neutral-500"
       >
         +{{ pattern.relatedCodes.length - 3 }} more
       </span>
@@ -223,11 +202,11 @@ const categoryIcon = computed(() => getPatternCategoryIcon(props.pattern.categor
 // Recovery status badge styling and labels
 const recoveryStatusBadgeClass = computed(() => {
   const classes: Record<string, string> = {
-    recoverable: 'bg-green-100 text-green-700 border-green-200',
-    partial: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    not_recoverable: 'bg-red-100 text-red-700 border-red-200',
+    recoverable: 'bg-success-100 text-success-700 border-success-200',
+    partial: 'bg-warning-100 text-warning-700 border-warning-200',
+    not_recoverable: 'bg-error-100 text-error-700 border-error-200',
   }
-  return classes[props.pattern.recoveryStatus] || 'bg-gray-100 text-gray-700 border-gray-200'
+  return classes[props.pattern.recoveryStatus] || 'bg-neutral-100 text-neutral-700 border-neutral-200'
 })
 
 const recoveryStatusLabel = computed(() => {
@@ -262,27 +241,11 @@ const trendIcon = computed(() => {
 
 const trendColor = computed(() => {
   const colors = {
-    up: 'text-red-600',
-    down: 'text-green-600',
-    stable: 'text-gray-600',
+    up: 'text-error-600',
+    down: 'text-success-600',
+    stable: 'text-neutral-600',
   }
   return colors[props.pattern.score.trend]
-})
-
-const progressBarColor = computed(() => {
-  const progress = props.pattern.learningProgress
-  if (progress >= 80) return 'bg-green-500'
-  if (progress >= 50) return 'bg-yellow-500'
-  if (progress >= 25) return 'bg-orange-500'
-  return 'bg-red-500'
-})
-
-const progressTextColor = computed(() => {
-  const progress = props.pattern.learningProgress
-  if (progress >= 80) return 'text-green-600'
-  if (progress >= 50) return 'text-yellow-600'
-  if (progress >= 25) return 'text-orange-600'
-  return 'text-red-600'
 })
 
 const latestImprovement = computed(() => {
