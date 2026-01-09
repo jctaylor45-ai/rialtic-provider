@@ -32,6 +32,7 @@
 
     <!-- Summary Stats -->
     <div class="grid grid-cols-4 gap-6 mb-6">
+      <!-- Total Patterns -->
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
         <div class="flex items-center justify-between mb-2">
           <div class="text-sm text-neutral-600">Total Patterns</div>
@@ -41,47 +42,60 @@
           {{ patternsStore.totalPatternsDetected }}
         </div>
         <div class="text-xs text-neutral-500 mt-1">
-          {{ patternsStore.activePatterns.length }} active,
-          {{ patternsStore.improvingPatterns.length }} improving
+          AI-detected denial patterns
         </div>
       </div>
 
+      <!-- Pattern Trends -->
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Total at Risk</div>
-          <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-neutral-400" />
+          <div class="text-sm text-neutral-600">Pattern Trends</div>
+          <Icon name="heroicons:arrow-trending-up" class="w-5 h-5 text-neutral-400" />
         </div>
-        <div class="text-3xl font-semibold text-error-600">
-          {{ formatCurrency(patternsStore.totalAtRisk, true) }}
+        <div class="flex items-center gap-4 mt-1">
+          <div class="flex items-center gap-1">
+            <Icon name="heroicons:arrow-trending-down" class="w-4 h-4 text-success-600" />
+            <span class="text-lg font-semibold text-success-600">{{ patternsStore.patternsImproving }}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <Icon name="heroicons:minus" class="w-4 h-4 text-neutral-500" />
+            <span class="text-lg font-semibold text-neutral-600">{{ patternsStore.patternsStable }}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <Icon name="heroicons:arrow-trending-up" class="w-4 h-4 text-error-600" />
+            <span class="text-lg font-semibold text-error-600">{{ patternsStore.patternsRegressing }}</span>
+          </div>
         </div>
-        <div class="text-xs text-neutral-500 mt-1">
-          Potential savings identified
+        <div class="text-xs text-neutral-500 mt-2">
+          Improving / Stable / Regressing
         </div>
       </div>
 
+      <!-- Recoverable Revenue -->
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
         <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Critical Patterns</div>
-          <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-neutral-400" />
-        </div>
-        <div class="text-3xl font-semibold text-orange-600">
-          {{ patternsStore.criticalPatterns.length }}
-        </div>
-        <div class="text-xs text-neutral-500 mt-1">
-          Require immediate attention
-        </div>
-      </div>
-
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-sm text-neutral-600">Total Recoverable</div>
+          <div class="text-sm text-neutral-600">Recoverable Revenue</div>
           <Icon name="heroicons:arrow-path-rounded-square" class="w-5 h-5 text-neutral-400" />
         </div>
         <div class="text-3xl font-semibold text-success-600">
-          {{ formatCurrency(patternsStore.totalRecoverable, true) }}
+          {{ formatCurrency(patternsStore.totalRecoverableRevenue, true) }}
         </div>
         <div class="text-xs text-neutral-500 mt-1">
-          {{ patternsStore.recoverablePatterns.length }} patterns can be recovered
+          {{ patternsStore.recoverablePatterns.length }} recoverable patterns
+        </div>
+      </div>
+
+      <!-- Denied Dollars -->
+      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-neutral-600">Denied Dollars</div>
+          <Icon name="heroicons:currency-dollar" class="w-5 h-5 text-neutral-400" />
+        </div>
+        <div class="text-3xl font-semibold text-error-600">
+          {{ formatCurrency(patternsStore.totalDeniedDollars, true) }}
+        </div>
+        <div class="text-xs text-neutral-500 mt-1">
+          Total at risk across all patterns
         </div>
       </div>
     </div>

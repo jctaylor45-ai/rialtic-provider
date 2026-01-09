@@ -18,76 +18,20 @@
       "avgDenialAmount": 282,
       "totalAtRisk": 7890,
       "affectedClaims": [
-        "CLM-2024-2001",
-        "CLM-2024-2002",
-        "CLM-2024-2006",
-        "CLM-2024-2009",
-        "CLM-2024-2012",
-        "CLM-2024-2015",
-        "CLM-2024-2021",
-        "CLM-2024-2024",
-        "CLM-2024-2028",
-        "CLM-2024-2032",
-        "CLM-2024-2036",
-        "CLM-2024-2039",
-        "CLM-2024-2042",
-        "CLM-2024-2046",
-        "CLM-2024-2051",
-        "CLM-2024-2054",
-        "CLM-2024-2058",
-        "CLM-2024-2062",
-        "CLM-2024-2066",
-        "CLM-2024-2071",
-        "CLM-2024-2074",
-        "CLM-2024-2078",
-        "CLM-2024-2082",
-        "CLM-2024-2086",
-        "CLM-2024-2091",
-        "CLM-2024-2094",
-        "CLM-2024-2098",
-        "CLM-2025-2102"
+        "CLM-2024-2001", "CLM-2024-2002", "CLM-2024-2006", "CLM-2024-2009",
+        "CLM-2024-2012", "CLM-2024-2015", "CLM-2024-2021", "CLM-2024-2024",
+        "CLM-2024-2028", "CLM-2024-2032", "CLM-2024-2036", "CLM-2024-2039",
+        "CLM-2024-2042", "CLM-2024-2046", "CLM-2024-2051", "CLM-2024-2054",
+        "CLM-2024-2058", "CLM-2024-2062", "CLM-2024-2066", "CLM-2024-2071",
+        "CLM-2024-2074", "CLM-2024-2078", "CLM-2024-2082", "CLM-2024-2086",
+        "CLM-2024-2091", "CLM-2024-2094", "CLM-2024-2098", "CLM-2025-2102"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2001",
-          "denialDate": "2024-07-05",
-          "denialReason": "Missing Modifier 25",
-          "billedAmount": 285,
-          "procedureCode": "99213",
-          "modifier": null
-        },
-        {
-          "claimId": "CLM-2024-2002",
-          "denialDate": "2024-07-06",
-          "denialReason": "Missing Modifier 25",
-          "billedAmount": 425,
-          "procedureCode": "99214",
-          "modifier": null
-        },
-        {
-          "claimId": "CLM-2024-2006",
-          "denialDate": "2024-07-10",
-          "denialReason": "Missing Modifier 25",
-          "billedAmount": 250,
-          "procedureCode": "99213",
-          "modifier": null
-        },
-        {
-          "claimId": "CLM-2024-2009",
-          "denialDate": "2024-07-14",
-          "denialReason": "Missing Modifier 25",
-          "billedAmount": 290,
-          "procedureCode": "99213",
-          "modifier": null
-        },
-        {
-          "claimId": "CLM-2024-2012",
-          "denialDate": "2024-07-18",
-          "denialReason": "Missing Modifier 25",
-          "billedAmount": 275,
-          "procedureCode": "99213",
-          "modifier": null
-        }
+        { "claimId": "CLM-2024-2001", "denialDate": "2024-07-05", "denialReason": "Missing Modifier 25", "billedAmount": 285, "procedureCode": "99213", "modifier": null },
+        { "claimId": "CLM-2024-2002", "denialDate": "2024-07-06", "denialReason": "Missing Modifier 25", "billedAmount": 425, "procedureCode": "99214", "modifier": null },
+        { "claimId": "CLM-2024-2006", "denialDate": "2024-07-10", "denialReason": "Missing Modifier 25", "billedAmount": 250, "procedureCode": "99213", "modifier": null },
+        { "claimId": "CLM-2024-2009", "denialDate": "2024-07-14", "denialReason": "Missing Modifier 25", "billedAmount": 290, "procedureCode": "99213", "modifier": null },
+        { "claimId": "CLM-2024-2012", "denialDate": "2024-07-18", "denialReason": "Missing Modifier 25", "billedAmount": 275, "procedureCode": "99213", "modifier": null }
       ],
       "firstDetected": "2024-07-05",
       "lastSeen": "2025-01-08",
@@ -95,98 +39,48 @@
       "practiceSessionsCompleted": 12,
       "correctionsApplied": 18,
       "improvements": [
-        {
-          "date": "2024-08-15",
-          "metric": "frequency",
-          "before": 8,
-          "after": 6,
-          "percentChange": -25,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-09-20",
-          "metric": "frequency",
-          "before": 6,
-          "after": 4,
-          "percentChange": -33.3,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-10-25",
-          "metric": "frequency",
-          "before": 4,
-          "after": 3,
-          "percentChange": -25,
-          "trigger": "insight-dismissed"
-        },
-        {
-          "date": "2024-11-18",
-          "metric": "frequency",
-          "before": 3,
-          "after": 2,
-          "percentChange": -33.3,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-12-20",
-          "metric": "frequency",
-          "before": 2,
-          "after": 1,
-          "percentChange": -50,
-          "trigger": "practice-session"
-        }
+        { "date": "2024-08-15", "metric": "frequency", "before": 8, "after": 6, "percentChange": -25, "trigger": "practice-session" },
+        { "date": "2024-09-20", "metric": "frequency", "before": 6, "after": 4, "percentChange": -33.3, "trigger": "practice-session" },
+        { "date": "2024-10-25", "metric": "frequency", "before": 4, "after": 3, "percentChange": -25, "trigger": "insight-dismissed" },
+        { "date": "2024-11-18", "metric": "frequency", "before": 3, "after": 2, "percentChange": -33.3, "trigger": "practice-session" },
+        { "date": "2024-12-20", "metric": "frequency", "before": 2, "after": 1, "percentChange": -50, "trigger": "practice-session" }
       ],
       "suggestedAction": "Always add modifier 25 to E&M codes (99213-99215) when performed with same-day procedures. Use the Claim Lab to practice identifying these scenarios.",
-      "relatedPolicies": [
-        "POL-001",
-        "POL-002"
-      ],
-      "relatedCodes": [
-        "99213",
-        "99214",
-        "99215",
-        "36415",
-        "93000"
-      ],
-      "actionCategory": "coding_knowledge",
+      "relatedPolicies": ["POL-001", "POL-002"],
+      "relatedCodes": ["99213", "99214", "99215", "36415", "93000"],
+      "actionCategory": "operational_system",
       "recoveryStatus": "recoverable",
+      "recoverableClaimCount": 20,
+      "recoverableAmount": 5640,
       "possibleRootCauses": [
         {
-          "id": "RC-001-1",
-          "description": "Coders not trained on modifier 25 requirements for same-day procedures",
-          "likelihood": "high",
-          "category": "coding_knowledge"
-        },
-        {
-          "id": "RC-001-2",
-          "description": "EHR system not prompting for modifier when E&M billed with procedure",
-          "likelihood": "medium",
-          "category": "operational_system"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-001-1",
-          "action": "Resubmit denied claims with modifier 25 added",
-          "priority": "high",
-          "estimatedImpact": "Recover $7,890",
-          "timeframe": "This week"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-001-1",
-          "action": "Configure EHR to auto-prompt for modifier 25 on same-day E&M + procedure",
           "category": "operational_system",
-          "expectedOutcome": "Eliminate 90% of modifier 25 errors"
+          "confidence": "high",
+          "signals": ["Same error across multiple coders", "Pattern spans different E&M code levels"],
+          "explanation": "Billing system may not prompt for modifier 25 when E&M is billed with same-day procedures."
         },
         {
-          "id": "LT-001-2",
-          "action": "Conduct coding team training on modifier 25 usage",
           "category": "coding_knowledge",
-          "expectedOutcome": "Reduce new occurrences by 75%"
+          "confidence": "medium",
+          "signals": ["Pattern isolated to specific procedure combinations"],
+          "explanation": "Coders may not recognize when E&M service is separately identifiable from the procedure."
         }
       ],
+      "shortTermAction": {
+        "description": "Add modifier 25 to E&M codes on affected claims and resubmit.",
+        "canResubmit": true,
+        "claimCount": 20,
+        "amount": 5640
+      },
+      "longTermAction": {
+        "description": "Configure billing system to prompt for modifier 25 evaluation when E&M is billed with same-day procedures.",
+        "steps": [
+          "Review billing system edit configuration for E&M + procedure combinations",
+          "Add pre-submission prompt or auto-flag for modifier 25 review",
+          "Brief coding staff on modifier 25 requirements for separately identifiable services",
+          "Monitor denial rate for this pattern over next 30 days"
+        ]
+      },
       "detectionConfidence": 92,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -209,54 +103,17 @@
       "avgDenialAmount": 1369,
       "totalAtRisk": 24650,
       "affectedClaims": [
-        "CLM-2024-2003",
-        "CLM-2024-2005",
-        "CLM-2024-2023",
-        "CLM-2024-2025",
-        "CLM-2024-2043",
-        "CLM-2024-2045",
-        "CLM-2024-2063",
-        "CLM-2024-2065",
-        "CLM-2024-2083",
-        "CLM-2024-2085",
-        "CLM-2024-2103",
-        "CLM-2024-2105",
-        "CLM-2025-2123",
-        "CLM-2025-2125",
-        "CLM-2025-2143",
-        "CLM-2025-2145",
-        "CLM-2025-2163",
-        "CLM-2025-2165"
+        "CLM-2024-2003", "CLM-2024-2005", "CLM-2024-2023", "CLM-2024-2025",
+        "CLM-2024-2043", "CLM-2024-2045", "CLM-2024-2063", "CLM-2024-2065",
+        "CLM-2024-2083", "CLM-2024-2085", "CLM-2024-2103", "CLM-2024-2105",
+        "CLM-2025-2123", "CLM-2025-2125", "CLM-2025-2143", "CLM-2025-2145",
+        "CLM-2025-2163", "CLM-2025-2165"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2003",
-          "denialDate": "2024-07-07",
-          "denialReason": "Prior Authorization Missing",
-          "billedAmount": 1250,
-          "procedureCode": "45378"
-        },
-        {
-          "claimId": "CLM-2024-2005",
-          "denialDate": "2024-07-09",
-          "denialReason": "Prior Authorization Missing",
-          "billedAmount": 380,
-          "procedureCode": "20610"
-        },
-        {
-          "claimId": "CLM-2024-2023",
-          "denialDate": "2024-08-12",
-          "denialReason": "Prior Authorization Missing",
-          "billedAmount": 1450,
-          "procedureCode": "45378"
-        },
-        {
-          "claimId": "CLM-2024-2025",
-          "denialDate": "2024-08-14",
-          "denialReason": "Prior Authorization Missing",
-          "billedAmount": 1320,
-          "procedureCode": "45378"
-        }
+        { "claimId": "CLM-2024-2003", "denialDate": "2024-07-07", "denialReason": "Prior Authorization Missing", "billedAmount": 1250, "procedureCode": "45378" },
+        { "claimId": "CLM-2024-2005", "denialDate": "2024-07-09", "denialReason": "Prior Authorization Missing", "billedAmount": 380, "procedureCode": "20610" },
+        { "claimId": "CLM-2024-2023", "denialDate": "2024-08-12", "denialReason": "Prior Authorization Missing", "billedAmount": 1450, "procedureCode": "45378" },
+        { "claimId": "CLM-2024-2025", "denialDate": "2024-08-14", "denialReason": "Prior Authorization Missing", "billedAmount": 1320, "procedureCode": "45378" }
       ],
       "firstDetected": "2024-07-07",
       "lastSeen": "2025-01-10",
@@ -264,79 +121,45 @@
       "practiceSessionsCompleted": 5,
       "correctionsApplied": 6,
       "improvements": [
-        {
-          "date": "2024-09-10",
-          "metric": "impact",
-          "before": 28000,
-          "after": 26500,
-          "percentChange": -5.4,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-11-05",
-          "metric": "frequency",
-          "before": 4,
-          "after": 3,
-          "percentChange": -25,
-          "trigger": "practice-session"
-        }
+        { "date": "2024-09-10", "metric": "impact", "before": 28000, "after": 26500, "percentChange": -5.4, "trigger": "practice-session" },
+        { "date": "2024-11-05", "metric": "frequency", "before": 4, "after": 3, "percentChange": -25, "trigger": "practice-session" }
       ],
       "suggestedAction": "Implement a pre-service authorization checklist for all procedures with codes 45378, 20610, and other high-value services. Verify auth status before scheduling.",
-      "relatedPolicies": [
-        "POL-001",
-        "POL-003"
-      ],
-      "relatedCodes": [
-        "45378",
-        "20610",
-        "93306"
-      ],
+      "relatedPolicies": ["POL-001", "POL-003"],
+      "relatedCodes": ["45378", "20610", "93306"],
       "actionCategory": "operational_system",
-      "recoveryStatus": "partial",
+      "recoveryStatus": "not_recoverable",
+      "recoverableClaimCount": 0,
+      "recoverableAmount": 0,
       "possibleRootCauses": [
         {
-          "id": "RC-002-1",
-          "description": "Scheduling staff not checking auth requirements before booking procedures",
-          "likelihood": "high",
-          "category": "operational_system"
-        },
-        {
-          "id": "RC-002-2",
-          "description": "Auth requirements vary by payer and are not centrally tracked",
-          "likelihood": "medium",
-          "category": "payer_specific"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-002-1",
-          "action": "Request retroactive auth for recent denials where possible",
-          "priority": "high",
-          "estimatedImpact": "Recover $12,000",
-          "timeframe": "Next 30 days"
-        },
-        {
-          "id": "ST-002-2",
-          "action": "Peer-to-peer review for high-value procedure denials",
-          "priority": "medium",
-          "estimatedImpact": "Recover $8,000",
-          "timeframe": "Next 30 days"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-002-1",
-          "action": "Implement pre-scheduling auth verification workflow",
           "category": "operational_system",
-          "expectedOutcome": "Prevent 95% of auth-related denials"
+          "confidence": "high",
+          "signals": ["Scheduling staff not checking auth requirements", "Auth status not visible in scheduling workflow"],
+          "explanation": "Scheduling staff not checking auth requirements before booking procedures."
         },
         {
-          "id": "LT-002-2",
-          "action": "Create payer-specific auth requirement matrix",
           "category": "payer_specific",
-          "expectedOutcome": "Reduce lookup time and errors by 80%"
+          "confidence": "medium",
+          "signals": ["Different payers have different auth requirements", "Auth lists not centrally maintained"],
+          "explanation": "Auth requirements vary by payer and are not centrally tracked."
         }
       ],
+      "shortTermAction": {
+        "description": "These claims cannot be resubmitted as prior authorization cannot be obtained retroactively for most payers. Focus on prevention.",
+        "canResubmit": false,
+        "claimCount": 0,
+        "amount": 0
+      },
+      "longTermAction": {
+        "description": "Implement pre-scheduling auth verification workflow to prevent future authorization denials.",
+        "steps": [
+          "Create payer-specific auth requirement matrix for common procedures",
+          "Add auth verification step to scheduling workflow",
+          "Train scheduling staff on checking auth status before booking",
+          "Set up automated auth status alerts for pending procedures"
+        ]
+      },
       "detectionConfidence": 88,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -359,43 +182,15 @@
       "avgDenialAmount": 344,
       "totalAtRisk": 4820,
       "affectedClaims": [
-        "CLM-2024-2010",
-        "CLM-2024-2017",
-        "CLM-2024-2030",
-        "CLM-2024-2037",
-        "CLM-2024-2050",
-        "CLM-2024-2057",
-        "CLM-2024-2070",
-        "CLM-2024-2077",
-        "CLM-2024-2090",
-        "CLM-2024-2097",
-        "CLM-2025-2110",
-        "CLM-2025-2117",
-        "CLM-2025-2130",
-        "CLM-2025-2137"
+        "CLM-2024-2010", "CLM-2024-2017", "CLM-2024-2030", "CLM-2024-2037",
+        "CLM-2024-2050", "CLM-2024-2057", "CLM-2024-2070", "CLM-2024-2077",
+        "CLM-2024-2090", "CLM-2024-2097", "CLM-2025-2110", "CLM-2025-2117",
+        "CLM-2025-2130", "CLM-2025-2137"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2010",
-          "denialDate": "2024-07-15",
-          "denialReason": "Insufficient Documentation",
-          "billedAmount": 320,
-          "procedureCode": "99214"
-        },
-        {
-          "claimId": "CLM-2024-2017",
-          "denialDate": "2024-07-25",
-          "denialReason": "Medical Necessity Not Supported",
-          "billedAmount": 385,
-          "procedureCode": "99215"
-        },
-        {
-          "claimId": "CLM-2024-2030",
-          "denialDate": "2024-08-18",
-          "denialReason": "Insufficient Documentation",
-          "billedAmount": 290,
-          "procedureCode": "99213"
-        }
+        { "claimId": "CLM-2024-2010", "denialDate": "2024-07-15", "denialReason": "Insufficient Documentation", "billedAmount": 320, "procedureCode": "99214" },
+        { "claimId": "CLM-2024-2017", "denialDate": "2024-07-25", "denialReason": "Medical Necessity Not Supported", "billedAmount": 385, "procedureCode": "99215" },
+        { "claimId": "CLM-2024-2030", "denialDate": "2024-08-18", "denialReason": "Insufficient Documentation", "billedAmount": 290, "procedureCode": "99213" }
       ],
       "firstDetected": "2024-07-15",
       "lastSeen": "2024-12-22",
@@ -403,88 +198,47 @@
       "practiceSessionsCompleted": 8,
       "correctionsApplied": 11,
       "improvements": [
-        {
-          "date": "2024-09-12",
-          "metric": "frequency",
-          "before": 5,
-          "after": 4,
-          "percentChange": -20,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-10-18",
-          "metric": "frequency",
-          "before": 4,
-          "after": 3,
-          "percentChange": -25,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-11-22",
-          "metric": "frequency",
-          "before": 3,
-          "after": 2,
-          "percentChange": -33.3,
-          "trigger": "insight-dismissed"
-        },
-        {
-          "date": "2024-12-15",
-          "metric": "frequency",
-          "before": 2,
-          "after": 1,
-          "percentChange": -50,
-          "trigger": "practice-session"
-        }
+        { "date": "2024-09-12", "metric": "frequency", "before": 5, "after": 4, "percentChange": -20, "trigger": "practice-session" },
+        { "date": "2024-10-18", "metric": "frequency", "before": 4, "after": 3, "percentChange": -25, "trigger": "practice-session" },
+        { "date": "2024-11-22", "metric": "frequency", "before": 3, "after": 2, "percentChange": -33.3, "trigger": "insight-dismissed" },
+        { "date": "2024-12-15", "metric": "frequency", "before": 2, "after": 1, "percentChange": -50, "trigger": "practice-session" }
       ],
       "suggestedAction": "Ensure all claims include detailed clinical notes, diagnosis rationale, and treatment plan. Use documentation templates to capture required elements.",
-      "relatedPolicies": [
-        "POL-005",
-        "POL-008"
-      ],
-      "relatedCodes": [
-        "99213",
-        "99214",
-        "99215"
-      ],
+      "relatedPolicies": ["POL-005", "POL-008"],
+      "relatedCodes": ["99213", "99214", "99215"],
       "actionCategory": "documentation",
       "recoveryStatus": "recoverable",
+      "recoverableClaimCount": 12,
+      "recoverableAmount": 4128,
       "possibleRootCauses": [
         {
-          "id": "RC-003-1",
-          "description": "Clinical notes lack specific medical necessity language",
-          "likelihood": "high",
-          "category": "documentation"
-        },
-        {
-          "id": "RC-003-2",
-          "description": "Providers rushing documentation at end of day",
-          "likelihood": "medium",
-          "category": "operational_system"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-003-1",
-          "action": "Resubmit with addended documentation",
-          "priority": "high",
-          "estimatedImpact": "Recover $4,820",
-          "timeframe": "Next 2 weeks"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-003-1",
-          "action": "Implement documentation templates with required elements",
           "category": "documentation",
-          "expectedOutcome": "Reduce documentation denials by 70%"
+          "confidence": "high",
+          "signals": ["Clinical notes lack medical necessity language", "Missing diagnosis rationale in documentation"],
+          "explanation": "Clinical notes lack specific medical necessity language required by payers."
         },
         {
-          "id": "LT-003-2",
-          "action": "Add real-time documentation completeness checks in EHR",
           "category": "operational_system",
-          "expectedOutcome": "Catch 85% of issues before submission"
+          "confidence": "medium",
+          "signals": ["Documentation completed at end of day", "Templates missing required fields"],
+          "explanation": "Providers rushing documentation at end of day, missing key elements."
         }
       ],
+      "shortTermAction": {
+        "description": "Resubmit denied claims with addended documentation including medical necessity rationale.",
+        "canResubmit": true,
+        "claimCount": 12,
+        "amount": 4128
+      },
+      "longTermAction": {
+        "description": "Implement documentation templates with required medical necessity elements.",
+        "steps": [
+          "Create documentation templates with required medical necessity fields",
+          "Train providers on documentation requirements for common services",
+          "Add real-time documentation completeness checks in EHR",
+          "Implement pre-submission review for high-value claims"
+        ]
+      },
       "detectionConfidence": 75,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -507,40 +261,14 @@
       "avgDenialAmount": 325,
       "totalAtRisk": 3575,
       "affectedClaims": [
-        "CLM-2024-2014",
-        "CLM-2024-2034",
-        "CLM-2024-2054",
-        "CLM-2024-2074",
-        "CLM-2024-2094",
-        "CLM-2025-2114",
-        "CLM-2025-2134",
-        "CLM-2025-2154",
-        "CLM-2025-2174",
-        "CLM-2025-2194",
-        "CLM-2025-2204"
+        "CLM-2024-2014", "CLM-2024-2034", "CLM-2024-2054", "CLM-2024-2074",
+        "CLM-2024-2094", "CLM-2025-2114", "CLM-2025-2134", "CLM-2025-2154",
+        "CLM-2025-2174", "CLM-2025-2194", "CLM-2025-2204"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2014",
-          "denialDate": "2024-07-20",
-          "denialReason": "Bundling Violation",
-          "billedAmount": 340,
-          "procedureCode": "36415"
-        },
-        {
-          "claimId": "CLM-2024-2034",
-          "denialDate": "2024-08-22",
-          "denialReason": "Code Bundled with Primary Procedure",
-          "billedAmount": 310,
-          "procedureCode": "93000"
-        },
-        {
-          "claimId": "CLM-2024-2054",
-          "denialDate": "2024-09-24",
-          "denialReason": "Bundling Violation",
-          "billedAmount": 325,
-          "procedureCode": "36415"
-        }
+        { "claimId": "CLM-2024-2014", "denialDate": "2024-07-20", "denialReason": "Bundling Violation", "billedAmount": 340, "procedureCode": "36415" },
+        { "claimId": "CLM-2024-2034", "denialDate": "2024-08-22", "denialReason": "Code Bundled with Primary Procedure", "billedAmount": 310, "procedureCode": "93000" },
+        { "claimId": "CLM-2024-2054", "denialDate": "2024-09-24", "denialReason": "Bundling Violation", "billedAmount": 325, "procedureCode": "36415" }
       ],
       "firstDetected": "2024-07-20",
       "lastSeen": "2024-12-08",
@@ -548,80 +276,46 @@
       "practiceSessionsCompleted": 6,
       "correctionsApplied": 8,
       "improvements": [
-        {
-          "date": "2024-09-05",
-          "metric": "frequency",
-          "before": 4,
-          "after": 3,
-          "percentChange": -25,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-10-22",
-          "metric": "frequency",
-          "before": 3,
-          "after": 2,
-          "percentChange": -33.3,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-11-28",
-          "metric": "frequency",
-          "before": 2,
-          "after": 1,
-          "percentChange": -50,
-          "trigger": "insight-dismissed"
-        }
+        { "date": "2024-09-05", "metric": "frequency", "before": 4, "after": 3, "percentChange": -25, "trigger": "practice-session" },
+        { "date": "2024-10-22", "metric": "frequency", "before": 3, "after": 2, "percentChange": -33.3, "trigger": "practice-session" },
+        { "date": "2024-11-28", "metric": "frequency", "before": 2, "after": 1, "percentChange": -50, "trigger": "insight-dismissed" }
       ],
       "suggestedAction": "Review CCI edits before billing. Use coding software to identify bundled procedures. Focus on common bundles like venipuncture with office visits.",
-      "relatedPolicies": [
-        "POL-004",
-        "POL-006"
-      ],
-      "relatedCodes": [
-        "36415",
-        "93000",
-        "99000"
-      ],
+      "relatedPolicies": ["POL-004", "POL-006"],
+      "relatedCodes": ["36415", "93000", "99000"],
       "actionCategory": "coding_knowledge",
       "recoveryStatus": "not_recoverable",
+      "recoverableClaimCount": 0,
+      "recoverableAmount": 0,
       "possibleRootCauses": [
         {
-          "id": "RC-004-1",
-          "description": "Coders not referencing CCI edits before submission",
-          "likelihood": "high",
-          "category": "coding_knowledge"
-        },
-        {
-          "id": "RC-004-2",
-          "description": "Billing software lacks built-in CCI edit checking",
-          "likelihood": "medium",
-          "category": "operational_system"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-004-1",
-          "action": "Review and correct future claims before submission",
-          "priority": "medium",
-          "estimatedImpact": "Prevent $1,200/month",
-          "timeframe": "Ongoing"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-004-1",
-          "action": "Integrate CCI edit checking into claim scrubbing workflow",
-          "category": "operational_system",
-          "expectedOutcome": "Catch 95% of bundling issues pre-submission"
-        },
-        {
-          "id": "LT-004-2",
-          "action": "Monthly coding team review of common bundling scenarios",
           "category": "coding_knowledge",
-          "expectedOutcome": "Reduce bundling errors by 60%"
+          "confidence": "high",
+          "signals": ["Coders billing separately for bundled services", "CCI edits not referenced before submission"],
+          "explanation": "Coders not referencing CCI edits before submission, resulting in unbundling violations."
+        },
+        {
+          "category": "operational_system",
+          "confidence": "medium",
+          "signals": ["No pre-submission bundling checks", "Software lacks CCI edit integration"],
+          "explanation": "Billing software lacks built-in CCI edit checking to flag bundling issues."
         }
       ],
+      "shortTermAction": {
+        "description": "Bundling violations cannot be resubmitted. These represent lost revenue. Focus on prevention through improved pre-submission checks.",
+        "canResubmit": false,
+        "claimCount": 0,
+        "amount": 0
+      },
+      "longTermAction": {
+        "description": "Integrate CCI edit checking into claim scrubbing workflow to catch bundling issues before submission.",
+        "steps": [
+          "Integrate CCI edit database into billing software",
+          "Add pre-submission bundling violation alerts",
+          "Monthly coding team review of common bundling scenarios",
+          "Create quick-reference guide for high-frequency bundle combinations"
+        ]
+      },
       "detectionConfidence": 68,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -644,29 +338,12 @@
       "avgDenialAmount": 350,
       "totalAtRisk": 2450,
       "affectedClaims": [
-        "CLM-2024-2018",
-        "CLM-2024-2038",
-        "CLM-2024-2058",
-        "CLM-2024-2078",
-        "CLM-2024-2098",
-        "CLM-2025-2118",
-        "CLM-2025-2138"
+        "CLM-2024-2018", "CLM-2024-2038", "CLM-2024-2058", "CLM-2024-2078",
+        "CLM-2024-2098", "CLM-2025-2118", "CLM-2025-2138"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2018",
-          "denialDate": "2024-10-28",
-          "denialReason": "Timely Filing Limit Exceeded",
-          "billedAmount": 375,
-          "procedureCode": "99214"
-        },
-        {
-          "claimId": "CLM-2024-2038",
-          "denialDate": "2024-11-15",
-          "denialReason": "Claim Submitted After Filing Deadline",
-          "billedAmount": 320,
-          "procedureCode": "99213"
-        }
+        { "claimId": "CLM-2024-2018", "denialDate": "2024-10-28", "denialReason": "Timely Filing Limit Exceeded", "billedAmount": 375, "procedureCode": "99214" },
+        { "claimId": "CLM-2024-2038", "denialDate": "2024-11-15", "denialReason": "Claim Submitted After Filing Deadline", "billedAmount": 320, "procedureCode": "99213" }
       ],
       "firstDetected": "2024-07-28",
       "lastSeen": "2024-11-24",
@@ -674,59 +351,44 @@
       "practiceSessionsCompleted": 2,
       "correctionsApplied": 3,
       "improvements": [
-        {
-          "date": "2024-10-10",
-          "metric": "frequency",
-          "before": 3,
-          "after": 2,
-          "percentChange": -33.3,
-          "trigger": "practice-session"
-        }
+        { "date": "2024-10-10", "metric": "frequency", "before": 3, "after": 2, "percentChange": -33.3, "trigger": "practice-session" }
       ],
       "suggestedAction": "Implement automated claim submission alerts. Review all claims older than 60 days weekly. Set up aging reports in practice management system.",
-      "relatedPolicies": [
-        "POL-007"
-      ],
+      "relatedPolicies": ["POL-007"],
       "relatedCodes": [],
       "actionCategory": "operational_system",
       "recoveryStatus": "not_recoverable",
+      "recoverableClaimCount": 0,
+      "recoverableAmount": 0,
       "possibleRootCauses": [
         {
-          "id": "RC-005-1",
-          "description": "No automated alerts for claims approaching filing deadline",
-          "likelihood": "high",
-          "category": "operational_system"
+          "category": "operational_system",
+          "confidence": "high",
+          "signals": ["No aging alerts configured", "Claims stuck in pending without review"],
+          "explanation": "No automated alerts for claims approaching filing deadline."
         },
         {
-          "id": "RC-005-2",
-          "description": "Claims stuck in pending status not being monitored",
-          "likelihood": "medium",
-          "category": "operational_system"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-005-1",
-          "action": "Review all claims >60 days old immediately",
-          "priority": "high",
-          "estimatedImpact": "Prevent future losses",
-          "timeframe": "This week"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-005-1",
-          "action": "Implement automated claim aging alerts at 60/75/85 days",
           "category": "operational_system",
-          "expectedOutcome": "Eliminate timely filing denials"
-        },
-        {
-          "id": "LT-005-2",
-          "action": "Weekly claims aging report review process",
-          "category": "operational_system",
-          "expectedOutcome": "Catch at-risk claims before deadline"
+          "confidence": "medium",
+          "signals": ["Claims in pending/hold status not monitored", "Manual submission process"],
+          "explanation": "Claims stuck in pending status not being monitored regularly."
         }
       ],
+      "shortTermAction": {
+        "description": "Timely filing denials cannot be appealed. This revenue is lost. Focus entirely on prevention.",
+        "canResubmit": false,
+        "claimCount": 0,
+        "amount": 0
+      },
+      "longTermAction": {
+        "description": "Implement automated claim aging alerts to prevent future timely filing denials.",
+        "steps": [
+          "Configure automated alerts at 60/75/85 days from service date",
+          "Establish weekly claims aging report review process",
+          "Create escalation workflow for claims approaching deadline",
+          "Track and report on near-miss claims monthly"
+        ]
+      },
       "detectionConfidence": 82,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -749,31 +411,13 @@
       "avgDenialAmount": 325,
       "totalAtRisk": 2925,
       "affectedClaims": [
-        "CLM-2024-2020",
-        "CLM-2024-2040",
-        "CLM-2024-2060",
-        "CLM-2024-2080",
-        "CLM-2024-2100",
-        "CLM-2025-2120",
-        "CLM-2025-2140",
-        "CLM-2025-2160",
+        "CLM-2024-2020", "CLM-2024-2040", "CLM-2024-2060", "CLM-2024-2080",
+        "CLM-2024-2100", "CLM-2025-2120", "CLM-2025-2140", "CLM-2025-2160",
         "CLM-2025-2180"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2020",
-          "denialDate": "2024-07-30",
-          "denialReason": "Service Not Covered by Plan",
-          "billedAmount": 295,
-          "procedureCode": "99213"
-        },
-        {
-          "claimId": "CLM-2024-2040",
-          "denialDate": "2024-08-25",
-          "denialReason": "Non-Covered Service",
-          "billedAmount": 310,
-          "procedureCode": "99214"
-        }
+        { "claimId": "CLM-2024-2020", "denialDate": "2024-07-30", "denialReason": "Service Not Covered by Plan", "billedAmount": 295, "procedureCode": "99213" },
+        { "claimId": "CLM-2024-2040", "denialDate": "2024-08-25", "denialReason": "Non-Covered Service", "billedAmount": 310, "procedureCode": "99214" }
       ],
       "firstDetected": "2024-07-30",
       "lastSeen": "2025-01-05",
@@ -782,50 +426,41 @@
       "correctionsApplied": 2,
       "improvements": [],
       "suggestedAction": "Verify insurance coverage before service. Obtain advance beneficiary notices (ABNs) for non-covered services. Update patient responsibility estimates.",
-      "relatedPolicies": [
-        "POL-009",
-        "POL-010"
-      ],
+      "relatedPolicies": ["POL-009", "POL-010"],
       "relatedCodes": [],
       "actionCategory": "coverage_blindspot",
       "recoveryStatus": "partial",
+      "recoverableClaimCount": 5,
+      "recoverableAmount": 1625,
       "possibleRootCauses": [
         {
-          "id": "RC-006-1",
-          "description": "Coverage limitations not verified before service",
-          "likelihood": "high",
-          "category": "coverage_blindspot"
-        },
-        {
-          "id": "RC-006-2",
-          "description": "Front desk not obtaining ABNs for potentially non-covered services",
-          "likelihood": "medium",
-          "category": "operational_system"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-006-1",
-          "action": "Bill patient or secondary insurance for non-covered amounts",
-          "priority": "medium",
-          "estimatedImpact": "Recover $1,500",
-          "timeframe": "Next 30 days"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-006-1",
-          "action": "Implement pre-visit eligibility and benefits verification",
-          "category": "operational_system",
-          "expectedOutcome": "Identify coverage gaps before service"
-        },
-        {
-          "id": "LT-006-2",
-          "action": "Train front desk on ABN requirements and process",
           "category": "coverage_blindspot",
-          "expectedOutcome": "Proper patient notification for non-covered services"
+          "confidence": "high",
+          "signals": ["Coverage not verified before service", "Plan limitations unknown at time of service"],
+          "explanation": "Coverage limitations not verified before service."
+        },
+        {
+          "category": "operational_system",
+          "confidence": "medium",
+          "signals": ["No ABN process in place", "Front desk not trained on ABN requirements"],
+          "explanation": "Front desk not obtaining ABNs for potentially non-covered services."
         }
       ],
+      "shortTermAction": {
+        "description": "Bill patient or secondary insurance for non-covered amounts where ABN was obtained.",
+        "canResubmit": true,
+        "claimCount": 5,
+        "amount": 1625
+      },
+      "longTermAction": {
+        "description": "Implement pre-visit eligibility and benefits verification to identify coverage gaps.",
+        "steps": [
+          "Add eligibility verification to scheduling workflow",
+          "Train front desk on ABN requirements and process",
+          "Create coverage alert system for common non-covered services",
+          "Update patient financial responsibility estimates pre-visit"
+        ]
+      },
       "detectionConfidence": 71,
       "lastUpdated": "2025-01-06",
       "actions": []
@@ -848,36 +483,13 @@
       "avgDenialAmount": 330,
       "totalAtRisk": 3960,
       "affectedClaims": [
-        "CLM-2024-2016",
-        "CLM-2024-2036",
-        "CLM-2024-2056",
-        "CLM-2024-2076",
-        "CLM-2024-2096",
-        "CLM-2025-2116",
-        "CLM-2025-2136",
-        "CLM-2025-2156",
-        "CLM-2025-2176",
-        "CLM-2025-2196",
-        "CLM-2025-2206",
-        "CLM-2025-2208"
+        "CLM-2024-2016", "CLM-2024-2036", "CLM-2024-2056", "CLM-2024-2076",
+        "CLM-2024-2096", "CLM-2025-2116", "CLM-2025-2136", "CLM-2025-2156",
+        "CLM-2025-2176", "CLM-2025-2196", "CLM-2025-2206", "CLM-2025-2208"
       ],
       "evidence": [
-        {
-          "claimId": "CLM-2024-2016",
-          "denialDate": "2024-07-23",
-          "denialReason": "Diagnosis Code Requires Greater Specificity",
-          "billedAmount": 340,
-          "diagnosisCode": "E11.9",
-          "procedureCode": "99214"
-        },
-        {
-          "claimId": "CLM-2024-2036",
-          "denialDate": "2024-08-23",
-          "denialReason": "Unspecified Diagnosis Code",
-          "billedAmount": 325,
-          "diagnosisCode": "M25.50",
-          "procedureCode": "20610"
-        }
+        { "claimId": "CLM-2024-2016", "denialDate": "2024-07-23", "denialReason": "Diagnosis Code Requires Greater Specificity", "billedAmount": 340, "diagnosisCode": "E11.9", "procedureCode": "99214" },
+        { "claimId": "CLM-2024-2036", "denialDate": "2024-08-23", "denialReason": "Unspecified Diagnosis Code", "billedAmount": 325, "diagnosisCode": "M25.50", "procedureCode": "20610" }
       ],
       "firstDetected": "2024-07-23",
       "lastSeen": "2024-12-18",
@@ -885,75 +497,46 @@
       "practiceSessionsCompleted": 7,
       "correctionsApplied": 9,
       "improvements": [
-        {
-          "date": "2024-09-08",
-          "metric": "frequency",
-          "before": 4,
-          "after": 3,
-          "percentChange": -25,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-10-15",
-          "metric": "frequency",
-          "before": 3,
-          "after": 2,
-          "percentChange": -33.3,
-          "trigger": "practice-session"
-        },
-        {
-          "date": "2024-11-20",
-          "metric": "frequency",
-          "before": 2,
-          "after": 1,
-          "percentChange": -50,
-          "trigger": "insight-dismissed"
-        }
+        { "date": "2024-09-08", "metric": "frequency", "before": 4, "after": 3, "percentChange": -25, "trigger": "practice-session" },
+        { "date": "2024-10-15", "metric": "frequency", "before": 3, "after": 2, "percentChange": -33.3, "trigger": "practice-session" },
+        { "date": "2024-11-20", "metric": "frequency", "before": 2, "after": 1, "percentChange": -50, "trigger": "insight-dismissed" }
       ],
       "suggestedAction": "Use the most specific ICD-10 code available. Avoid .9 unspecified codes when laterality or additional detail is known. Review diagnosis code guidelines quarterly.",
-      "relatedPolicies": [
-        "POL-011"
-      ],
+      "relatedPolicies": ["POL-011"],
       "relatedCodes": [],
       "actionCategory": "coding_knowledge",
       "recoveryStatus": "recoverable",
+      "recoverableClaimCount": 10,
+      "recoverableAmount": 3300,
       "possibleRootCauses": [
         {
-          "id": "RC-007-1",
-          "description": "Coders defaulting to unspecified codes for speed",
-          "likelihood": "high",
-          "category": "coding_knowledge"
+          "category": "coding_knowledge",
+          "confidence": "high",
+          "signals": ["High use of .9 unspecified codes", "Coders selecting first match instead of most specific"],
+          "explanation": "Coders defaulting to unspecified codes for speed."
         },
         {
-          "id": "RC-007-2",
-          "description": "Clinical documentation not specifying laterality or type",
-          "likelihood": "medium",
-          "category": "documentation"
-        }
-      ],
-      "shortTermActions": [
-        {
-          "id": "ST-007-1",
-          "action": "Resubmit with corrected specific diagnosis codes",
-          "priority": "high",
-          "estimatedImpact": "Recover $3,960",
-          "timeframe": "Next 2 weeks"
-        }
-      ],
-      "longTermActions": [
-        {
-          "id": "LT-007-1",
-          "action": "Add coding software alerts for unspecified codes",
-          "category": "operational_system",
-          "expectedOutcome": "Flag 90% of specificity issues before submission"
-        },
-        {
-          "id": "LT-007-2",
-          "action": "Provider education on documenting specificity (laterality, type)",
           "category": "documentation",
-          "expectedOutcome": "Improve documentation completeness by 50%"
+          "confidence": "medium",
+          "signals": ["Clinical notes missing laterality", "Diagnosis type not specified in documentation"],
+          "explanation": "Clinical documentation not specifying laterality or type needed for specific codes."
         }
       ],
+      "shortTermAction": {
+        "description": "Resubmit with corrected specific diagnosis codes based on clinical documentation.",
+        "canResubmit": true,
+        "claimCount": 10,
+        "amount": 3300
+      },
+      "longTermAction": {
+        "description": "Add coding software alerts for unspecified codes and train providers on documentation specificity.",
+        "steps": [
+          "Configure alerts for .9 and other unspecified code submissions",
+          "Train coders on selecting most specific diagnosis codes",
+          "Educate providers on documenting laterality and type",
+          "Implement quarterly diagnosis coding audits"
+        ]
+      },
       "detectionConfidence": 79,
       "lastUpdated": "2025-01-06",
       "actions": []

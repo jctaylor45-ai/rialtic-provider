@@ -20,7 +20,7 @@
               'text-neutral-600 hover:text-neutral-900': activeView !== 'provider'
             }"
           >
-            Provider View
+            ROI Metrics
           </button>
           <button
             @click="activeView = 'network'"
@@ -30,7 +30,7 @@
               'text-neutral-600 hover:text-neutral-900': activeView !== 'network'
             }"
           >
-            Network View
+            Trend Analysis
           </button>
           <button
             @click="activeView = 'achievements'"
@@ -40,7 +40,7 @@
               'text-neutral-600 hover:text-neutral-900': activeView !== 'achievements'
             }"
           >
-            Achievement History
+            Pattern Progress
           </button>
         </div>
       </div>

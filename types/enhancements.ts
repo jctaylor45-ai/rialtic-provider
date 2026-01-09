@@ -33,26 +33,22 @@ export type RecoveryStatus =
   | 'not_recoverable'       // Cannot be recovered (timely filing, etc.)
 
 export interface PossibleRootCause {
-  id: string
-  description: string
-  likelihood: 'high' | 'medium' | 'low'
   category: ActionCategory
+  confidence: 'high' | 'medium' | 'low'
+  signals: string[]
+  explanation: string
 }
 
 export interface ShortTermAction {
-  id: string
-  action: string
-  priority: 'high' | 'medium' | 'low'
-  estimatedImpact: string    // e.g., "Recover $12,500"
-  timeframe: string          // e.g., "This week", "Next 30 days"
+  description: string
+  canResubmit: boolean
+  claimCount: number
+  amount: number
 }
 
 export interface LongTermAction {
-  id: string
-  action: string
-  category: ActionCategory
-  expectedOutcome: string
-  implementationNotes?: string
+  description: string
+  steps: string[]
 }
 
 export interface PatternEvidence {
@@ -137,11 +133,13 @@ export interface Pattern {
   // Root cause analysis
   actionCategory: ActionCategory
   recoveryStatus: RecoveryStatus
+  recoverableClaimCount: number
+  recoverableAmount: number
   possibleRootCauses: PossibleRootCause[]
 
   // Recommended actions
-  shortTermActions: ShortTermAction[]
-  longTermActions: LongTermAction[]
+  shortTermAction: ShortTermAction
+  longTermAction: LongTermAction
 
   // AI metadata
   detectionConfidence: number
@@ -167,9 +165,9 @@ export type EventType =
   | 'dashboard-click'  // User clicked an element on the dashboard
   | 'action-recorded'  // User marked action taken on a pattern
   | 'code-intel-viewed'  // User viewed code intelligence modal
-  | 'root-cause-viewed'  // User viewed root cause analysis section
-  | 'action-item-clicked'  // User clicked on a short-term or long-term action
-  | 'filter-applied'  // User applied a filter
+  | 'insight-export-claims'  // User clicked Export Claims button
+  | 'insight-claims-fixed'  // User clicked Mark Claims Fixed button
+  | 'insight-root-cause-addressed'  // User clicked Mark Root Cause Addressed button
 
 export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
 
@@ -210,19 +208,11 @@ export interface EventMetadata {
   // Action recording
   actionType?: ActionType
   actionNotes?: string
-
-  // Root cause / action item tracking
-  rootCauseId?: string
-  rootCauseLikelihood?: 'high' | 'medium' | 'low'
-  actionItemId?: string
-  actionItemType?: 'short-term' | 'long-term'
-  actionItemPriority?: 'high' | 'medium' | 'low'
   actionCategory?: ActionCategory
-  recoveryStatus?: RecoveryStatus
 
-  // Filter tracking
-  filterType?: 'status' | 'tier' | 'category' | 'actionCategory' | 'recoveryStatus' | 'search' | 'minImpact'
-  filterValue?: string | string[]
+  // Export/fix claims tracking
+  claimCount?: number
+  amount?: number
 }
 
 export interface LearningEvent {

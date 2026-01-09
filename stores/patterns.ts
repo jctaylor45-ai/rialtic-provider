@@ -100,15 +100,15 @@ export const usePatternsStore = defineStore('patterns', () => {
       .sort((a, b) => a.learningProgress - b.learningProgress)
   )
 
-  // Trend-based getters (score.trend: down=improving, stable=stable, up=regressing)
-  const patternsWithImprovingTrend = computed(() =>
-    patterns.value.filter(p => p.score.trend === 'down')
+  // Trend-based counts (score.trend: down=improving, stable=stable, up=regressing)
+  const patternsImproving = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'down').length
   )
-  const patternsWithStableTrend = computed(() =>
-    patterns.value.filter(p => p.score.trend === 'stable')
+  const patternsStable = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'stable').length
   )
-  const patternsWithRegressingTrend = computed(() =>
-    patterns.value.filter(p => p.score.trend === 'up')
+  const patternsRegressing = computed(() =>
+    patterns.value.filter(p => p.score.trend === 'up').length
   )
 
   // Recovery status getters
@@ -122,9 +122,14 @@ export const usePatternsStore = defineStore('patterns', () => {
     patterns.value.filter(p => p.recoveryStatus === 'not_recoverable')
   )
 
-  // Total recoverable amount (patterns with recoveryStatus 'recoverable')
-  const totalRecoverable = computed(() =>
-    recoverablePatterns.value.reduce((sum, p) => sum + p.totalAtRisk, 0)
+  // Total recoverable revenue (sum of recoverableAmount for all patterns)
+  const totalRecoverableRevenue = computed(() =>
+    patterns.value.reduce((sum, p) => sum + (p.recoverableAmount || 0), 0)
+  )
+
+  // Total denied dollars (same as totalAtRisk, renamed for clarity)
+  const totalDeniedDollars = computed(() =>
+    patterns.value.reduce((sum, p) => sum + p.totalAtRisk, 0)
   )
 
   // Patterns by action category
@@ -272,15 +277,16 @@ export const usePatternsStore = defineStore('patterns', () => {
     patternsByImpact,
     patternsByFrequency,
     patternsNeedingPractice,
-    // Trend-based getters
-    patternsWithImprovingTrend,
-    patternsWithStableTrend,
-    patternsWithRegressingTrend,
+    // Trend-based counts
+    patternsImproving,
+    patternsStable,
+    patternsRegressing,
     // Recovery status getters
     recoverablePatterns,
     partiallyRecoverablePatterns,
     notRecoverablePatterns,
-    totalRecoverable,
+    totalRecoverableRevenue,
+    totalDeniedDollars,
     // Actions
     loadPatterns,
     getPatternById,

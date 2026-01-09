@@ -29,7 +29,6 @@ export const useActions = () => {
       actionType,
       actionNotes: notes,
       actionCategory: pattern?.actionCategory,
-      recoveryStatus: pattern?.recoveryStatus,
       patternCategory: pattern?.category,
     })
   }
