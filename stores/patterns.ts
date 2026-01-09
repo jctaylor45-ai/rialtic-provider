@@ -2,11 +2,52 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction, ActionCategory, RecoveryStatus } from '~/types/enhancements'
 
+// Types for API response
+interface DbPattern {
+  id: string
+  title: string
+  description?: string
+  category: string
+  status: string
+  tier: string
+  scenarioId?: string
+  scoreFrequency?: number
+  scoreImpact?: number
+  scoreTrend?: string
+  scoreVelocity?: number
+  scoreConfidence?: number
+  scoreRecency?: number
+  avgDenialAmount?: number
+  totalAtRisk?: number
+  learningProgress?: number
+  practiceSessionsCompleted?: number
+  correctionsApplied?: number
+  suggestedAction?: string
+  baselineStart?: string
+  currentClaimCount?: number
+  currentDenialRate?: number
+  currentDollarsDenied?: number
+  liveClaimCount?: number
+  liveImpactAmount?: number
+}
+
+interface PatternApiResponse {
+  data: DbPattern[]
+  pagination: {
+    total: number
+    limit: number
+    offset: number
+    hasMore: boolean
+  }
+}
+
 export const usePatternsStore = defineStore('patterns', () => {
   // State
   const patterns = ref<Pattern[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const useDatabase = ref(true)
+  const pagination = ref({ total: 0, limit: 50, offset: 0, hasMore: false })
   const filters = ref<PatternFilters>({
     status: [],
     tier: [],
@@ -145,18 +186,118 @@ export const usePatternsStore = defineStore('patterns', () => {
     isLoading.value = true
     error.value = null
     try {
+      // Try to load from localStorage first
       loadSavedPatterns()
 
-      if (patterns.value.length === 0) {
-        const data = await $fetch<{ patterns: Pattern[] }>('/data/patterns.json')
-        patterns.value = data.patterns
+      // If we have saved patterns, we're done
+      if (patterns.value.length > 0) {
+        isLoading.value = false
+        return
+      }
+
+      if (useDatabase.value) {
+        await loadFromDatabase()
+      } else {
+        await loadFromJson()
       }
     } catch (err) {
       console.error('Failed to load patterns:', err)
       error.value = 'Failed to load pattern data'
+      // Fallback to JSON if database fails
+      if (useDatabase.value) {
+        try {
+          await loadFromJson()
+          error.value = null
+        } catch {
+          // Keep the original error
+        }
+      }
     } finally {
       isLoading.value = false
     }
+  }
+
+  async function loadFromDatabase() {
+    const response = await $fetch<PatternApiResponse>('/api/v1/patterns')
+    // Transform database patterns to match the frontend Pattern type
+    patterns.value = response.data.map(transformDbPattern)
+    pagination.value = response.pagination
+  }
+
+  async function loadFromJson() {
+    const data = await $fetch<{ patterns: Pattern[] }>('/data/patterns.json')
+    patterns.value = data.patterns
+  }
+
+  function transformDbPattern(dbPattern: DbPattern): Pattern {
+    // Map database schema to frontend Pattern type
+    const now = new Date().toISOString()
+    return {
+      id: dbPattern.id,
+      title: dbPattern.title,
+      description: dbPattern.description || '',
+      category: dbPattern.category as PatternCategory,
+      status: dbPattern.status as 'active' | 'improving' | 'resolved' | 'archived',
+      tier: dbPattern.tier as 'critical' | 'high' | 'medium' | 'low',
+      score: {
+        frequency: dbPattern.scoreFrequency || 0,
+        impact: dbPattern.scoreImpact || 0,
+        trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
+        velocity: dbPattern.scoreVelocity || 0,
+        confidence: dbPattern.scoreConfidence || 0,
+        recency: dbPattern.scoreRecency || 0,
+      },
+      avgDenialAmount: dbPattern.avgDenialAmount || 0,
+      totalAtRisk: dbPattern.totalAtRisk || dbPattern.liveImpactAmount || 0,
+      learningProgress: dbPattern.learningProgress || 0,
+      practiceSessionsCompleted: dbPattern.practiceSessionsCompleted || 0,
+      correctionsApplied: dbPattern.correctionsApplied || 0,
+      suggestedAction: dbPattern.suggestedAction || '',
+      affectedClaims: [],
+      relatedPolicies: [],
+      relatedCodes: [],
+      improvements: [],
+      actions: [],
+      evidence: [],
+      firstDetected: dbPattern.baselineStart || now,
+      lastUpdated: now,
+      lastSeen: now,
+      actionCategory: 'process' as ActionCategory,
+      recoveryStatus: 'recoverable' as RecoveryStatus,
+      recoverableAmount: dbPattern.totalAtRisk || 0,
+      recoverableClaimCount: dbPattern.liveClaimCount || dbPattern.currentClaimCount || 0,
+      possibleRootCauses: [],
+      shortTermAction: {
+        description: dbPattern.suggestedAction || 'Review and correct the claim',
+        canResubmit: true,
+        claimCount: dbPattern.liveClaimCount || dbPattern.currentClaimCount || 0,
+        amount: dbPattern.totalAtRisk || dbPattern.liveImpactAmount || 0,
+      },
+      longTermAction: {
+        description: 'Implement process improvements to prevent future occurrences',
+        steps: [],
+      },
+      detectionConfidence: dbPattern.scoreConfidence || 0.5,
+    }
+  }
+
+  async function refreshPatterns(apiFilters?: { category?: string; status?: string; tier?: string }) {
+    isLoading.value = true
+    try {
+      const response = await $fetch<PatternApiResponse>('/api/v1/patterns', {
+        params: apiFilters
+      })
+      patterns.value = response.data.map(transformDbPattern)
+      pagination.value = response.pagination
+    } catch (err) {
+      console.error('Failed to refresh patterns:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  function setUseDatabase(value: boolean) {
+    useDatabase.value = value
   }
 
   function getPatternById(id: string): Pattern | undefined {
@@ -263,6 +404,8 @@ export const usePatternsStore = defineStore('patterns', () => {
     isLoading,
     error,
     filters,
+    useDatabase,
+    pagination,
     // Getters
     filteredPatterns,
     activePatterns,
@@ -289,6 +432,10 @@ export const usePatternsStore = defineStore('patterns', () => {
     totalDeniedDollars,
     // Actions
     loadPatterns,
+    loadFromDatabase,
+    loadFromJson,
+    refreshPatterns,
+    setUseDatabase,
     getPatternById,
     getPatternsByCategory,
     getPatternsByActionCategory,
