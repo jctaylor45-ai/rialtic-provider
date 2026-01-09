@@ -37,10 +37,13 @@
 
     <!-- Footer -->
     <div class="p-4 border-t border-neutral-700">
-      <button class="flex items-center gap-2 text-neutral-400 hover:text-white text-sm transition-colors">
-        <Icon name="heroicons:book-open" class="w-4 h-4" />
-        <span>Product Guide</span>
-      </button>
+      <NuxtLink
+        to="/admin/scenario-builder"
+        class="flex items-center gap-2 text-neutral-400 hover:text-white text-sm transition-colors no-underline"
+      >
+        <Icon name="heroicons:cog-6-tooth" class="w-4 h-4" />
+        <span>Admin</span>
+      </NuxtLink>
     </div>
   </div>
 </template>
