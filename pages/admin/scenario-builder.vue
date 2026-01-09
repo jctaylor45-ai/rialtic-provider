@@ -464,6 +464,149 @@
 
       <!-- Step 4: Preview & Export -->
       <div v-show="currentStep === 4" class="space-y-6">
+        <!-- Generation Controls -->
+        <div class="card p-6 border-2 border-primary-200 bg-primary-50/30">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-lg font-semibold text-neutral-900">Live Data Generation</h2>
+              <p class="text-sm text-neutral-600 mt-1">
+                Generate continuous mock data based on your scenario configuration
+              </p>
+            </div>
+            <div
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              :class="generationStatus.isRunning ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-600'"
+            >
+              {{ generationStatus.isRunning ? 'Running' : 'Stopped' }}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Claims/Day</label>
+              <input
+                v-model.number="generationConfig.claimsPerDay"
+                type="number"
+                min="10"
+                max="1000"
+                step="10"
+                class="form-input w-full text-sm"
+                :disabled="generationStatus.isRunning"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Speed</label>
+              <select
+                v-model.number="generationConfig.speed"
+                class="form-input w-full text-sm"
+                :disabled="generationStatus.isRunning"
+              >
+                <option :value="1">Real-time (1x)</option>
+                <option :value="10">Fast (10x)</option>
+                <option :value="100">Very Fast (100x)</option>
+                <option :value="1000">Maximum (1000x)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Generate Appeals</label>
+              <select
+                v-model="generationConfig.generateAppeals"
+                class="form-input w-full text-sm"
+                :disabled="generationStatus.isRunning"
+              >
+                <option :value="true">Yes</option>
+                <option :value="false">No</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Generate Events</label>
+              <select
+                v-model="generationConfig.generateEvents"
+                class="form-input w-full text-sm"
+                :disabled="generationStatus.isRunning"
+              >
+                <option :value="true">Yes</option>
+                <option :value="false">No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <button
+              v-if="!generationStatus.isRunning"
+              type="button"
+              class="btn btn-primary"
+              :disabled="!generatedScenario"
+              @click="startGeneration"
+            >
+              Start Generation
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn bg-error-600 text-white hover:bg-error-700"
+              @click="stopGeneration"
+            >
+              Stop Generation
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              :disabled="generationStatus.isRunning"
+              @click="runSingleBatch"
+            >
+              Run Single Batch
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="refreshStatus"
+            >
+              Refresh Status
+            </button>
+          </div>
+
+          <!-- Generation Stats -->
+          <div v-if="generationStatus.stats.batchesCompleted > 0" class="mt-4 p-3 bg-white rounded-lg">
+            <h4 class="text-sm font-medium text-neutral-700 mb-2">Generation Statistics</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-neutral-500">Claims Generated:</span>
+                <span class="ml-1 font-medium">{{ generationStatus.stats.claimsGenerated.toLocaleString() }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Appeals Generated:</span>
+                <span class="ml-1 font-medium">{{ generationStatus.stats.appealsGenerated.toLocaleString() }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Events Generated:</span>
+                <span class="ml-1 font-medium">{{ generationStatus.stats.eventsGenerated.toLocaleString() }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Batches:</span>
+                <span class="ml-1 font-medium">{{ generationStatus.stats.batchesCompleted }}</span>
+              </div>
+            </div>
+            <div v-if="generationStatus.database" class="mt-3 pt-3 border-t border-neutral-100">
+              <h4 class="text-sm font-medium text-neutral-700 mb-2">Database Totals</h4>
+              <div class="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span class="text-neutral-500">Total Claims:</span>
+                  <span class="ml-1 font-medium">{{ generationStatus.database.totalClaims.toLocaleString() }}</span>
+                </div>
+                <div>
+                  <span class="text-neutral-500">Total Appeals:</span>
+                  <span class="ml-1 font-medium">{{ generationStatus.database.totalAppeals.toLocaleString() }}</span>
+                </div>
+                <div>
+                  <span class="text-neutral-500">Total Events:</span>
+                  <span class="ml-1 font-medium">{{ generationStatus.database.totalEvents.toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-semibold text-neutral-900">Preview</h2>
@@ -629,7 +772,7 @@ import {
   policyToPatternMap,
   type EngagementLevel,
 } from '~/composables/useScenarioBuilder'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
 
 const {
   input,
@@ -664,6 +807,137 @@ const engagementLevels: { value: EngagementLevel; label: string; description: st
   { value: 'medium', label: 'Medium', description: 'Moderate engagement' },
   { value: 'high', label: 'High', description: 'Active user with many actions' },
 ]
+
+// Generation controls
+const generationConfig = reactive({
+  claimsPerDay: 100,
+  speed: 100,
+  generateAppeals: true,
+  generateEvents: true,
+})
+
+const generationStatus = reactive({
+  isRunning: false,
+  startedAt: null as string | null,
+  config: null as typeof generationConfig | null,
+  stats: {
+    claimsGenerated: 0,
+    appealsGenerated: 0,
+    eventsGenerated: 0,
+    batchesCompleted: 0,
+    lastBatchAt: null as string | null,
+    errors: 0,
+  },
+  database: null as { totalClaims: number; totalAppeals: number; totalEvents: number } | null,
+})
+
+let statusPollInterval: ReturnType<typeof setInterval> | null = null
+
+async function refreshStatus() {
+  try {
+    const response = await $fetch('/api/admin/generation/status')
+    Object.assign(generationStatus, response)
+  } catch (error) {
+    console.error('Failed to fetch status:', error)
+  }
+}
+
+async function startGeneration() {
+  if (!generatedScenario.value) return
+
+  try {
+    // Build pattern configs from scenario
+    const patterns = generatedScenario.value.patterns.map(p => ({
+      patternId: p.id,
+      rate: (p.trajectory.current.denialRate || 10) / 100,
+      denialReason: p.denialReason,
+      category: p.category,
+    }))
+
+    const response = await $fetch('/api/admin/generation/start', {
+      method: 'POST',
+      body: {
+        claimsPerDay: generationConfig.claimsPerDay,
+        speed: generationConfig.speed,
+        patterns,
+        generateAppeals: generationConfig.generateAppeals,
+        generateEvents: generationConfig.generateEvents,
+        scenarioId: generatedScenario.value.id,
+      },
+    })
+
+    if (response.success) {
+      generationStatus.isRunning = true
+      // Start polling for status updates
+      statusPollInterval = setInterval(refreshStatus, 2000)
+    }
+  } catch (error) {
+    console.error('Failed to start generation:', error)
+    alert('Failed to start generation. Check console for details.')
+  }
+}
+
+async function stopGeneration() {
+  try {
+    const response = await $fetch('/api/admin/generation/stop', {
+      method: 'POST',
+    })
+
+    if (response.success) {
+      generationStatus.isRunning = false
+      if (statusPollInterval) {
+        clearInterval(statusPollInterval)
+        statusPollInterval = null
+      }
+      // Update stats from response
+      Object.assign(generationStatus.stats, response.stats)
+    }
+  } catch (error) {
+    console.error('Failed to stop generation:', error)
+  }
+}
+
+async function runSingleBatch() {
+  if (!generatedScenario.value) return
+
+  try {
+    const patterns = generatedScenario.value.patterns.map(p => ({
+      patternId: p.id,
+      rate: (p.trajectory.current.denialRate || 10) / 100,
+      denialReason: p.denialReason,
+      category: p.category,
+    }))
+
+    const response = await $fetch('/api/admin/generation/batch', {
+      method: 'POST',
+      body: {
+        patterns,
+        generateAppeals: generationConfig.generateAppeals,
+        generateEvents: generationConfig.generateEvents,
+        scenarioId: generatedScenario.value.id,
+      },
+    })
+
+    if (response.success) {
+      // Refresh status to get updated counts
+      await refreshStatus()
+      alert(`Batch completed: ${response.stats.claimsGenerated} claims, ${response.stats.appealsGenerated} appeals, ${response.stats.eventsGenerated} events`)
+    }
+  } catch (error) {
+    console.error('Failed to run batch:', error)
+    alert('Failed to run batch. Check console for details.')
+  }
+}
+
+onMounted(() => {
+  refreshStatus()
+})
+
+onUnmounted(() => {
+  if (statusPollInterval) {
+    clearInterval(statusPollInterval)
+  }
+})
 
 const availableSpecialties = computed(() => {
   const usedSpecialties = new Set(input.specialties.map(s => s.specialty))
