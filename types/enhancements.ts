@@ -168,6 +168,7 @@ export type EventType =
   | 'insight-export-claims'  // User clicked Export Claims button
   | 'insight-claims-fixed'  // User clicked Mark Claims Fixed button
   | 'insight-root-cause-addressed'  // User clicked Mark Root Cause Addressed button
+  | 'claim-lab-test'  // User ran a test in Claim Lab
 
 export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
 
@@ -213,6 +214,13 @@ export interface EventMetadata {
   // Export/fix claims tracking
   claimCount?: number
   amount?: number
+
+  // Claim Lab test tracking
+  result?: 'approved' | 'denied'
+  lineCount?: number
+  linesWithEdits?: number
+  linesApproved?: number
+  linesDenied?: number
 }
 
 export interface LearningEvent {

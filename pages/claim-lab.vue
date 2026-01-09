@@ -2,11 +2,28 @@
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Header -->
     <header class="flex items-center justify-between border-b border-neutral-200 px-4 py-3 lg:px-7 lg:py-4 bg-white">
-      <div>
-        <h1 class="text-lg font-semibold text-neutral-900 lg:text-2xl">Claim Lab</h1>
-        <p v-if="originalClaim" class="text-xs text-secondary-700 lg:text-sm">
-          {{ originalClaim.id }}
-        </p>
+      <div class="flex items-center gap-4">
+        <div>
+          <h1 class="text-lg font-semibold text-neutral-900 lg:text-2xl">Claim Lab</h1>
+          <p v-if="originalClaim" class="text-xs text-secondary-700 lg:text-sm">
+            {{ originalClaim.id }}
+          </p>
+        </div>
+
+        <!-- Claim Search -->
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <Icon name="heroicons:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <input
+              v-model="claimSearch"
+              type="text"
+              placeholder="Search claim ID..."
+              class="pl-9 pr-3 py-2 w-64 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              @keydown.enter="handleClaimSearch"
+            />
+          </div>
+          <span v-if="searchError" class="text-sm text-error-600">{{ searchError }}</span>
+        </div>
       </div>
 
       <div class="flex items-center gap-2">
@@ -54,6 +71,36 @@
         </button>
       </div>
     </header>
+
+    <!-- Pattern Context Banner -->
+    <div v-if="contextPattern" class="bg-primary-50 border border-primary-200 rounded-lg p-4 mx-4 mt-4 lg:mx-7">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <Icon name="heroicons:light-bulb" class="w-5 h-5 text-primary-600" />
+            <span class="text-sm text-primary-700">Testing fix for pattern</span>
+          </div>
+          <h3 class="text-lg font-semibold text-neutral-900 mt-1">{{ contextPattern.title }}</h3>
+          <div class="flex items-center gap-3 mt-3">
+            <div class="bg-white rounded-lg border border-primary-100 px-3 py-2">
+              <div class="font-semibold text-neutral-900">{{ contextPattern.affectedClaims.length }}</div>
+              <div class="text-xs text-neutral-500">claims affected</div>
+            </div>
+            <div class="bg-white rounded-lg border border-primary-100 px-3 py-2">
+              <div class="font-semibold text-neutral-900">{{ formatCurrency(contextPattern.totalAtRisk) }}</div>
+              <div class="text-xs text-neutral-500">at risk</div>
+            </div>
+          </div>
+        </div>
+        <button
+          @click="navigateTo(`/insights?pattern=${contextPattern.id}`)"
+          class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+        >
+          View Pattern
+          <Icon name="heroicons:arrow-right" class="w-4 h-4" />
+        </button>
+      </div>
+    </div>
 
     <!-- No Claim Selected State -->
     <div v-if="!originalClaim" class="flex-1 flex items-center justify-center p-8">
@@ -155,6 +202,8 @@ const testInProgress = ref(false)
 const testError = ref('')
 const testResult = ref<TestResult | null>(null)
 const newLineCounter = ref(0)
+const claimSearch = ref('')
+const searchError = ref('')
 
 // Place of service options (defined before use)
 const placeOfServiceOptions = [
@@ -365,6 +414,20 @@ function resetChanges() {
   }
 }
 
+function handleClaimSearch() {
+  if (!claimSearch.value.trim()) return
+
+  const claim = appStore.getClaimById(claimSearch.value.trim())
+  if (claim) {
+    navigateTo({ path: '/claim-lab', query: { claim: claim.id, pattern: patternId.value || undefined } })
+    claimSearch.value = ''
+    searchError.value = ''
+  } else {
+    searchError.value = 'Claim not found'
+    setTimeout(() => { searchError.value = '' }, 3000)
+  }
+}
+
 function applySuggestion(lineId: string, field: string, value: string) {
   const line = claimLines.value.find(l => l.id === lineId)
   if (line) {
@@ -428,6 +491,18 @@ async function runTest() {
 
     // Run the test simulation
     testResult.value = simulateClaimTest(claimLines.value)
+
+    // Track the test event for engagement attribution
+    const eventsStore = useEventsStore()
+    eventsStore.trackEvent('claim-lab-test', 'claim-lab', {
+      claimId: originalClaim.value.id,
+      patternId: patternId.value || undefined,
+      result: testResult.value.status,
+      lineCount: claimLines.value.length,
+      linesWithEdits: claimLines.value.filter(l => lineHasEdits(l.id)).length,
+      linesApproved: testResult.value.lineResults.filter(r => r.status === 'approved').length,
+      linesDenied: testResult.value.lineResults.filter(r => r.status === 'denied').length,
+    })
 
     // Open status panel to show results
     statusPanelOpen.value = true

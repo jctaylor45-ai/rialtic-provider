@@ -471,7 +471,8 @@ export function calculateEngagementScore(events: LearningEvent[]): number {
     'code-intel-viewed': 3,
     'insight-export-claims': 5,
     'insight-claims-fixed': 8,
-    'insight-root-cause-addressed': 10
+    'insight-root-cause-addressed': 10,
+    'claim-lab-test': 6
   }
 
   const score = events.reduce((sum, event) => {
