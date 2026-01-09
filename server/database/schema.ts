@@ -711,3 +711,91 @@ export const claimAppealsRelations = relations(claimAppeals, ({ one }) => ({
     references: [claims.id],
   }),
 }))
+
+// =============================================================================
+// DATA SOURCES (External Integrations)
+// =============================================================================
+
+export const dataSources = sqliteTable('data_sources', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  sourceType: text('source_type', {
+    enum: ['hl7', 'era', 'csv', 'api', 'sftp']
+  }).notNull(),
+  status: text('status', {
+    enum: ['active', 'inactive', 'error', 'syncing']
+  }).default('inactive'),
+
+  // Connection Configuration (encrypted in production)
+  config: text('config', { mode: 'json' }).$type<{
+    endpoint?: string
+    apiKey?: string
+    username?: string
+    password?: string
+    filePath?: string
+    columnMapping?: Record<string, string>
+    [key: string]: unknown
+  } | null>(),
+
+  // Sync Settings
+  syncEnabled: integer('sync_enabled', { mode: 'boolean' }).default(false),
+  syncSchedule: text('sync_schedule'), // cron expression
+  lastSyncAt: text('last_sync_at'),
+  lastSyncStatus: text('last_sync_status'),
+  lastSyncError: text('last_sync_error'),
+
+  // Statistics
+  totalImported: integer('total_imported').default(0),
+  lastImportCount: integer('last_import_count').default(0),
+
+  // Timestamps
+  createdAt: text('created_at').default('CURRENT_TIMESTAMP'),
+  updatedAt: text('updated_at').default('CURRENT_TIMESTAMP'),
+}, (table) => ({
+  statusIdx: index('idx_data_sources_status').on(table.status),
+  typeIdx: index('idx_data_sources_type').on(table.sourceType),
+}))
+
+// =============================================================================
+// IMPORT HISTORY
+// =============================================================================
+
+export const importHistory = sqliteTable('import_history', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  dataSourceId: text('data_source_id').notNull().references(() => dataSources.id, { onDelete: 'cascade' }),
+  startedAt: text('started_at').notNull(),
+  completedAt: text('completed_at'),
+  status: text('status', {
+    enum: ['running', 'completed', 'failed', 'cancelled']
+  }).notNull(),
+
+  // Statistics
+  recordsFetched: integer('records_fetched').default(0),
+  recordsValidated: integer('records_validated').default(0),
+  recordsInserted: integer('records_inserted').default(0),
+  recordsUpdated: integer('records_updated').default(0),
+  recordsSkipped: integer('records_skipped').default(0),
+  recordsErrored: integer('records_errored').default(0),
+
+  // Duration
+  durationMs: integer('duration_ms'),
+
+  // Error Details
+  errorMessage: text('error_message'),
+  errorDetails: text('error_details', { mode: 'json' }).$type<Array<{
+    record: number
+    sourceId?: string
+    errors: string[]
+  }> | null>(),
+}, (table) => ({
+  dataSourceIdx: index('idx_import_history_source').on(table.dataSourceId),
+  statusIdx: index('idx_import_history_status').on(table.status),
+}))
+
+export const importHistoryRelations = relations(importHistory, ({ one }) => ({
+  dataSource: one(dataSources, {
+    fields: [importHistory.dataSourceId],
+    references: [dataSources.id],
+  }),
+}))
