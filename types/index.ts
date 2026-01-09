@@ -140,6 +140,23 @@ export interface Policy {
   relatedPolicies: string[]
   learningMarkersCount: number
   recentTests: number
+
+  // Geography - regions where policy applies
+  geography?: {
+    regions: string[]
+    states?: string[]
+    jurisdictions?: string[]
+  }
+
+  // Applicable claim types
+  applicableClaimTypes?: ('Professional' | 'Institutional' | 'Dental' | 'Pharmacy')[]
+
+  // CARC/RARC codes
+  carcCodes?: CARCCode[]
+  rarcCodes?: RARCCode[]
+
+  // Specialty codes
+  specialtyCodes?: SpecialtyCode[]
 }
 
 export interface Insight {
@@ -191,4 +208,21 @@ export interface Provider {
   name: string
   specialty: string
   npi: string
+}
+
+// CARC/RARC and Specialty Code types for Policy
+export interface CARCCode {
+  code: string
+  description: string
+}
+
+export interface RARCCode {
+  code: string
+  description: string
+}
+
+export interface SpecialtyCode {
+  code: string
+  description: string
+  cmsCategory?: string
 }

@@ -36,7 +36,49 @@
     ],
     "relatedPolicies": ["POL-002", "POL-005"],
     "learningMarkersCount": 23,
-    "recentTests": 5
+    "recentTests": 5,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "4",
+        "description": "The procedure code is inconsistent with the modifier used or a required modifier is missing."
+      },
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N519",
+        "description": "Invalid modifier"
+      },
+      {
+        "code": "M15",
+        "description": "Separately billed services/tests have been bundled as they are considered components of the same procedure."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "08",
+        "description": "Family Practice",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-002",
@@ -75,7 +117,31 @@
     ],
     "relatedPolicies": ["POL-003"],
     "learningMarkersCount": 8,
-    "recentTests": 2
+    "recentTests": 2,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "18",
+        "description": "Exact duplicate claim/service."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N522",
+        "description": "Duplicate of a claim processed, or to be processed, as a crossover claim."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "69",
+        "description": "Clinical Laboratory",
+        "cmsCategory": "Suppliers"
+      }
+    ]
   },
   {
     "id": "POL-003",
@@ -120,7 +186,40 @@
     ],
     "relatedPolicies": ["POL-002", "POL-010"],
     "learningMarkersCount": 15,
-    "recentTests": 4
+    "recentTests": 4,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "50",
+        "description": "These are non-covered services because this is not deemed a 'medical necessity' by the payer."
+      },
+      {
+        "code": "119",
+        "description": "Benefit maximum for this time period or occurrence has been reached."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N386",
+        "description": "This decision was based on a Local Coverage Determination (LCD)."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "69",
+        "description": "Clinical Laboratory",
+        "cmsCategory": "Suppliers"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-004",
@@ -159,7 +258,36 @@
     ],
     "relatedPolicies": ["POL-001"],
     "learningMarkersCount": 19,
-    "recentTests": 3
+    "recentTests": 3,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "4",
+        "description": "The procedure code is inconsistent with the modifier used or a required modifier is missing."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N517",
+        "description": "Resubmit a new claim with the corrected modifier."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "20",
+        "description": "Orthopedic Surgery",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "28",
+        "description": "Colorectal Surgery",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-005",
@@ -198,7 +326,41 @@
     ],
     "relatedPolicies": ["POL-001"],
     "learningMarkersCount": 12,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "5",
+        "description": "The procedure code/bill type is inconsistent with the place of service."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N95",
+        "description": "This provider type/provider specialty may not bill this service."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "08",
+        "description": "Family Practice",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-006",
@@ -237,7 +399,31 @@
     ],
     "relatedPolicies": [],
     "learningMarkersCount": 7,
-    "recentTests": 2
+    "recentTests": 2,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "16",
+        "description": "Claim/service lacks information or has submission/billing error(s)."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N362",
+        "description": "The number of Days or Units of Service exceeds our acceptable maximum."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "06",
+        "description": "Cardiovascular Disease (Cardiology)",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-007",
@@ -276,7 +462,31 @@
     ],
     "relatedPolicies": [],
     "learningMarkersCount": 4,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["DME MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "15",
+        "description": "The authorization number is missing, invalid, or does not apply to the billed services or provider."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N30",
+        "description": "Patient ineligible for this service."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "A4",
+        "description": "DMEPOS Supplier",
+        "cmsCategory": "Suppliers"
+      }
+    ]
   },
   {
     "id": "POL-008",
@@ -315,7 +525,40 @@
     ],
     "relatedPolicies": ["POL-003"],
     "learningMarkersCount": 11,
-    "recentTests": 3
+    "recentTests": 3,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "59",
+        "description": "Processed based on multiple or concurrent procedure rules."
+      },
+      {
+        "code": "119",
+        "description": "Benefit maximum for this time period or occurrence has been reached."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N362",
+        "description": "The number of Days or Units of Service exceeds our acceptable maximum."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "65",
+        "description": "Physical Therapist",
+        "cmsCategory": "Non-Physician Practitioners"
+      },
+      {
+        "code": "67",
+        "description": "Occupational Therapist",
+        "cmsCategory": "Non-Physician Practitioners"
+      }
+    ]
   },
   {
     "id": "POL-009",
@@ -354,7 +597,44 @@
     ],
     "relatedPolicies": ["POL-003"],
     "learningMarkersCount": 18,
-    "recentTests": 4
+    "recentTests": 4,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "16",
+        "description": "Claim/service lacks information or has submission/billing error(s)."
+      },
+      {
+        "code": "50",
+        "description": "These are non-covered services because this is not deemed a 'medical necessity' by the payer."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "M76",
+        "description": "Missing/incomplete/invalid diagnosis or condition."
+      },
+      {
+        "code": "MA130",
+        "description": "Claim did not provide one or more required diagnosis codes."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-010",
@@ -393,7 +673,35 @@
     ],
     "relatedPolicies": ["POL-003"],
     "learningMarkersCount": 9,
-    "recentTests": 2
+    "recentTests": 2,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "96",
+        "description": "Non-covered charge(s)."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N386",
+        "description": "This decision was based on a Local Coverage Determination (LCD)."
+      },
+      {
+        "code": "N52",
+        "description": "Patient age not covered."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "30",
+        "description": "Diagnostic Radiology",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-011",
@@ -432,7 +740,36 @@
     ],
     "relatedPolicies": ["POL-001", "POL-004"],
     "learningMarkersCount": 16,
-    "recentTests": 3
+    "recentTests": 3,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "M15",
+        "description": "Separately billed services/tests have been bundled as they are considered components of the same procedure."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "02",
+        "description": "General Surgery",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "18",
+        "description": "Dermatology",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-012",
@@ -471,7 +808,36 @@
     ],
     "relatedPolicies": ["POL-002"],
     "learningMarkersCount": 5,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N657",
+        "description": "This code combination is not payable."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "69",
+        "description": "Clinical Laboratory",
+        "cmsCategory": "Suppliers"
+      },
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-013",
@@ -510,7 +876,45 @@
     ],
     "relatedPolicies": ["POL-005"],
     "learningMarkersCount": 13,
-    "recentTests": 3
+    "recentTests": 3,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "5",
+        "description": "The procedure code/bill type is inconsistent with the place of service."
+      },
+      {
+        "code": "58",
+        "description": "Treatment was deemed by the payer to have been rendered in an inappropriate or invalid place of service."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N95",
+        "description": "This provider type/provider specialty may not bill this service."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "86",
+        "description": "Neuropsychiatry",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-014",
@@ -549,7 +953,41 @@
     ],
     "relatedPolicies": ["POL-001"],
     "learningMarkersCount": 21,
-    "recentTests": 5
+    "recentTests": 5,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "M15",
+        "description": "Separately billed services/tests have been bundled as they are considered components of the same procedure."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "08",
+        "description": "Family Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "37",
+        "description": "Pediatric Medicine",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-015",
@@ -588,7 +1026,36 @@
     ],
     "relatedPolicies": ["POL-012"],
     "learningMarkersCount": 10,
-    "recentTests": 2
+    "recentTests": 2,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "M86",
+        "description": "Service denied because payment already made for same/similar procedure within set time frame."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "02",
+        "description": "General Surgery",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "20",
+        "description": "Orthopedic Surgery",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-016",
@@ -627,7 +1094,41 @@
     ],
     "relatedPolicies": ["POL-008"],
     "learningMarkersCount": 6,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "97",
+        "description": "Payment adjusted because the benefit for this service is included in the payment/allowance for another service/procedure that has already been adjudicated."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N362",
+        "description": "The number of Days or Units of Service exceeds our acceptable maximum."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "26",
+        "description": "Psychiatry",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "62",
+        "description": "Psychologist",
+        "cmsCategory": "Non-Physician Practitioners"
+      },
+      {
+        "code": "68",
+        "description": "Clinical Social Worker",
+        "cmsCategory": "Non-Physician Practitioners"
+      }
+    ]
   },
   {
     "id": "POL-017",
@@ -666,7 +1167,36 @@
     ],
     "relatedPolicies": ["POL-005"],
     "learningMarkersCount": 14,
-    "recentTests": 3
+    "recentTests": 3,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "185",
+        "description": "The rendering provider is not eligible to perform the service billed."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N95",
+        "description": "This provider type/provider specialty may not bill this service."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "50",
+        "description": "Nurse Practitioner",
+        "cmsCategory": "Non-Physician Practitioners"
+      },
+      {
+        "code": "97",
+        "description": "Physician Assistant",
+        "cmsCategory": "Non-Physician Practitioners"
+      }
+    ]
   },
   {
     "id": "POL-018",
@@ -705,7 +1235,36 @@
     ],
     "relatedPolicies": ["POL-005"],
     "learningMarkersCount": 3,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "5",
+        "description": "The procedure code/bill type is inconsistent with the place of service."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N95",
+        "description": "This provider type/provider specialty may not bill this service."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "12",
+        "description": "Hospitalist",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-019",
@@ -744,7 +1303,36 @@
     ],
     "relatedPolicies": ["POL-009"],
     "learningMarkersCount": 8,
-    "recentTests": 2
+    "recentTests": 2,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional"],
+    "carcCodes": [
+      {
+        "code": "16",
+        "description": "Claim/service lacks information or has submission/billing error(s)."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N362",
+        "description": "The number of Days or Units of Service exceeds our acceptable maximum."
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "01",
+        "description": "General Practice",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "11",
+        "description": "Internal Medicine",
+        "cmsCategory": "Physicians"
+      }
+    ]
   },
   {
     "id": "POL-020",
@@ -783,6 +1371,39 @@
     ],
     "relatedPolicies": ["POL-002"],
     "learningMarkersCount": 5,
-    "recentTests": 1
+    "recentTests": 1,
+    "geography": {
+      "regions": ["National"],
+      "jurisdictions": ["All MACs"]
+    },
+    "applicableClaimTypes": ["Professional", "Institutional"],
+    "carcCodes": [
+      {
+        "code": "18",
+        "description": "Exact duplicate claim/service."
+      },
+      {
+        "code": "4",
+        "description": "The procedure code is inconsistent with the modifier used or a required modifier is missing."
+      }
+    ],
+    "rarcCodes": [
+      {
+        "code": "N519",
+        "description": "Invalid modifier"
+      }
+    ],
+    "specialtyCodes": [
+      {
+        "code": "30",
+        "description": "Diagnostic Radiology",
+        "cmsCategory": "Physicians"
+      },
+      {
+        "code": "94",
+        "description": "Interventional Radiology",
+        "cmsCategory": "Physicians"
+      }
+    ]
   }
 ]

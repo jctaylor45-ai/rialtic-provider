@@ -87,6 +87,40 @@ const displayedClaims = computed(() => {
   return policyClaimsData.value.claims.slice(0, 5)
 })
 
+// CARC/RARC/Specialty code display toggles
+const showAllCarc = ref(false)
+const showAllRarc = ref(false)
+const showAllSpecialty = ref(false)
+
+const displayedCarcCodes = computed(() => {
+  if (!props.policy.carcCodes) return []
+  if (showAllCarc.value) return props.policy.carcCodes
+  return props.policy.carcCodes.slice(0, 3)
+})
+
+const displayedRarcCodes = computed(() => {
+  if (!props.policy.rarcCodes) return []
+  if (showAllRarc.value) return props.policy.rarcCodes
+  return props.policy.rarcCodes.slice(0, 3)
+})
+
+const displayedSpecialtyCodes = computed(() => {
+  if (!props.policy.specialtyCodes) return []
+  if (showAllSpecialty.value) return props.policy.specialtyCodes
+  return props.policy.specialtyCodes.slice(0, 5)
+})
+
+// Claim type icons
+const getClaimTypeIcon = (claimType: string) => {
+  const icons: Record<string, string> = {
+    'Professional': 'heroicons:user',
+    'Institutional': 'heroicons:building-office-2',
+    'Dental': 'heroicons:face-smile',
+    'Pharmacy': 'heroicons:beaker',
+  }
+  return icons[claimType] || 'heroicons:document-text'
+}
+
 // Get pattern tier badge class
 const getPatternBadgeClass = (tier: string) => {
   const classes = {
@@ -319,6 +353,72 @@ const showCodeIntelligence = (code: string) => {
         </div>
       </div>
 
+      <!-- Geography -->
+      <div v-if="policy.geography" class="p-6 border-b border-neutral-200">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Geography</h3>
+        <div class="grid grid-cols-3 gap-x-6 gap-y-3 text-sm">
+          <!-- Regions -->
+          <div v-if="policy.geography.regions?.length">
+            <div class="text-neutral-500 text-xs mb-2">Applicable Regions</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="region in policy.geography.regions"
+                :key="region"
+                class="px-2 py-1 bg-secondary-50 text-secondary-700 text-xs rounded border border-secondary-200"
+              >
+                {{ region }}
+              </span>
+            </div>
+          </div>
+
+          <!-- States -->
+          <div v-if="policy.geography.states?.length">
+            <div class="text-neutral-500 text-xs mb-2">States</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="state in policy.geography.states"
+                :key="state"
+                class="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs font-mono rounded border border-neutral-200"
+              >
+                {{ state }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Jurisdictions -->
+          <div v-if="policy.geography.jurisdictions?.length">
+            <div class="text-neutral-500 text-xs mb-2">Jurisdictions</div>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="jurisdiction in policy.geography.jurisdictions"
+                :key="jurisdiction"
+                class="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs rounded border border-neutral-200"
+              >
+                {{ jurisdiction }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applicable Claim Types -->
+      <div v-if="policy.applicableClaimTypes?.length" class="p-6 border-b border-neutral-200">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Applicable Claim Types</h3>
+        <div class="flex flex-wrap gap-3">
+          <div
+            v-for="claimType in policy.applicableClaimTypes"
+            :key="claimType"
+            class="flex items-center gap-2 px-3 py-2 bg-neutral-50 rounded-lg border border-neutral-200"
+          >
+            <Icon
+              :name="getClaimTypeIcon(claimType)"
+              class="w-5 h-5 text-primary-600"
+            />
+            <span class="text-sm font-medium text-neutral-900">{{ claimType }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Description -->
       <div class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-2">Description</h3>
@@ -411,6 +511,103 @@ const showCodeIntelligence = (code: string) => {
         <!-- No codes message -->
         <div v-if="!policy.procedureCodes?.length && !policy.diagnosisCodes?.length && !policy.modifiers?.length && !policy.placeOfService?.length" class="text-sm text-neutral-500">
           No specific codes configured for this policy.
+        </div>
+      </div>
+
+      <!-- CARC/RARC Codes -->
+      <div v-if="policy.carcCodes?.length || policy.rarcCodes?.length" class="p-6 border-b border-neutral-200">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Claim Adjustment Reason Codes</h3>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- CARC Codes -->
+          <div v-if="policy.carcCodes?.length">
+            <div class="text-xs text-neutral-600 mb-3 flex items-center gap-2">
+              <span class="font-semibold">CARC Codes</span>
+              <span class="text-neutral-400">(Claim Adjustment Reason)</span>
+            </div>
+            <div class="space-y-2">
+              <div
+                v-for="carc in displayedCarcCodes"
+                :key="carc.code"
+                class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="px-2 py-0.5 bg-error-100 text-error-700 text-xs font-mono font-semibold rounded">
+                    {{ carc.code }}
+                  </span>
+                  <p class="text-sm text-neutral-700 flex-1">{{ carc.description }}</p>
+                </div>
+              </div>
+              <button
+                v-if="policy.carcCodes.length > 3"
+                class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
+                @click="showAllCarc = !showAllCarc"
+              >
+                {{ showAllCarc ? 'Show Less' : `Show All ${policy.carcCodes.length} Codes` }}
+              </button>
+            </div>
+          </div>
+
+          <!-- RARC Codes -->
+          <div v-if="policy.rarcCodes?.length">
+            <div class="text-xs text-neutral-600 mb-3 flex items-center gap-2">
+              <span class="font-semibold">RARC Codes</span>
+              <span class="text-neutral-400">(Remittance Advice Remark)</span>
+            </div>
+            <div class="space-y-2">
+              <div
+                v-for="rarc in displayedRarcCodes"
+                :key="rarc.code"
+                class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+              >
+                <div class="flex items-start gap-3">
+                  <span class="px-2 py-0.5 bg-warning-100 text-warning-700 text-xs font-mono font-semibold rounded">
+                    {{ rarc.code }}
+                  </span>
+                  <p class="text-sm text-neutral-700 flex-1">{{ rarc.description }}</p>
+                </div>
+              </div>
+              <button
+                v-if="policy.rarcCodes.length > 3"
+                class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
+                @click="showAllRarc = !showAllRarc"
+              >
+                {{ showAllRarc ? 'Show Less' : `Show All ${policy.rarcCodes.length} Codes` }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specialty Codes -->
+      <div v-if="policy.specialtyCodes?.length" class="p-6 border-b border-neutral-200">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-4">CMS Specialty Codes</h3>
+        <div class="text-xs text-neutral-600 mb-3">
+          Provider specialties to which this policy applies
+        </div>
+        <div class="space-y-2">
+          <div
+            v-for="specialty in displayedSpecialtyCodes"
+            :key="specialty.code"
+            class="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+          >
+            <span class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-mono font-semibold rounded min-w-[3rem] text-center">
+              {{ specialty.code }}
+            </span>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-neutral-900">{{ specialty.description }}</p>
+              <p v-if="specialty.cmsCategory" class="text-xs text-neutral-500 mt-0.5">
+                {{ specialty.cmsCategory }}
+              </p>
+            </div>
+          </div>
+          <button
+            v-if="policy.specialtyCodes.length > 5"
+            class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
+            @click="showAllSpecialty = !showAllSpecialty"
+          >
+            {{ showAllSpecialty ? 'Show Less' : `Show All ${policy.specialtyCodes.length} Specialties` }}
+          </button>
         </div>
       </div>
 
