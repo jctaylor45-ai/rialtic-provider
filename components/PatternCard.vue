@@ -52,16 +52,15 @@
         <div class="text-lg font-semibold text-neutral-900">
           {{ pattern.score.frequency }}
         </div>
-        <div class="flex items-center gap-1 text-xs" :class="trendColor">
-          <Icon :name="trendIcon" class="w-3 h-3" />
-          <span>{{ pattern.score.trend }}</span>
+        <div class="text-xs text-neutral-500">
+          occurrences
         </div>
       </div>
 
       <div>
-        <div class="text-xs text-neutral-500 mb-1">Impact</div>
+        <div class="text-xs text-neutral-500 mb-1">Denied</div>
         <div class="text-lg font-semibold text-neutral-900">
-          {{ formatCurrency(pattern.score.impact) }}
+          {{ formatCurrency(pattern.totalAtRisk) }}
         </div>
         <div class="text-xs text-neutral-500">
           ~{{ formatCurrency(pattern.avgDenialAmount) }} avg
@@ -69,12 +68,13 @@
       </div>
 
       <div>
-        <div class="text-xs text-neutral-500 mb-1">Confidence</div>
-        <div class="text-lg font-semibold text-neutral-900">
-          {{ pattern.score.confidence }}%
+        <div class="text-xs text-neutral-500 mb-1">Trend</div>
+        <div class="flex items-center gap-1" :class="trendColor">
+          <Icon :name="trendIcon" class="w-5 h-5" />
+          <span class="text-lg font-semibold capitalize">{{ pattern.score.trend }}</span>
         </div>
         <div class="text-xs text-neutral-500">
-          {{ pattern.score.recency }}d ago
+          {{ pattern.score.recency }}d since last
         </div>
       </div>
     </div>
@@ -223,7 +223,7 @@ const actionCategoryLabel = computed(() => {
   const labels: Record<string, string> = {
     coding_knowledge: 'Coding Knowledge',
     documentation: 'Documentation',
-    operational_system: 'Operational',
+    operational_system: 'System/Process',
     coverage_blindspot: 'Coverage Gap',
     payer_specific: 'Payer-Specific',
   }
