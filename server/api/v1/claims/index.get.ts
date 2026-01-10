@@ -3,14 +3,27 @@
  *
  * GET /api/v1/claims
  *
- * Returns paginated claims list with optional filtering.
+ * Returns paginated claims list in PaAPI-compatible ProcessedClaim format.
  * Supports filtering by specific claim IDs (for pattern-linked claims).
+ * Data source is determined by app settings (local DB or PaAPI).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { claims, claimLineItems, claimDiagnosisCodes } from '~/server/database/schema'
+import { claims } from '~/server/database/schema'
 import { eq, desc, and, gte, lte, like, sql, inArray } from 'drizzle-orm'
+import { claimListAdapter, type DbClaim } from '~/server/utils/claimAdapter'
+import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
+
+interface PaapiClaimsResponse {
+  data: unknown[]
+  pagination: {
+    total: number
+    limit: number
+    offset: number
+    hasMore: boolean
+  }
+}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -26,6 +39,32 @@ export default defineEventHandler(async (event) => {
     const idsParam = query.ids as string | undefined
     const ids = idsParam ? idsParam.split(',').filter(id => id.trim()) : undefined
 
+    // Check data source configuration
+    const dataSourceConfig = await getDataSourceConfig()
+
+    // If PaAPI is configured, fetch from remote
+    if (dataSourceConfig.source === 'paapi' && dataSourceConfig.paapi) {
+      const params: Record<string, string | number | undefined> = {
+        limit,
+        offset,
+        status,
+        startDate,
+        endDate,
+        providerId,
+        search,
+        ids: ids?.join(','),
+      }
+
+      const response = await fetchFromPaAPI<PaapiClaimsResponse>(
+        dataSourceConfig.paapi,
+        '/api/v1/claims',
+        { params }
+      )
+
+      return response
+    }
+
+    // Local database source
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
 
@@ -58,24 +97,7 @@ export default defineEventHandler(async (event) => {
 
     // Query claims
     const claimsList = await db
-      .select({
-        id: claims.id,
-        providerId: claims.providerId,
-        providerName: claims.providerName,
-        claimType: claims.claimType,
-        patientName: claims.patientName,
-        patientDob: claims.patientDob,
-        patientSex: claims.patientSex,
-        memberId: claims.memberId,
-        dateOfService: claims.dateOfService,
-        billedAmount: claims.billedAmount,
-        paidAmount: claims.paidAmount,
-        status: claims.status,
-        denialReason: claims.denialReason,
-        submissionDate: claims.submissionDate,
-        processingDate: claims.processingDate,
-        createdAt: claims.createdAt,
-      })
+      .select()
       .from(claims)
       .where(where)
       .orderBy(desc(claims.dateOfService))
@@ -90,8 +112,13 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
+    // Transform to PaAPI format
+    const processedClaims = claimsList.map(claim =>
+      claimListAdapter(claim as unknown as DbClaim)
+    )
+
     return {
-      data: claimsList,
+      data: processedClaims,
       pagination: {
         total,
         limit,

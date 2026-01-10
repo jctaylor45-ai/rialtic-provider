@@ -3,13 +3,26 @@
  *
  * GET /api/v1/policies
  *
- * Returns paginated policies list with impact metrics.
+ * Returns paginated policies list in PaAPI-compatible format.
+ * Data source is determined by app settings (local DB or PaAPI).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { policies, policyProcedureCodes, policyDiagnosisCodes } from '~/server/database/schema'
-import { eq, desc, and, like, sql, count } from 'drizzle-orm'
+import { eq, desc, and, like, sql } from 'drizzle-orm'
+import { policyListAdapter, type DbPolicy } from '~/server/utils/policyAdapter'
+import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
+
+interface PaapiPoliciesResponse {
+  data: unknown[]
+  pagination: {
+    total: number
+    limit: number
+    offset: number
+    hasMore: boolean
+  }
+}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -20,6 +33,29 @@ export default defineEventHandler(async (event) => {
     const topic = query.topic as string | undefined
     const search = query.search as string | undefined
 
+    // Check data source configuration
+    const dataSourceConfig = await getDataSourceConfig()
+
+    // If PaAPI is configured, fetch from remote
+    if (dataSourceConfig.source === 'paapi' && dataSourceConfig.paapi) {
+      const params: Record<string, string | number | undefined> = {
+        limit,
+        offset,
+        mode,
+        topic,
+        search,
+      }
+
+      const response = await fetchFromPaAPI<PaapiPoliciesResponse>(
+        dataSourceConfig.paapi,
+        '/api/v1/policies',
+        { params }
+      )
+
+      return response
+    }
+
+    // Local database source
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
 
@@ -39,27 +75,7 @@ export default defineEventHandler(async (event) => {
 
     // Query policies
     const policiesList = await db
-      .select({
-        id: policies.id,
-        name: policies.name,
-        mode: policies.mode,
-        effectiveDate: policies.effectiveDate,
-        description: policies.description,
-        clinicalRationale: policies.clinicalRationale,
-        topic: policies.topic,
-        logicType: policies.logicType,
-        source: policies.source,
-        hitRate: policies.hitRate,
-        denialRate: policies.denialRate,
-        appealRate: policies.appealRate,
-        overturnRate: policies.overturnRate,
-        impact: policies.impact,
-        insightCount: policies.insightCount,
-        providersImpacted: policies.providersImpacted,
-        trend: policies.trend,
-        commonMistake: policies.commonMistake,
-        fixGuidance: policies.fixGuidance,
-      })
+      .select()
       .from(policies)
       .where(where)
       .orderBy(desc(policies.impact), desc(policies.denialRate))
@@ -74,8 +90,8 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Get procedure and diagnosis codes for each policy
-    const policiesWithCodes = await Promise.all(
+    // Get procedure and diagnosis codes for each policy and transform to PaAPI format
+    const transformedPolicies = await Promise.all(
       policiesList.map(async (policy) => {
         const procedureCodes = await db
           .select({ code: policyProcedureCodes.code })
@@ -87,16 +103,16 @@ export default defineEventHandler(async (event) => {
           .from(policyDiagnosisCodes)
           .where(eq(policyDiagnosisCodes.policyId, policy.id))
 
-        return {
-          ...policy,
-          procedureCodes: procedureCodes.map(c => c.code),
-          diagnosisCodes: diagnosisCodes.map(c => c.code),
-        }
+        return policyListAdapter(
+          policy as unknown as DbPolicy,
+          procedureCodes.map(c => c.code),
+          diagnosisCodes.map(c => c.code),
+        )
       })
     )
 
     return {
-      data: policiesWithCodes,
+      data: transformedPolicies,
       pagination: {
         total,
         limit,

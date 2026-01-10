@@ -808,3 +808,42 @@ export const importHistoryRelations = relations(importHistory, ({ one }) => ({
     references: [dataSources.id],
   }),
 }))
+
+// =============================================================================
+// APPLICATION SETTINGS
+// =============================================================================
+
+export const appSettings = sqliteTable('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value', { mode: 'json' }).$type<unknown>(),
+  description: text('description'),
+  category: text('category').default('general'),
+  updatedAt: text('updated_at').default('CURRENT_TIMESTAMP'),
+})
+
+// =============================================================================
+// PAAPI CONFIGURATION
+// =============================================================================
+
+export const paapiConfig = sqliteTable('paapi_config', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull().default('default'),
+  baseUrl: text('base_url').notNull(),
+  apiKey: text('api_key'),
+  authType: text('auth_type', {
+    enum: ['none', 'api_key', 'bearer', 'basic']
+  }).default('api_key'),
+  // For basic auth
+  username: text('username'),
+  password: text('password'),
+  // Status
+  isActive: integer('is_active', { mode: 'boolean' }).default(false),
+  lastTestedAt: text('last_tested_at'),
+  lastTestStatus: text('last_test_status', {
+    enum: ['success', 'failed', 'pending']
+  }),
+  lastTestError: text('last_test_error'),
+  // Timestamps
+  createdAt: text('created_at').default('CURRENT_TIMESTAMP'),
+  updatedAt: text('updated_at').default('CURRENT_TIMESTAMP'),
+})
