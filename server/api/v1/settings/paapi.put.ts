@@ -5,6 +5,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~/server/database'
 import { paapiConfig } from '~/server/database/schema'
+import { invalidateConfigCache } from '~/server/utils/dataSource'
 
 interface PaapiConfigBody {
   name?: string
@@ -55,6 +56,9 @@ export default defineEventHandler(async (event) => {
       })
       .where(eq(paapiConfig.id, config?.id || 1))
 
+    // Invalidate config cache when PaAPI settings change
+    invalidateConfigCache()
+
     return { success: true, id: config?.id }
   } else {
     // Insert new config
@@ -69,6 +73,9 @@ export default defineEventHandler(async (event) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }).returning({ id: paapiConfig.id })
+
+    // Invalidate config cache when PaAPI settings change
+    invalidateConfigCache()
 
     return { success: true, id: result[0]?.id }
   }

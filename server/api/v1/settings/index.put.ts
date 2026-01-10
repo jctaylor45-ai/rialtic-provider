@@ -5,6 +5,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '~/server/database'
 import { appSettings } from '~/server/database/schema'
+import { invalidateConfigCache } from '~/server/utils/dataSource'
 
 interface SettingsUpdateBody {
   key: string
@@ -45,6 +46,11 @@ export default defineEventHandler(async (event) => {
       category: body.category || 'general',
       updatedAt: new Date().toISOString(),
     })
+  }
+
+  // Invalidate config cache if data source setting changed
+  if (body.key === 'dataSource') {
+    invalidateConfigCache()
   }
 
   return { success: true, key: body.key }
