@@ -1043,23 +1043,29 @@ function writeToDatabase(ctx: GenerationContext): void {
       }
 
       // Insert policy links at LINE level (policies link to lines, not claims)
-      // Distribute policies across line items
-      if (claim.policyIds.length > 0 && lineItemIds.length > 0) {
+      // ONLY link policies to DENIED lines - policies in Edit mode cause denials
+      // This represents the "logic check" - not just scope matching
+      if (claim.status === 'denied' && claim.policyIds.length > 0 && lineItemIds.length > 0) {
         claim.policyIds.forEach((policyId, idx) => {
           const lineItemId = lineItemIds[idx % lineItemIds.length]
-          const isDenied = claim.status === 'denied' ? 1 : 0
           const lineItem = claim.lineItems[idx % claim.lineItems.length]
-          const deniedAmount = isDenied ? (lineItem?.billedAmount || 0) : 0
-          insertClaimLinePolicy.run(lineItemId, policyId, isDenied, deniedAmount, claim.denialReason || null)
+          // Only insert for denied lines
+          if (lineItem && lineItem.status === 'denied') {
+            insertClaimLinePolicy.run(lineItemId, policyId, 1, lineItem.billedAmount, claim.denialReason || null)
+          }
         })
       }
 
       // Insert pattern links at LINE level (patterns link to lines, not claims)
-      if (claim.patternId && lineItemIds.length > 0) {
+      // ONLY link DENIED lines to patterns - this represents claims that actually
+      // failed the pattern's logic check, not just claims in scope
+      if (claim.status === 'denied' && claim.patternId && lineItemIds.length > 0) {
         lineItemIds.forEach((lineItemId, idx) => {
           const lineItem = claim.lineItems[idx]
-          const deniedAmount = claim.status === 'denied' ? (lineItem?.billedAmount || 0) : 0
-          insertPatternClaimLine.run(claim.patternId, lineItemId, deniedAmount, claim.dateOfService)
+          // Only insert for denied lines
+          if (lineItem && lineItem.status === 'denied') {
+            insertPatternClaimLine.run(claim.patternId, lineItemId, lineItem.billedAmount, claim.dateOfService)
+          }
         })
       }
     }

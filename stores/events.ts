@@ -160,13 +160,15 @@ export const useEventsStore = defineStore('events', () => {
     isLoading.value = true
     error.value = null
     try {
-      const data = await $fetch<{ events: LearningEvent[] }>('/data/learningEvents.json')
-      events.value = data.events.sort((a, b) =>
+      const data = await $fetch<{ learningEvents: LearningEvent[] }>('/data/learningEvents.json')
+      const eventList = data.learningEvents || []
+      events.value = eventList.sort((a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       )
     } catch (err) {
       console.error('Failed to load events:', err)
       error.value = 'Failed to load event data'
+      events.value = [] // Initialize to empty array on error
     } finally {
       isLoading.value = false
     }

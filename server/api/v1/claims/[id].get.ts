@@ -94,11 +94,19 @@ export default defineEventHandler(async (event) => {
       })
     )
 
+    // Transform diagnosis codes to array of strings, sorted by sequence
+    const diagnosisCodeStrings = diagnosisCodes
+      .sort((a, b) => a.sequence - b.sequence)
+      .map(dc => dc.code)
+
+    // Transform procedure codes to array of strings
+    const procedureCodeStrings = procedureCodes.map(pc => pc.code)
+
     return {
       ...claim,
       lineItems: lineItemsWithPolicies,
-      diagnosisCodes,
-      procedureCodes,
+      diagnosisCodes: diagnosisCodeStrings,
+      procedureCodes: procedureCodeStrings,
       appeals,
     }
   } catch (error) {

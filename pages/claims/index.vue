@@ -16,10 +16,11 @@
         class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-center justify-between"
       >
         <div class="flex items-center gap-3">
-          <Icon name="heroicons:funnel" class="w-5 h-5 text-orange-600" />
+          <Icon v-if="isLoadingPatternClaims" name="heroicons:arrow-path" class="w-5 h-5 text-orange-600 animate-spin" />
+          <Icon v-else name="heroicons:funnel" class="w-5 h-5 text-orange-600" />
           <div>
             <span class="text-sm font-medium text-orange-900">
-              Viewing {{ patternClaimIds.length }} claims linked to pattern
+              {{ isLoadingPatternClaims ? 'Loading' : 'Viewing' }} {{ patternLinkedClaims.length || patternClaimIds.length }} claims linked to pattern
             </span>
             <span class="text-xs text-orange-700 ml-2">
               From Insights page
@@ -449,6 +450,36 @@ const handleClearFilters = () => {
   clearUrlParams()
 }
 
+// State for pattern-linked claims fetched directly from API
+const patternLinkedClaims = ref<typeof appStore.claims>([])
+const isLoadingPatternClaims = ref(false)
+
+// Fetch pattern-linked claims directly from API when IDs are in URL
+async function fetchPatternLinkedClaims(ids: string[]) {
+  if (ids.length === 0) return
+  isLoadingPatternClaims.value = true
+  try {
+    const response = await $fetch<{ data: typeof appStore.claims }>('/api/v1/claims', {
+      params: { ids: ids.join(','), limit: 500 }
+    })
+    patternLinkedClaims.value = response.data
+  } catch (err) {
+    console.error('Failed to fetch pattern-linked claims:', err)
+    patternLinkedClaims.value = []
+  } finally {
+    isLoadingPatternClaims.value = false
+  }
+}
+
+// Watch for changes to ids query param
+watch(() => route.query.ids, async (newIds) => {
+  if (typeof newIds === 'string' && newIds.length > 0) {
+    await fetchPatternLinkedClaims(newIds.split(','))
+  } else {
+    patternLinkedClaims.value = []
+  }
+}, { immediate: true })
+
 // Ensure data is loaded and apply query params
 onMounted(async () => {
   if (appStore.claims.length === 0 && !appStore.isLoading) {
@@ -456,6 +487,11 @@ onMounted(async () => {
   }
   if (patternsStore.patterns.length === 0 && !patternsStore.isLoading) {
     await patternsStore.loadPatterns()
+  }
+
+  // Fetch pattern-linked claims if IDs in URL
+  if (route.query.ids && typeof route.query.ids === 'string') {
+    await fetchPatternLinkedClaims(route.query.ids.split(','))
   }
 
   // Open drawer if claim ID in URL
@@ -475,12 +511,10 @@ const sorting = computed<SortingState>(() => {
 
 // Filter claims based on search params and filters (now using URL-synced refs)
 const filteredClaims = computed(() => {
-  let result = [...appStore.claims]
-
-  // Pattern-linked claims filter (highest priority - filters to specific claims from insights)
-  if (patternClaimIds.value && patternClaimIds.value.length > 0) {
-    result = result.filter(c => patternClaimIds.value!.includes(c.id))
-  }
+  // When viewing pattern-linked claims, use the API-fetched claims instead of store
+  let result = patternClaimIds.value && patternClaimIds.value.length > 0
+    ? [...patternLinkedClaims.value]
+    : [...appStore.claims]
 
   // Search filters
   if (searchClaimId.value) {

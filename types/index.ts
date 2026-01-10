@@ -98,6 +98,17 @@ export interface LineItem {
   status: string
   editsFired?: string[]
   policiesTriggered?: string[]
+
+  // Policies from API (full details from claim_line_policies join)
+  policies?: Array<{
+    policyId: string
+    policyName: string
+    policyMode: string
+    triggeredAt?: string
+    isDenied?: boolean
+    deniedAmount?: number
+    denialReason?: string
+  }>
 }
 
 export interface Policy {

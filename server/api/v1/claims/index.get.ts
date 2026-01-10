@@ -4,12 +4,13 @@
  * GET /api/v1/claims
  *
  * Returns paginated claims list with optional filtering.
+ * Supports filtering by specific claim IDs (for pattern-linked claims).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { claims, claimLineItems, claimDiagnosisCodes } from '~/server/database/schema'
-import { eq, desc, and, gte, lte, like, sql } from 'drizzle-orm'
+import { eq, desc, and, gte, lte, like, sql, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -21,9 +22,17 @@ export default defineEventHandler(async (event) => {
     const endDate = query.endDate as string | undefined
     const providerId = query.providerId as string | undefined
     const search = query.search as string | undefined
+    // Support filtering by specific claim IDs (comma-separated)
+    const idsParam = query.ids as string | undefined
+    const ids = idsParam ? idsParam.split(',').filter(id => id.trim()) : undefined
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
+
+    // If filtering by specific IDs, add that condition
+    if (ids && ids.length > 0) {
+      whereConditions.push(inArray(claims.id, ids))
+    }
 
     if (status) {
       whereConditions.push(eq(claims.status, status as 'approved' | 'denied' | 'pending' | 'appealed' | 'paid'))

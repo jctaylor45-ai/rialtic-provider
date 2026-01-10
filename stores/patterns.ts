@@ -29,7 +29,20 @@ interface DbPattern {
   currentDenialRate?: number
   currentDollarsDenied?: number
   liveClaimCount?: number
+  liveLineCount?: number
   liveImpactAmount?: number
+  liveTotalAtRisk?: number
+  liveTotalBilled?: number
+  // Related data from API
+  relatedPolicies?: Array<{
+    policyId: string
+    policyName: string
+    policyMode: string
+    fixGuidance?: string
+    commonMistake?: string
+    logicType?: string
+  }>
+  affectedClaims?: string[]
 }
 
 interface PatternApiResponse {
@@ -189,20 +202,15 @@ export const usePatternsStore = defineStore('patterns', () => {
     isLoading.value = true
     error.value = null
     try {
-      // Try to load from localStorage first
-      loadSavedPatterns()
-
-      // If we have saved patterns, we're done
-      if (patterns.value.length > 0) {
-        isLoading.value = false
-        return
-      }
-
+      // Always fetch fresh data from API/database
       if (useDatabase.value) {
         await loadFromDatabase()
       } else {
         await loadFromJson()
       }
+
+      // Merge any saved actions/progress from localStorage
+      mergeLocalPatternState()
     } catch (err) {
       console.error('Failed to load patterns:', err)
       error.value = 'Failed to load pattern data'
@@ -220,6 +228,36 @@ export const usePatternsStore = defineStore('patterns', () => {
     }
   }
 
+  // Merge saved pattern state (actions, progress) with fresh API data
+  function mergeLocalPatternState() {
+    if (typeof window === 'undefined') return
+
+    const saved = localStorage.getItem('patterns')
+    if (!saved) return
+
+    try {
+      const savedPatterns: Pattern[] = JSON.parse(saved)
+      const savedMap = new Map(savedPatterns.map(p => [p.id, p]))
+
+      // Merge user-generated data (actions, progress) into fresh patterns
+      patterns.value = patterns.value.map(pattern => {
+        const savedPattern = savedMap.get(pattern.id)
+        if (savedPattern) {
+          return {
+            ...pattern,
+            actions: savedPattern.actions || [],
+            learningProgress: savedPattern.learningProgress || pattern.learningProgress,
+            practiceSessionsCompleted: savedPattern.practiceSessionsCompleted || pattern.practiceSessionsCompleted,
+            correctionsApplied: savedPattern.correctionsApplied || pattern.correctionsApplied,
+          }
+        }
+        return pattern
+      })
+    } catch (e) {
+      console.error('Failed to merge saved pattern state:', e)
+    }
+  }
+
   async function loadFromDatabase() {
     const response = await $fetch<PatternApiResponse>('/api/v1/patterns')
     // Transform database patterns to match the frontend Pattern type
@@ -232,9 +270,56 @@ export const usePatternsStore = defineStore('patterns', () => {
     patterns.value = data.patterns
   }
 
+  // Generate long-term action steps based on related policies
+  function generateLongTermSteps(relatedPolicies: DbPattern['relatedPolicies']): string[] {
+    if (!relatedPolicies || relatedPolicies.length === 0) {
+      return [
+        'Review denial patterns with coding team',
+        'Update internal coding guidelines',
+        'Implement pre-submission validation checks',
+      ]
+    }
+
+    const steps: string[] = []
+
+    // Add policy-specific guidance
+    for (const policy of relatedPolicies) {
+      if (policy.fixGuidance) {
+        steps.push(policy.fixGuidance)
+      }
+    }
+
+    // Add common prevention steps based on logic type
+    const logicTypes = new Set(relatedPolicies.map(p => p.logicType).filter(Boolean))
+
+    if (logicTypes.has('Modifier')) {
+      steps.push('Train staff on modifier usage requirements')
+      steps.push('Add modifier validation to EHR/billing system')
+    }
+    if (logicTypes.has('Authorization')) {
+      steps.push('Verify authorization requirements before scheduling services')
+      steps.push('Implement authorization tracking workflow')
+    }
+    if (logicTypes.has('Medical Necessity')) {
+      steps.push('Ensure documentation supports medical necessity')
+      steps.push('Review LCD/NCD coverage requirements')
+    }
+
+    // Deduplicate and limit to 5 steps
+    return [...new Set(steps)].slice(0, 5)
+  }
+
   function transformDbPattern(dbPattern: DbPattern): Pattern {
     // Map database schema to frontend Pattern type
     const now = new Date().toISOString()
+
+    // Use live data from API if available
+    const liveTotalAtRisk = dbPattern.liveTotalAtRisk || dbPattern.totalAtRisk || dbPattern.liveImpactAmount || 0
+    const liveClaimCount = dbPattern.affectedClaims?.length || dbPattern.liveClaimCount || dbPattern.currentClaimCount || 0
+
+    // Extract policy IDs from related policies
+    const relatedPolicyIds = dbPattern.relatedPolicies?.map(p => p.policyId) || []
+
     return {
       id: dbPattern.id,
       title: dbPattern.title,
@@ -243,21 +328,21 @@ export const usePatternsStore = defineStore('patterns', () => {
       status: dbPattern.status as 'active' | 'improving' | 'resolved' | 'archived',
       tier: dbPattern.tier as 'critical' | 'high' | 'medium' | 'low',
       score: {
-        frequency: dbPattern.scoreFrequency || 0,
-        impact: dbPattern.scoreImpact || 0,
+        frequency: dbPattern.scoreFrequency || dbPattern.liveLineCount || 0,
+        impact: dbPattern.scoreImpact || liveTotalAtRisk,
         trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
         velocity: dbPattern.scoreVelocity || 0,
         confidence: dbPattern.scoreConfidence || 0,
         recency: dbPattern.scoreRecency || 0,
       },
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
-      totalAtRisk: dbPattern.totalAtRisk || dbPattern.liveImpactAmount || 0,
+      totalAtRisk: liveTotalAtRisk,
       learningProgress: dbPattern.learningProgress || 0,
       practiceSessionsCompleted: dbPattern.practiceSessionsCompleted || 0,
       correctionsApplied: dbPattern.correctionsApplied || 0,
       suggestedAction: dbPattern.suggestedAction || '',
-      affectedClaims: [],
-      relatedPolicies: [],
+      affectedClaims: dbPattern.affectedClaims || [],
+      relatedPolicies: relatedPolicyIds,
       relatedCodes: [],
       improvements: [],
       actions: [],
@@ -265,20 +350,27 @@ export const usePatternsStore = defineStore('patterns', () => {
       firstDetected: dbPattern.baselineStart || now,
       lastUpdated: now,
       lastSeen: now,
-      actionCategory: 'process' as ActionCategory,
+      actionCategory: 'coding_knowledge' as ActionCategory,
       recoveryStatus: 'recoverable' as RecoveryStatus,
-      recoverableAmount: dbPattern.totalAtRisk || 0,
-      recoverableClaimCount: dbPattern.liveClaimCount || dbPattern.currentClaimCount || 0,
-      possibleRootCauses: [],
+      recoverableAmount: liveTotalAtRisk,
+      recoverableClaimCount: liveClaimCount,
+      possibleRootCauses: dbPattern.relatedPolicies?.filter(p => p.commonMistake).map(p => ({
+        category: 'coding_knowledge' as ActionCategory,
+        confidence: 'high' as const,
+        signals: [p.policyName],
+        explanation: p.commonMistake || '',
+      })) || [],
       shortTermAction: {
-        description: dbPattern.suggestedAction || 'Review and correct the claim',
+        description: dbPattern.suggestedAction ||
+          dbPattern.relatedPolicies?.[0]?.fixGuidance ||
+          'Review and correct the claim before resubmission',
         canResubmit: true,
-        claimCount: dbPattern.liveClaimCount || dbPattern.currentClaimCount || 0,
-        amount: dbPattern.totalAtRisk || dbPattern.liveImpactAmount || 0,
+        claimCount: liveClaimCount,
+        amount: liveTotalAtRisk,
       },
       longTermAction: {
-        description: 'Implement process improvements to prevent future occurrences',
-        steps: [],
+        description: 'Implement process improvements to prevent future denials',
+        steps: generateLongTermSteps(dbPattern.relatedPolicies || []),
       },
       detectionConfidence: dbPattern.scoreConfidence || 0.5,
     }

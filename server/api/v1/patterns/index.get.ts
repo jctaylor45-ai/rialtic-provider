@@ -4,12 +4,13 @@
  * GET /api/v1/patterns
  *
  * Returns paginated patterns list with optional filtering.
+ * Includes related policies and affected claims derived from claim line linkages.
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { patterns, patternClaimLines, claimLineItems } from '~/server/database/schema'
-import { eq, desc, and, sql, count, sum } from 'drizzle-orm'
+import { patterns, patternClaimLines, claimLineItems, claimLinePolicies, policies } from '~/server/database/schema'
+import { eq, desc, and, sql, count } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -78,16 +79,21 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Calculate live line counts and totalAtRisk for each pattern
-    // Patterns link to claim LINES - totalAtRisk is sum of denied line amounts
+    // Calculate live line counts, totalAtRisk, related policies, and affected claims for each pattern
+    // IMPORTANT: Only count DENIED lines - patterns should only show lines that failed the logic check
     const patternsWithLiveCounts = await Promise.all(
       patternsList.map(async (pattern) => {
-        const [lineCountResult] = await db
+        // Count only denied lines linked to this pattern
+        const [deniedLineCountResult] = await db
           .select({ count: count() })
           .from(patternClaimLines)
-          .where(eq(patternClaimLines.patternId, pattern.id))
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            eq(claimLineItems.status, 'denied')
+          ))
 
-        // Calculate totalAtRisk from linked line denied amounts
+        // Calculate totalAtRisk from DENIED line amounts only
         const [impactResult] = await db
           .select({
             totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
@@ -95,13 +101,53 @@ export default defineEventHandler(async (event) => {
           })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
-          .where(eq(patternClaimLines.patternId, pattern.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            eq(claimLineItems.status, 'denied')
+          ))
+
+        // Get related policies via claim lines chain (only from denied lines):
+        // pattern -> pattern_claim_lines -> claim_line_items (denied) -> claim_line_policies -> policies
+        // Include fixGuidance and commonMistake for insight guidance sections
+        const relatedPolicies = await db
+          .selectDistinct({
+            policyId: policies.id,
+            policyName: policies.name,
+            policyMode: policies.mode,
+            fixGuidance: policies.fixGuidance,
+            commonMistake: policies.commonMistake,
+            logicType: policies.logicType,
+          })
+          .from(patternClaimLines)
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claimLinePolicies, eq(claimLineItems.id, claimLinePolicies.lineItemId))
+          .innerJoin(policies, eq(claimLinePolicies.policyId, policies.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            eq(claimLineItems.status, 'denied')
+          ))
+
+        // Get affected claim IDs (only claims with DENIED lines)
+        const affectedClaimsResult = await db
+          .selectDistinct({
+            claimId: claimLineItems.claimId,
+          })
+          .from(patternClaimLines)
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            eq(claimLineItems.status, 'denied')
+          ))
+
+        const affectedClaims = affectedClaimsResult.map(r => r.claimId)
 
         return {
           ...pattern,
-          liveLineCount: lineCountResult?.count || 0,
+          liveLineCount: deniedLineCountResult?.count || 0,
           liveTotalAtRisk: Number(impactResult?.totalAtRisk) || 0,
           liveTotalBilled: Number(impactResult?.totalBilled) || 0,
+          relatedPolicies,
+          affectedClaims,
         }
       })
     )

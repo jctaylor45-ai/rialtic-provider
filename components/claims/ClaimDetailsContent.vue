@@ -7,6 +7,7 @@
  */
 import { format, parseISO } from 'date-fns'
 import type { Pattern } from '~/types/enhancements'
+import type { Claim } from '~/types'
 import { useClaimRecovery } from '~/composables/useClaimRecovery'
 
 const props = defineProps<{
@@ -55,9 +56,37 @@ const formatDateLong = (dateStr: string | undefined | null): string => {
   }
 }
 
+// Fetch full claim details from API (includes line items)
+const claimData = ref<Claim | null>(null)
+const isLoadingClaim = ref(false)
+const claimError = ref<string | null>(null)
+
+async function fetchClaimDetails() {
+  isLoadingClaim.value = true
+  claimError.value = null
+  try {
+    const response = await $fetch<Claim>(`/api/v1/claims/${props.claimId}`)
+    claimData.value = response
+  } catch (err) {
+    console.error('Failed to fetch claim details:', err)
+    claimError.value = 'Failed to load claim details'
+    // Fall back to store data if API fails
+    const storeClaim = appStore.getClaimById(props.claimId)
+    if (storeClaim) {
+      claimData.value = ensureLineItems(storeClaim)
+    }
+  } finally {
+    isLoadingClaim.value = false
+  }
+}
+
+// Fetch claim details when claimId changes
+watch(() => props.claimId, () => {
+  fetchClaimDetails()
+}, { immediate: true })
+
 const claim = computed(() => {
-  const foundClaim = appStore.getClaimById(props.claimId)
-  return foundClaim ? ensureLineItems(foundClaim) : null
+  return claimData.value ? ensureLineItems(claimData.value) : null
 })
 
 // Track expanded lines
@@ -89,9 +118,28 @@ const enrichedLineItems = computed(() => {
   if (!claim.value?.lineItems) return []
 
   return claim.value.lineItems.map(line => {
-    const policyDetails = getPolicyDetails(line.policiesTriggered || [])
+    // Use policies from API response (line.policies) instead of policiesTriggered
+    const apiPolicies = line.policies || []
+
+    // Transform API policy data to the format expected by the template
+    const policyDetails = apiPolicies.map((p: NonNullable<typeof line.policies>[number]) => {
+      // Get additional policy info from store if available
+      const storePolicy = appStore.policies.find(sp => sp.id === p.policyId)
+      return {
+        policyId: p.policyId,
+        policyName: p.policyName,
+        logicType: storePolicy?.logicType || p.policyMode || 'Edit',
+        description: p.denialReason || storePolicy?.description || '',
+        fixGuidance: storePolicy?.fixGuidance || 'Review and correct the issue before resubmission',
+        isDenied: p.isDenied,
+        deniedAmount: p.deniedAmount,
+      }
+    })
+
+    // Extract policy IDs for recovery computation
+    const policyIds = apiPolicies.map((p: NonNullable<typeof line.policies>[number]) => p.policyId)
     const recovery = computeLineRecovery(
-      line.policiesTriggered || [],
+      policyIds,
       line.editsFired || []
     )
 
@@ -188,8 +236,16 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- Loading State -->
+  <div v-if="isLoadingClaim" class="flex-1 flex items-center justify-center p-8">
+    <div class="text-center">
+      <UiLoading size="lg" class="mx-auto mb-4" />
+      <p class="text-sm text-neutral-600">Loading claim details...</p>
+    </div>
+  </div>
+
   <!-- Not Found State -->
-  <div v-if="!claim" class="flex-1 flex items-center justify-center p-8">
+  <div v-else-if="!claim" class="flex-1 flex items-center justify-center p-8">
     <div class="text-center">
       <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-neutral-400 mx-auto mb-4" />
       <h2 class="text-xl font-semibold text-neutral-900 mb-2">Claim Not Found</h2>
