@@ -102,8 +102,16 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="isLoadingClaim" class="flex-1 flex items-center justify-center p-8">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4" />
+        <p class="text-neutral-600">Loading claim data...</p>
+      </div>
+    </div>
+
     <!-- No Claim Selected State -->
-    <div v-if="!originalClaim" class="flex-1 flex items-center justify-center p-8">
+    <div v-else-if="!originalClaim" class="flex-1 flex items-center justify-center p-8">
       <div class="text-center">
         <Icon name="heroicons:beaker" class="w-16 h-16 text-neutral-300 mx-auto mb-4" />
         <h2 class="text-xl font-semibold text-neutral-900 mb-2">No Claim Selected</h2>
@@ -209,6 +217,49 @@ const newLineCounter = ref(0)
 const claimSearch = ref('')
 const searchError = ref('')
 
+// Claim data fetched from API (includes line items)
+const fetchedClaim = ref<Claim | null>(null)
+const isLoadingClaim = ref(false)
+const claimFetchError = ref('')
+
+// Fetch full claim details from API when claimId changes
+watch(claimId, async (newClaimId) => {
+  if (newClaimId) {
+    await fetchClaimDetails(newClaimId)
+  } else {
+    // Try to load first denied claim
+    await loadDefaultClaim()
+  }
+}, { immediate: true })
+
+async function fetchClaimDetails(id: string) {
+  isLoadingClaim.value = true
+  claimFetchError.value = ''
+
+  try {
+    const response = await $fetch<Claim>(`/api/v1/claims/${id}`)
+    fetchedClaim.value = response
+  } catch (error) {
+    console.error('Failed to fetch claim details:', error)
+    claimFetchError.value = 'Failed to load claim details'
+    // Fall back to store data (without line items)
+    const storeClaim = appStore.getClaimById(id)
+    if (storeClaim) {
+      fetchedClaim.value = storeClaim
+    }
+  } finally {
+    isLoadingClaim.value = false
+  }
+}
+
+async function loadDefaultClaim() {
+  // Get first denied claim from store to get its ID, then fetch full details
+  const deniedClaim = appStore.deniedClaims[0]
+  if (deniedClaim) {
+    await fetchClaimDetails(deniedClaim.id)
+  }
+}
+
 // Place of service options (defined before use)
 const placeOfServiceOptions = [
   { value: '11', label: '11 - Office' },
@@ -248,14 +299,8 @@ const rowFields = ref<RowField[]>([
   { key: 'priorAuthNumber', label: 'Prior Auth #', required: false, editable: false, type: 'display' },
 ])
 
-// Get original claim
-const originalClaim = computed(() => {
-  if (claimId.value) {
-    return appStore.getClaimById(claimId.value) || null
-  }
-  // Default to first denied claim
-  return appStore.deniedClaims[0] || null
-})
+// Get original claim (now uses fetched claim data with line items)
+const originalClaim = computed(() => fetchedClaim.value)
 
 // Get pattern context
 const contextPattern = computed(() => {
@@ -268,8 +313,8 @@ const contextPattern = computed(() => {
 // Claim lines (editable state)
 const claimLines = ref<ClaimLabLine[]>([])
 
-// Initialize claim lines from original claim
-watch(originalClaim, (claim) => {
+// Initialize claim lines when fetched claim data changes
+watch(fetchedClaim, (claim) => {
   if (claim) {
     initializeClaimLines(claim)
   }
@@ -442,17 +487,29 @@ function resetChanges() {
   }
 }
 
-function handleClaimSearch() {
+async function handleClaimSearch() {
   if (!claimSearch.value.trim()) return
 
-  const claim = appStore.getClaimById(claimSearch.value.trim())
-  if (claim) {
-    navigateTo({ path: '/claim-lab', query: { claim: claim.id, pattern: patternId.value || undefined } })
+  const searchId = claimSearch.value.trim()
+
+  // Try to fetch from API directly
+  try {
+    await $fetch<Claim>(`/api/v1/claims/${searchId}`)
+    // If successful, navigate to it
+    navigateTo({ path: '/claim-lab', query: { claim: searchId, pattern: patternId.value || undefined } })
     claimSearch.value = ''
     searchError.value = ''
-  } else {
-    searchError.value = 'Claim not found'
-    setTimeout(() => { searchError.value = '' }, 3000)
+  } catch {
+    // If API fails, check store as fallback
+    const claim = appStore.getClaimById(searchId)
+    if (claim) {
+      navigateTo({ path: '/claim-lab', query: { claim: claim.id, pattern: patternId.value || undefined } })
+      claimSearch.value = ''
+      searchError.value = ''
+    } else {
+      searchError.value = 'Claim not found'
+      setTimeout(() => { searchError.value = '' }, 3000)
+    }
   }
 }
 
