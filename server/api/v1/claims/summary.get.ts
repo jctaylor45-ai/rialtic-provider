@@ -4,17 +4,46 @@
  * GET /api/v1/claims/summary
  *
  * Returns aggregate statistics for claims.
+ * Data source is determined by app settings (local DB or PaAPI).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { claims, claimAppeals } from '~/server/database/schema'
 import { eq, sql, count, sum, and, gte } from 'drizzle-orm'
+import {
+  getDataSourceConfig,
+  fetchClaimsSummaryFromPaAPI,
+  validateClaimsSummaryResponse,
+  createPaapiError,
+} from '~/server/utils/dataSource'
 
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
     const days = parseInt(query.days as string) || 30
+
+    // Check data source configuration
+    const dataSourceConfig = await getDataSourceConfig()
+
+    // If PaAPI is configured, fetch from remote
+    if (dataSourceConfig.source === 'paapi' && dataSourceConfig.paapi) {
+      try {
+        const response = await fetchClaimsSummaryFromPaAPI(dataSourceConfig.paapi, { days })
+
+        // Validate response structure
+        if (!validateClaimsSummaryResponse(response)) {
+          console.warn('Invalid claims summary response from PaAPI, falling back to local')
+        } else {
+          return response
+        }
+      } catch (error) {
+        console.error('PaAPI claims summary failed, falling back to local:', error)
+        // Fall through to local database
+      }
+    }
+
+    // Local database source
 
     // Calculate date range
     const startDate = new Date()

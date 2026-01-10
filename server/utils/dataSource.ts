@@ -362,3 +362,246 @@ export async function getDataSourceType(): Promise<DataSourceType> {
   const config = await getDataSourceConfig()
   return config.source
 }
+
+// =============================================================================
+// PAAPI ERROR HANDLING
+// =============================================================================
+
+export interface PaapiErrorDetail {
+  code: string
+  message: string
+  details?: unknown
+  statusCode: number
+  isRetryable: boolean
+}
+
+/**
+ * Parse and normalize PaAPI error responses
+ */
+export function parsePaapiError(error: unknown): PaapiErrorDetail {
+  const anyError = error as any
+
+  // Extract status code
+  const statusCode = anyError?.statusCode || anyError?.status || 500
+
+  // Try to extract structured error
+  const errorBody = anyError?.data || anyError?.response?._data || anyError
+
+  // Determine if error is retryable
+  const isRetryable = statusCode >= 500 || statusCode === 408 || statusCode === 429
+
+  // Build normalized error
+  return {
+    code: errorBody?.code || `HTTP_${statusCode}`,
+    message: errorBody?.message || anyError?.message || 'Unknown PaAPI error',
+    details: errorBody?.details,
+    statusCode,
+    isRetryable,
+  }
+}
+
+/**
+ * Create a standardized error from PaAPI response
+ */
+export function createPaapiError(error: unknown, context?: string): ReturnType<typeof createError> {
+  const parsed = parsePaapiError(error)
+
+  return createError({
+    statusCode: parsed.statusCode,
+    message: context
+      ? `${context}: ${parsed.message}`
+      : parsed.message,
+    data: {
+      code: parsed.code,
+      details: parsed.details,
+      isRetryable: parsed.isRetryable,
+    },
+  })
+}
+
+// =============================================================================
+// SPECIALIZED PAAPI FETCH FUNCTIONS
+// =============================================================================
+
+import type {
+  ClaimsSummaryResponse,
+  InsightsResponse,
+  ProvidersListResponse,
+  AnalyticsDashboardResponse,
+  ClaimsListResponse,
+  PoliciesListResponse,
+} from '~/types'
+
+/**
+ * Fetch claims summary from PaAPI
+ */
+export async function fetchClaimsSummaryFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: { days?: number } = {}
+): Promise<ClaimsSummaryResponse> {
+  return fetchFromPaAPI<ClaimsSummaryResponse>(
+    config,
+    '/api/v1/claims/summary',
+    { params, cacheTTL: cacheTTL.medium }
+  )
+}
+
+/**
+ * Fetch insights from PaAPI
+ */
+export async function fetchInsightsFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: { days?: number } = {}
+): Promise<InsightsResponse> {
+  return fetchFromPaAPI<InsightsResponse>(
+    config,
+    '/api/v1/insights',
+    { params, cacheTTL: cacheTTL.medium }
+  )
+}
+
+/**
+ * Fetch providers from PaAPI
+ */
+export async function fetchProvidersFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: { limit?: number; offset?: number; specialty?: string; search?: string } = {}
+): Promise<ProvidersListResponse> {
+  return fetchFromPaAPI<ProvidersListResponse>(
+    config,
+    '/api/v1/providers',
+    { params, cacheTTL: cacheTTL.medium }
+  )
+}
+
+/**
+ * Fetch analytics dashboard from PaAPI
+ */
+export async function fetchDashboardFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: { days?: number } = {}
+): Promise<AnalyticsDashboardResponse> {
+  return fetchFromPaAPI<AnalyticsDashboardResponse>(
+    config,
+    '/api/v1/analytics/dashboard',
+    { params, cacheTTL: cacheTTL.short }
+  )
+}
+
+/**
+ * Fetch claims list from PaAPI
+ */
+export async function fetchClaimsFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: {
+    limit?: number
+    offset?: number
+    status?: string
+    startDate?: string
+    endDate?: string
+    providerId?: string
+    search?: string
+    ids?: string
+  } = {}
+): Promise<ClaimsListResponse> {
+  return fetchFromPaAPI<ClaimsListResponse>(
+    config,
+    '/api/v1/claims',
+    { params, cacheTTL: cacheTTL.short }
+  )
+}
+
+/**
+ * Fetch policies list from PaAPI
+ */
+export async function fetchPoliciesFromPaAPI(
+  config: NonNullable<DataSourceConfig['paapi']>,
+  params: {
+    limit?: number
+    offset?: number
+    mode?: string
+    topic?: string
+    search?: string
+  } = {}
+): Promise<PoliciesListResponse> {
+  return fetchFromPaAPI<PoliciesListResponse>(
+    config,
+    '/api/v1/policies',
+    { params, cacheTTL: cacheTTL.medium }
+  )
+}
+
+// =============================================================================
+// RESPONSE VALIDATION
+// =============================================================================
+
+/**
+ * Validate that a response has the expected pagination structure
+ */
+export function validatePaginatedResponse<T>(
+  response: unknown,
+  resourceName: string
+): response is { data: T[]; pagination: { total: number; limit: number; offset: number; hasMore: boolean } } {
+  if (!response || typeof response !== 'object') {
+    console.warn(`Invalid ${resourceName} response: not an object`)
+    return false
+  }
+
+  const resp = response as Record<string, unknown>
+
+  if (!Array.isArray(resp.data)) {
+    console.warn(`Invalid ${resourceName} response: data is not an array`)
+    return false
+  }
+
+  if (!resp.pagination || typeof resp.pagination !== 'object') {
+    console.warn(`Invalid ${resourceName} response: missing pagination`)
+    return false
+  }
+
+  return true
+}
+
+/**
+ * Validate claims summary response structure
+ */
+export function validateClaimsSummaryResponse(response: unknown): response is ClaimsSummaryResponse {
+  if (!response || typeof response !== 'object') {
+    return false
+  }
+
+  const resp = response as Record<string, unknown>
+
+  // Check required fields
+  const requiredFields = ['totalClaims', 'statusBreakdown', 'denialRate', 'financial', 'appeals', 'period']
+  for (const field of requiredFields) {
+    if (!(field in resp)) {
+      console.warn(`Invalid claims summary: missing field "${field}"`)
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Validate insights response structure
+ */
+export function validateInsightsResponse(response: unknown): response is InsightsResponse {
+  if (!response || typeof response !== 'object') {
+    return false
+  }
+
+  const resp = response as Record<string, unknown>
+
+  // Check required fields
+  const requiredFields = ['period', 'denialAnalysis', 'appeals']
+  for (const field of requiredFields) {
+    if (!(field in resp)) {
+      console.warn(`Invalid insights response: missing field "${field}"`)
+      return false
+    }
+  }
+
+  return true
+}

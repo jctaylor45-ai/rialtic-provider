@@ -4,17 +4,45 @@
  * GET /api/v1/insights
  *
  * Returns aggregated insights from claims, patterns, and learning events.
+ * Data source is determined by app settings (local DB or PaAPI).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { claims, patterns, learningEvents, claimAppeals } from '~/server/database/schema'
 import { eq, desc, and, gte, sql, count, sum } from 'drizzle-orm'
+import {
+  getDataSourceConfig,
+  fetchInsightsFromPaAPI,
+  validateInsightsResponse,
+} from '~/server/utils/dataSource'
 
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
     const days = parseInt(query.days as string) || 30
+
+    // Check data source configuration
+    const dataSourceConfig = await getDataSourceConfig()
+
+    // If PaAPI is configured, fetch from remote
+    if (dataSourceConfig.source === 'paapi' && dataSourceConfig.paapi) {
+      try {
+        const response = await fetchInsightsFromPaAPI(dataSourceConfig.paapi, { days })
+
+        // Validate response structure
+        if (!validateInsightsResponse(response)) {
+          console.warn('Invalid insights response from PaAPI, falling back to local')
+        } else {
+          return response
+        }
+      } catch (error) {
+        console.error('PaAPI insights fetch failed, falling back to local:', error)
+        // Fall through to local database
+      }
+    }
+
+    // Local database source
 
     // Calculate date range
     const startDate = new Date()

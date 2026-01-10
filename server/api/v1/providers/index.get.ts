@@ -4,12 +4,18 @@
  * GET /api/v1/providers
  *
  * Returns paginated providers list with claim statistics.
+ * Data source is determined by app settings (local DB or PaAPI).
  */
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { providers, claims } from '~/server/database/schema'
 import { eq, desc, like, sql, count, sum, and } from 'drizzle-orm'
+import {
+  getDataSourceConfig,
+  fetchProvidersFromPaAPI,
+  validatePaginatedResponse,
+} from '~/server/utils/dataSource'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -18,6 +24,32 @@ export default defineEventHandler(async (event) => {
     const offset = parseInt(query.offset as string) || 0
     const specialty = query.specialty as string | undefined
     const search = query.search as string | undefined
+
+    // Check data source configuration
+    const dataSourceConfig = await getDataSourceConfig()
+
+    // If PaAPI is configured, fetch from remote
+    if (dataSourceConfig.source === 'paapi' && dataSourceConfig.paapi) {
+      try {
+        const response = await fetchProvidersFromPaAPI(dataSourceConfig.paapi, {
+          limit,
+          offset,
+          specialty,
+          search,
+        })
+
+        // Validate response structure
+        if (validatePaginatedResponse(response, 'providers')) {
+          return response
+        }
+        console.warn('Invalid providers response from PaAPI, falling back to local')
+      } catch (error) {
+        console.error('PaAPI providers fetch failed, falling back to local:', error)
+        // Fall through to local database
+      }
+    }
+
+    // Local database source
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
