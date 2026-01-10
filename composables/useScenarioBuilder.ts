@@ -3,9 +3,12 @@
  *
  * Provides state management, reference data, and generation logic
  * for the Scenario Builder UI tool.
+ *
+ * Now fetches policies dynamically from the database API instead of
+ * using hardcoded mappings.
  */
 
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import type {
   ScenarioDefinition,
   PatternDefinition,
@@ -17,7 +20,22 @@ import type {
   MonthlySnapshot,
   SpecialtyType,
 } from '../tools/scenario-types'
+import type { Policy } from '~/types'
 import { getAppConfig } from '~/config/appConfig'
+
+// =============================================================================
+// API RESPONSE TYPES
+// =============================================================================
+
+interface PoliciesListResponse {
+  data: Policy[]
+  pagination: {
+    total: number
+    limit: number
+    offset: number
+    hasMore: boolean
+  }
+}
 
 // =============================================================================
 // INPUT TYPES
@@ -66,6 +84,8 @@ export interface SpecialtyConfig {
   providerNamePrefixes: string[]
 }
 
+// Specialty configurations now come from appConfig with additional display data
+// These are enriched versions with procedure/diagnosis codes for generation
 export const specialtyConfigurations: SpecialtyConfig[] = [
   {
     specialty: 'Orthopedic Surgery',
@@ -149,125 +169,41 @@ export const specialtyConfigurations: SpecialtyConfig[] = [
   },
 ]
 
-export const policyToPatternMap: Record<string, { category: PatternCategory; title: string; description: string; denialReason: string }> = {
-  'POL-MOD-25': {
-    category: 'modifier-missing',
-    title: 'Missing Modifier 25 on E/M Services',
-    description: 'E/M services billed on the same day as procedures without required modifier 25',
-    denialReason: 'Modifier 25 required for E/M service on same day as procedure',
-  },
-  'POL-MOD-59': {
-    category: 'modifier-missing',
-    title: 'Missing Modifier 59 for Distinct Services',
-    description: 'Bundled services billed without modifier 59 to indicate distinct procedures',
-    denialReason: 'Modifier 59 required to indicate distinct procedural service',
-  },
-  'POL-MOD-50': {
-    category: 'modifier-missing',
-    title: 'Missing Bilateral Procedure Modifier',
-    description: 'Bilateral procedures billed without modifier 50 or RT/LT modifiers',
-    denialReason: 'Bilateral modifier required for procedure performed on both sides',
-  },
-  'POL-MOD-76': {
-    category: 'modifier-missing',
-    title: 'Missing Repeat Procedure Modifier',
-    description: 'Repeated procedures billed without modifier 76 or 77',
-    denialReason: 'Modifier 76/77 required for repeat procedure by same/different physician',
-  },
-  'POL-AUTH-PROC': {
-    category: 'authorization',
-    title: 'Missing Prior Authorization',
-    description: 'High-cost procedures performed without required prior authorization',
-    denialReason: 'Prior authorization required but not obtained',
-  },
-  'POL-AUTH-MRI': {
-    category: 'authorization',
-    title: 'Missing MRI Prior Authorization',
-    description: 'MRI procedures performed without required prior authorization',
-    denialReason: 'MRI prior authorization required but not obtained',
-  },
-  'POL-DOC-PT-CAP': {
-    category: 'documentation',
-    title: 'Physical Therapy Cap Exceeded',
-    description: 'PT services exceeding therapy cap without KX modifier and documentation',
-    denialReason: 'Therapy cap exceeded without medical necessity documentation',
-  },
-  'POL-DOC-MEDICAL-NECESSITY': {
-    category: 'medical-necessity',
-    title: 'Insufficient Medical Necessity Documentation',
-    description: 'Services lacking documented medical necessity to support diagnosis',
-    denialReason: 'Medical necessity not established in documentation',
-  },
-  'POL-BUNDLE-INJECT': {
-    category: 'billing-error',
-    title: 'Injection Services Bundled',
-    description: 'Injection administration codes billed separately when included in primary procedure',
-    denialReason: 'Injection service is bundled with primary procedure',
-  },
-  'POL-BUNDLE-SURGERY': {
-    category: 'billing-error',
-    title: 'Global Period Violation',
-    description: 'Services billed separately during surgical global period',
-    denialReason: 'Service included in surgical global period',
-  },
-  'POL-POS-TELEHEALTH': {
-    category: 'billing-error',
-    title: 'Incorrect Telehealth Place of Service',
-    description: 'Telehealth services billed with incorrect place of service code',
-    denialReason: 'Incorrect place of service for telehealth encounter',
-  },
-  'POL-POS-FACILITY': {
-    category: 'billing-error',
-    title: 'Facility/Non-Facility POS Mismatch',
-    description: 'Place of service does not match where service was rendered',
-    denialReason: 'Place of service code does not match service location',
-  },
-  'POL-CODE-SPECIFICITY': {
-    category: 'coding-specificity',
-    title: 'Diagnosis Code Lacks Specificity',
-    description: 'ICD-10 codes not coded to highest level of specificity',
-    denialReason: 'Diagnosis code requires higher specificity',
-  },
-  'POL-CODE-DX-PROC': {
-    category: 'code-mismatch',
-    title: 'Diagnosis-Procedure Mismatch',
-    description: 'Procedure codes not supported by appropriate diagnosis codes',
-    denialReason: 'Diagnosis does not support medical necessity of procedure',
-  },
-  'POL-FREQ-E&M': {
-    category: 'timing',
-    title: 'Multiple E/M Same Day',
-    description: 'Multiple E/M visits billed same day without justification',
-    denialReason: 'Multiple E/M services same day require medical necessity documentation',
-  },
-  'POL-FREQ-INJECT': {
-    category: 'timing',
-    title: 'Injection Frequency Exceeded',
-    description: 'Joint injections performed more frequently than guidelines allow',
-    denialReason: 'Injection frequency exceeds medical guidelines',
-  },
+// =============================================================================
+// TOPIC TO CATEGORY MAPPING
+// =============================================================================
+
+/**
+ * Maps a policy topic name to a PatternCategory
+ * This allows dynamic policies to integrate with the existing pattern system
+ */
+function mapTopicToCategory(topicName: string | undefined): PatternCategory {
+  if (!topicName) return 'billing-error'
+
+  const topic = topicName.toLowerCase()
+
+  if (topic.includes('modifier')) return 'modifier-missing'
+  if (topic.includes('authorization') || topic.includes('auth')) return 'authorization'
+  if (topic.includes('documentation') || topic.includes('doc')) return 'documentation'
+  if (topic.includes('bundling') || topic.includes('bundle')) return 'billing-error'
+  if (topic.includes('place of service') || topic.includes('pos')) return 'billing-error'
+  if (topic.includes('coding') || topic.includes('specificity')) return 'coding-specificity'
+  if (topic.includes('mismatch') || topic.includes('dx-proc')) return 'code-mismatch'
+  if (topic.includes('frequency') || topic.includes('timing')) return 'timing'
+  if (topic.includes('medical necessity') || topic.includes('necessity')) return 'medical-necessity'
+
+  return 'billing-error'
 }
 
-export const appealRateDefaults: Record<PatternCategory, number> = {
-  'modifier-missing': 0.45,
-  'authorization': 0.30,
-  'documentation': 0.35,
-  'billing-error': 0.40,
-  'coding-specificity': 0.25,
-  'code-mismatch': 0.35,
-  'timing': 0.20,
-  'medical-necessity': 0.40,
-}
-
-export const appealOverturnDefaults: Record<PatternCategory, number> = {
-  'modifier-missing': 0.65,
-  'authorization': 0.20,
-  'documentation': 0.45,
-  'billing-error': 0.55,
-  'coding-specificity': 0.40,
-  'code-mismatch': 0.50,
-  'timing': 0.30,
-  'medical-necessity': 0.35,
+/**
+ * Get procedure codes from a policy's policy_details
+ */
+function getPolicyProcedureCodes(policy: Policy): string[] {
+  if (!policy.policy_details) return []
+  return [
+    ...(policy.policy_details.cpt_codes || []),
+    ...(policy.policy_details.hcpcs_codes || []),
+  ]
 }
 
 export const engagementDefaults: Record<EngagementLevel, { views: number; labTests: number; exports: number; actionsPerPattern: number }> = {
@@ -447,23 +383,6 @@ function generatePatternId(category: PatternCategory, index: number): string {
   return `${categoryCode}-${String(index).padStart(3, '0')}`
 }
 
-function getProcedureCodesForPattern(policyId: string, specialties: SpecialtyCount[]): string[] {
-  // Get codes based on policy type and available specialties
-  const codes: Set<string> = new Set()
-
-  for (const { specialty } of specialties) {
-    const config = specialtyConfigurations.find(c => c.specialty === specialty)
-    if (config) {
-      // Add 2-4 relevant codes from the specialty
-      const numCodes = 2 + Math.floor(Math.random() * 3)
-      const shuffled = [...config.commonProcedures].sort(() => Math.random() - 0.5)
-      shuffled.slice(0, numCodes).forEach(code => codes.add(code))
-    }
-  }
-
-  return Array.from(codes).slice(0, 6)
-}
-
 function generateRecordedActions(
   engagementLevel: EngagementLevel,
   startDate: string,
@@ -504,13 +423,12 @@ function generateRecordedActions(
   return actions.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-function generateRemediation(
-  policyId: string,
+function generateRemediationStatic(
+  category: PatternCategory,
   deniedCount: number,
   avgClaimValue: number
 ): PatternDefinition['remediation'] {
-  const mapping = policyToPatternMap[policyId]
-  const canResubmit = mapping?.category === 'modifier-missing' || mapping?.category === 'billing-error'
+  const canResubmit = category === 'modifier-missing' || category === 'billing-error'
 
   return {
     shortTerm: {
@@ -538,6 +456,13 @@ function generateRemediation(
 // =============================================================================
 
 export function useScenarioBuilder() {
+  const appConfig = getAppConfig()
+
+  // Policy state - fetched from API
+  const policies = ref<Policy[]>([])
+  const policiesLoading = ref(false)
+  const policiesError = ref<string | null>(null)
+
   // Form state
   const input = reactive<ScenarioBuilderInput>({
     scenarioName: '',
@@ -557,6 +482,23 @@ export function useScenarioBuilder() {
   const generatedScenario = ref<ScenarioDefinition | null>(null)
   const validationErrors = ref<string[]>([])
 
+  // Load policies from API
+  async function loadPolicies() {
+    policiesLoading.value = true
+    policiesError.value = null
+    try {
+      const response = await $fetch<PoliciesListResponse>('/api/v1/policies', {
+        params: { limit: 100 },
+      })
+      policies.value = response.data
+    } catch (error) {
+      console.error('Failed to load policies:', error)
+      policiesError.value = error instanceof Error ? error.message : 'Failed to load policies'
+    } finally {
+      policiesLoading.value = false
+    }
+  }
+
   // Computed
   const endDate = computed(() => {
     if (!input.startDate || !input.durationMonths) return ''
@@ -567,10 +509,14 @@ export function useScenarioBuilder() {
     return input.specialties.reduce((sum, s) => sum + s.providerCount, 0)
   })
 
+  // Available policies from API with derived category info
   const availablePolicies = computed(() => {
-    return Object.entries(policyToPatternMap).map(([id, info]) => ({
-      id,
-      ...info,
+    return policies.value.map(p => ({
+      id: p.id,
+      title: p.name,
+      category: mapTopicToCategory(p.topic?.name),
+      description: p.description || '',
+      denialReason: p.common_mistake || p.description || 'Claim denied per policy requirements',
     }))
   })
 
@@ -586,15 +532,20 @@ export function useScenarioBuilder() {
   }
 
   function addPattern() {
+    // Use first available policy or defaults if no policies loaded
+    const firstPolicy = availablePolicies.value[0]
+    const defaultCategory: PatternCategory = firstPolicy?.category || 'modifier-missing'
+    const defaultPolicyId = firstPolicy?.id || 'POL-MOD-25'
+
     input.patterns.push({
-      category: 'modifier-missing',
-      policyId: 'POL-MOD-25',
+      category: defaultCategory,
+      policyId: defaultPolicyId,
       tier: 'high',
       baselineDenialRate: 25,
       currentDenialRate: 10,
       claimCount: Math.round(input.totalClaims * 0.1),
       trajectory: 'gradual_improvement',
-      appealRate: appealRateDefaults['modifier-missing'],
+      appealRate: appConfig.appeal.ratesByCategory[defaultCategory],
     })
   }
 
@@ -604,11 +555,40 @@ export function useScenarioBuilder() {
 
   function updatePatternFromPolicy(patternIndex: number, policyId: string) {
     const pattern = input.patterns[patternIndex]
-    const mapping = policyToPatternMap[policyId]
-    if (pattern && mapping) {
-      pattern.category = mapping.category
-      pattern.appealRate = appealRateDefaults[mapping.category]
+    const policy = policies.value.find(p => p.id === policyId)
+    if (pattern && policy) {
+      const category = mapTopicToCategory(policy.topic?.name)
+      pattern.category = category
+      // Use policy's appeal rate if available, otherwise fall back to config
+      pattern.appealRate = policy.appeal_rate ?? appConfig.appeal.ratesByCategory[category]
     }
+  }
+
+  /**
+   * Get procedure codes for a pattern from its associated policy
+   */
+  function getProcedureCodesForPatternFromPolicy(policyId: string, specialties: SpecialtyCount[]): string[] {
+    const policy = policies.value.find(p => p.id === policyId)
+
+    // First try to get codes from the policy itself
+    if (policy) {
+      const policyCodes = getPolicyProcedureCodes(policy)
+      if (policyCodes.length > 0) {
+        return policyCodes.slice(0, 6)
+      }
+    }
+
+    // Fallback: get codes from specialties
+    const codes: Set<string> = new Set()
+    for (const { specialty } of specialties) {
+      const config = specialtyConfigurations.find(c => c.specialty === specialty)
+      if (config) {
+        const numCodes = 2 + Math.floor(Math.random() * 3)
+        const shuffled = [...config.commonProcedures].sort(() => Math.random() - 0.5)
+        shuffled.slice(0, numCodes).forEach(code => codes.add(code))
+      }
+    }
+    return Array.from(codes).slice(0, 6)
   }
 
   function validate(): boolean {
@@ -658,7 +638,8 @@ export function useScenarioBuilder() {
 
     // Generate patterns
     const patterns: PatternDefinition[] = input.patterns.map((p, index) => {
-      const mapping = policyToPatternMap[p.policyId]
+      // Get policy info from available policies (fetched from API)
+      const policyInfo = availablePolicies.value.find(ap => ap.id === p.policyId)
       const patternId = generatePatternId(p.category, index + 1)
 
       // Calculate claim distribution
@@ -666,7 +647,8 @@ export function useScenarioBuilder() {
       const deniedCurrent = Math.round(p.claimCount * (p.currentDenialRate / 100))
       const totalDeniedForPattern = Math.round((deniedBaseline + deniedCurrent) / 2)
       const appealsFiled = Math.round(totalDeniedForPattern * p.appealRate)
-      const overturnRate = appealOverturnDefaults[p.category]
+      // Use config for overturn rate
+      const overturnRate = appConfig.appeal.overturnRatesByCategory[p.category]
       const appealsOverturnedForPattern = Math.round(appealsFiled * overturnRate)
 
       totalDenied += totalDeniedForPattern
@@ -700,14 +682,14 @@ export function useScenarioBuilder() {
 
       return {
         id: patternId,
-        title: mapping?.title || `Pattern ${index + 1}`,
-        description: mapping?.description || 'Generated pattern',
+        title: policyInfo?.title || `Pattern ${index + 1}`,
+        description: policyInfo?.description || 'Generated pattern',
         category: p.category,
         status: derivePatternStatus(p.baselineDenialRate, p.currentDenialRate),
         tier: p.tier,
-        procedureCodes: getProcedureCodesForPattern(p.policyId, input.specialties),
+        procedureCodes: getProcedureCodesForPatternFromPolicy(p.policyId, input.specialties),
         policies: [{ id: p.policyId, triggerRate: 0.85 + Math.random() * 0.1 }],
-        denialReason: mapping?.denialReason || 'Claim denied per policy requirements',
+        denialReason: policyInfo?.denialReason || 'Claim denied per policy requirements',
         claimDistribution: {
           total: p.claimCount,
           deniedBaseline,
@@ -747,7 +729,7 @@ export function useScenarioBuilder() {
             p.trajectory
           ),
         },
-        remediation: generateRemediation(p.policyId, totalDeniedForPattern, avgClaimValue),
+        remediation: generateRemediationStatic(p.category, totalDeniedForPattern, avgClaimValue),
       }
     })
 
@@ -809,12 +791,8 @@ export function useScenarioBuilder() {
       volume: {
         totalClaims: input.totalClaims,
         monthlyVariation,
-        claimLinesPerClaim: { min: 1, max: 5 },
-        claimValueRanges: {
-          low: { min: 75, max: 250 },
-          medium: { min: 250, max: 1500 },
-          high: { min: 1500, max: 8000 },
-        },
+        claimLinesPerClaim: appConfig.claimGeneration.linesPerClaim,
+        claimValueRanges: appConfig.claimGeneration.valueRanges,
       },
       patterns,
       learningEvents: {
@@ -900,6 +878,11 @@ export default scenario
     generatedScenario,
     validationErrors,
 
+    // Policy state (from API)
+    policies,
+    policiesLoading,
+    policiesError,
+
     // Computed
     endDate,
     totalProviders,
@@ -907,11 +890,11 @@ export default scenario
 
     // Reference data
     specialtyConfigurations,
-    policyToPatternMap,
-    appealRateDefaults,
     engagementDefaults,
+    appConfig,
 
     // Methods
+    loadPolicies,
     addSpecialty,
     removeSpecialty,
     addPattern,

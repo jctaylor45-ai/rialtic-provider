@@ -195,6 +195,122 @@ export const defaultUIConfig: UIConfig = {
 }
 
 // =============================================================================
+// APPEAL CONFIGURATION
+// =============================================================================
+
+export type PatternCategory =
+  | 'modifier-missing'
+  | 'code-mismatch'
+  | 'documentation'
+  | 'authorization'
+  | 'billing-error'
+  | 'timing'
+  | 'coding-specificity'
+  | 'medical-necessity'
+
+export interface AppealConfig {
+  /** Appeal filing rates by pattern category (0-1) */
+  ratesByCategory: Record<PatternCategory, number>
+  /** Appeal overturn rates by pattern category (0-1) */
+  overturnRatesByCategory: Record<PatternCategory, number>
+}
+
+export const defaultAppealConfig: AppealConfig = {
+  ratesByCategory: {
+    'modifier-missing': Number(process.env.APPEAL_RATE_MODIFIER) || 0.45,
+    'authorization': Number(process.env.APPEAL_RATE_AUTH) || 0.30,
+    'documentation': Number(process.env.APPEAL_RATE_DOC) || 0.35,
+    'billing-error': Number(process.env.APPEAL_RATE_BILLING) || 0.40,
+    'coding-specificity': Number(process.env.APPEAL_RATE_CODING) || 0.25,
+    'code-mismatch': Number(process.env.APPEAL_RATE_MISMATCH) || 0.35,
+    'timing': Number(process.env.APPEAL_RATE_TIMING) || 0.20,
+    'medical-necessity': Number(process.env.APPEAL_RATE_NECESSITY) || 0.40,
+  },
+  overturnRatesByCategory: {
+    'modifier-missing': Number(process.env.OVERTURN_RATE_MODIFIER) || 0.65,
+    'authorization': Number(process.env.OVERTURN_RATE_AUTH) || 0.20,
+    'documentation': Number(process.env.OVERTURN_RATE_DOC) || 0.45,
+    'billing-error': Number(process.env.OVERTURN_RATE_BILLING) || 0.55,
+    'coding-specificity': Number(process.env.OVERTURN_RATE_CODING) || 0.40,
+    'code-mismatch': Number(process.env.OVERTURN_RATE_MISMATCH) || 0.50,
+    'timing': Number(process.env.OVERTURN_RATE_TIMING) || 0.30,
+    'medical-necessity': Number(process.env.OVERTURN_RATE_NECESSITY) || 0.35,
+  },
+}
+
+// =============================================================================
+// CLAIM GENERATION CONFIGURATION
+// =============================================================================
+
+export interface ClaimGenerationConfig {
+  /** Claim value ranges for generation */
+  valueRanges: {
+    low: { min: number; max: number }
+    medium: { min: number; max: number }
+    high: { min: number; max: number }
+  }
+  /** Lines per claim range */
+  linesPerClaim: { min: number; max: number }
+  /** Base denial rate before pattern injection (0-1) */
+  baseDenialRate: number
+}
+
+export const defaultClaimGenerationConfig: ClaimGenerationConfig = {
+  valueRanges: {
+    low: {
+      min: Number(process.env.CLAIM_VALUE_LOW_MIN) || 75,
+      max: Number(process.env.CLAIM_VALUE_LOW_MAX) || 250,
+    },
+    medium: {
+      min: Number(process.env.CLAIM_VALUE_MEDIUM_MIN) || 250,
+      max: Number(process.env.CLAIM_VALUE_MEDIUM_MAX) || 1500,
+    },
+    high: {
+      min: Number(process.env.CLAIM_VALUE_HIGH_MIN) || 1500,
+      max: Number(process.env.CLAIM_VALUE_HIGH_MAX) || 8000,
+    },
+  },
+  linesPerClaim: {
+    min: Number(process.env.CLAIM_LINES_MIN) || 1,
+    max: Number(process.env.CLAIM_LINES_MAX) || 5,
+  },
+  baseDenialRate: Number(process.env.BASE_DENIAL_RATE) || 0.15,
+}
+
+// =============================================================================
+// SPECIALTY CONFIGURATION
+// =============================================================================
+
+export interface SpecialtyDefinition {
+  /** Display name of the specialty */
+  specialty: string
+  /** NUCC taxonomy code */
+  taxonomy: string
+  /** Typical claim value range for this specialty */
+  typicalClaimRange: { min: number; max: number }
+}
+
+export interface SpecialtyConfig {
+  /** Available specialties for scenario generation */
+  specialties: SpecialtyDefinition[]
+}
+
+export const defaultSpecialtyConfig: SpecialtyConfig = {
+  specialties: [
+    { specialty: 'Orthopedic Surgery', taxonomy: '207X00000X', typicalClaimRange: { min: 500, max: 15000 } },
+    { specialty: 'Sports Medicine', taxonomy: '207QS0000X', typicalClaimRange: { min: 150, max: 2500 } },
+    { specialty: 'Physical Therapy', taxonomy: '225100000X', typicalClaimRange: { min: 75, max: 500 } },
+    { specialty: 'Pain Management', taxonomy: '208VP0014X', typicalClaimRange: { min: 300, max: 5000 } },
+    { specialty: 'Internal Medicine', taxonomy: '207R00000X', typicalClaimRange: { min: 100, max: 1000 } },
+    { specialty: 'Family Medicine', taxonomy: '207Q00000X', typicalClaimRange: { min: 75, max: 750 } },
+    { specialty: 'Cardiology', taxonomy: '207RC0000X', typicalClaimRange: { min: 200, max: 8000 } },
+    { specialty: 'General Practice', taxonomy: '208D00000X', typicalClaimRange: { min: 75, max: 600 } },
+    { specialty: 'Neurology', taxonomy: '2084N0400X', typicalClaimRange: { min: 150, max: 3000 } },
+    { specialty: 'Rheumatology', taxonomy: '207RR0500X', typicalClaimRange: { min: 150, max: 2000 } },
+  ],
+}
+
+// =============================================================================
 // COMPLETE APP CONFIG
 // =============================================================================
 
@@ -204,6 +320,9 @@ export interface AppConfig {
   pattern: PatternConfig
   health: HealthConfig
   ui: UIConfig
+  appeal: AppealConfig
+  claimGeneration: ClaimGenerationConfig
+  specialty: SpecialtyConfig
 }
 
 export const defaultAppConfig: AppConfig = {
@@ -212,6 +331,9 @@ export const defaultAppConfig: AppConfig = {
   pattern: defaultPatternConfig,
   health: defaultHealthConfig,
   ui: defaultUIConfig,
+  appeal: defaultAppealConfig,
+  claimGeneration: defaultClaimGenerationConfig,
+  specialty: defaultSpecialtyConfig,
 }
 
 // Export singleton instance
@@ -240,5 +362,14 @@ export function updateAppConfig(partial: Partial<AppConfig>): void {
   }
   if (partial.ui) {
     config.ui = { ...config.ui, ...partial.ui }
+  }
+  if (partial.appeal) {
+    config.appeal = { ...config.appeal, ...partial.appeal }
+  }
+  if (partial.claimGeneration) {
+    config.claimGeneration = { ...config.claimGeneration, ...partial.claimGeneration }
+  }
+  if (partial.specialty) {
+    config.specialty = { ...config.specialty, ...partial.specialty }
   }
 }

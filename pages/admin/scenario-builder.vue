@@ -268,11 +268,11 @@
                     {{ pattern.tier.toUpperCase() }}
                   </span>
                   <span class="text-sm text-neutral-500">
-                    {{ policyToPatternMap[pattern.policyId]?.category || pattern.category }}
+                    {{ getPolicyInfo(pattern.policyId)?.category || pattern.category }}
                   </span>
                 </div>
                 <div class="font-medium text-neutral-900">
-                  {{ policyToPatternMap[pattern.policyId]?.title || 'Select a policy' }}
+                  {{ getPolicyInfo(pattern.policyId)?.title || 'Select a policy' }}
                 </div>
               </div>
               <button
@@ -769,7 +769,6 @@
 import {
   useScenarioBuilder,
   specialtyConfigurations,
-  policyToPatternMap,
   type EngagementLevel,
 } from '~/composables/useScenarioBuilder'
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
@@ -782,6 +781,9 @@ const {
   endDate,
   totalProviders,
   availablePolicies,
+  policiesLoading,
+  policiesError,
+  loadPolicies,
   addSpecialty,
   removeSpecialty,
   addPattern,
@@ -792,6 +794,16 @@ const {
   exportScenario,
   reset,
 } = useScenarioBuilder()
+
+// Load policies on mount
+onMounted(() => {
+  loadPolicies()
+})
+
+// Helper to get policy info by ID
+function getPolicyInfo(policyId: string) {
+  return availablePolicies.value.find(p => p.id === policyId)
+}
 
 const selectedSpecialty = ref('')
 

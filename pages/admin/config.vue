@@ -778,6 +778,51 @@ const config = reactive<AppConfig>({
     paginationLimit: 50,
     metricTrendThreshold: 5,
   },
+  appeal: {
+    ratesByCategory: {
+      'modifier-missing': 0.45,
+      'authorization': 0.30,
+      'documentation': 0.35,
+      'billing-error': 0.40,
+      'coding-specificity': 0.25,
+      'code-mismatch': 0.35,
+      'timing': 0.20,
+      'medical-necessity': 0.40,
+    },
+    overturnRatesByCategory: {
+      'modifier-missing': 0.65,
+      'authorization': 0.20,
+      'documentation': 0.45,
+      'billing-error': 0.55,
+      'coding-specificity': 0.40,
+      'code-mismatch': 0.50,
+      'timing': 0.30,
+      'medical-necessity': 0.35,
+    },
+  },
+  claimGeneration: {
+    valueRanges: {
+      low: { min: 75, max: 250 },
+      medium: { min: 250, max: 1500 },
+      high: { min: 1500, max: 8000 },
+    },
+    linesPerClaim: { min: 1, max: 5 },
+    baseDenialRate: 0.15,
+  },
+  specialty: {
+    specialties: [
+      { specialty: 'Orthopedic Surgery', taxonomy: '207X00000X', typicalClaimRange: { min: 500, max: 15000 } },
+      { specialty: 'Sports Medicine', taxonomy: '207QS0000X', typicalClaimRange: { min: 150, max: 2500 } },
+      { specialty: 'Physical Therapy', taxonomy: '225100000X', typicalClaimRange: { min: 75, max: 500 } },
+      { specialty: 'Pain Management', taxonomy: '208VP0014X', typicalClaimRange: { min: 300, max: 5000 } },
+      { specialty: 'Internal Medicine', taxonomy: '207R00000X', typicalClaimRange: { min: 100, max: 1000 } },
+      { specialty: 'Family Medicine', taxonomy: '207Q00000X', typicalClaimRange: { min: 75, max: 750 } },
+      { specialty: 'Cardiology', taxonomy: '207RC0000X', typicalClaimRange: { min: 200, max: 8000 } },
+      { specialty: 'General Practice', taxonomy: '208D00000X', typicalClaimRange: { min: 75, max: 600 } },
+      { specialty: 'Neurology', taxonomy: '2084N0400X', typicalClaimRange: { min: 150, max: 3000 } },
+      { specialty: 'Rheumatology', taxonomy: '207RR0500X', typicalClaimRange: { min: 150, max: 2000 } },
+    ],
+  },
 })
 
 // Computed
