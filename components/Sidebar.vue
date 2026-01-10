@@ -35,15 +35,26 @@
       </NuxtLink>
     </nav>
 
-    <!-- Footer -->
+    <!-- Admin Section -->
     <div class="p-4 border-t border-neutral-700">
-      <NuxtLink
-        to="/admin/scenario-builder"
-        class="flex items-center gap-2 text-neutral-400 hover:text-white text-sm transition-colors no-underline"
-      >
+      <div class="flex items-center gap-2 text-neutral-500 text-xs font-medium uppercase tracking-wide mb-2">
         <Icon name="heroicons:cog-6-tooth" class="w-4 h-4" />
         <span>Admin</span>
-      </NuxtLink>
+      </div>
+      <div class="space-y-1">
+        <NuxtLink
+          v-for="item in adminItems"
+          :key="item.id"
+          :to="item.path"
+          class="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors no-underline"
+          :class="isActive(item.path)
+            ? 'bg-neutral-700 text-white'
+            : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'"
+        >
+          <Icon :name="item.icon" class="w-4 h-4" />
+          <span>{{ item.label }}</span>
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>
@@ -59,6 +70,11 @@ const navItems = [
   { id: 'insights', label: 'Insights', icon: 'heroicons:light-bulb', path: '/insights' },
   { id: 'claim-lab', label: 'Claim Lab', icon: 'heroicons:beaker', path: '/claim-lab' },
   { id: 'impact', label: 'Impact', icon: 'heroicons:chart-bar', path: '/impact' },
+]
+
+const adminItems = [
+  { id: 'config', label: 'Configuration', icon: 'heroicons:adjustments-horizontal', path: '/admin/config' },
+  { id: 'scenario-builder', label: 'Scenario Builder', icon: 'heroicons:wrench-screwdriver', path: '/admin/scenario-builder' },
 ]
 
 function isActive(path: string): boolean {
