@@ -21,7 +21,7 @@ import {
 const configLoaded = ref(false)
 const computedAvgClaimValue = ref<number | null>(null)
 
-export function useAppConfig() {
+export function useRialticConfig() {
   const config = getAppConfig()
 
   // ==========================================================================

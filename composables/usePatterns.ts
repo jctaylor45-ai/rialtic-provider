@@ -9,7 +9,7 @@ import type { Pattern, PatternStatus, PatternTier } from '~/types/enhancements'
 export function usePatterns() {
   const patternsStore = usePatternsStore()
   const eventsStore = useEventsStore()
-  const appConfig = useAppConfig()
+  const appConfig = useRialticConfig()
 
   // Get pattern color based on tier
   const getPatternTierColor = (tier: PatternTier): string => {

@@ -7,7 +7,7 @@ import type { MetricTrend } from '~/types/enhancements'
 
 export function useAnalytics() {
   const analyticsStore = useAnalyticsStore()
-  const appConfig = useAppConfig()
+  const appConfig = useRialticConfig()
 
   // Format currency
   const formatCurrency = (amount: number, compact: boolean = false): string => {

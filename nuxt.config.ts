@@ -32,6 +32,12 @@ export default defineNuxtConfig({
     '@vee-validate/nuxt',
   ],
 
+  // Icon configuration
+  icon: {
+    provider: 'iconify',
+    serverBundle: 'auto',
+  },
+
   // UnoCSS configuration
   unocss: {
     preflight: true,

@@ -52,8 +52,7 @@
     "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
-    "@iconify/vue": "^4.1.2",
-    "@nuxt/icon": "^1.9.3",
+    "@nuxt/icon": "^1.15.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/numeral": "^2.0.5",
     "@types/papaparse": "^5.5.2",
