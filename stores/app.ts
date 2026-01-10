@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Claim, Policy, Insight, LearningMarker } from '~/types'
+import type { ProcessedClaim, Policy, Insight, LearningMarker } from '~/types'
 
 // Types for API responses
 interface ClaimsApiResponse {
-  data: Claim[]
+  data: ProcessedClaim[]
   pagination: {
     total: number
     limit: number
@@ -50,9 +50,29 @@ interface ClaimsSummaryResponse {
   }
 }
 
+// Helper to get status from PaAPI claim
+function getClaimStatus(claim: ProcessedClaim): string {
+  return (claim.additionalDetails as { status?: string })?.status || 'pending'
+}
+
+// Helper to get billed amount from PaAPI claim
+function getClaimBilledAmount(claim: ProcessedClaim): number {
+  return claim.total?.value || 0
+}
+
+// Helper to get paid amount from PaAPI claim
+function getClaimPaidAmount(claim: ProcessedClaim): number {
+  return (claim.additionalDetails as { paidAmount?: number })?.paidAmount || 0
+}
+
+// Helper to get policy mode
+function getPolicyMode(policy: Policy): string {
+  return policy.connector_insight_mode?.[0]?.insight_mode || 'Active'
+}
+
 export const useAppStore = defineStore('app', () => {
   // State
-  const claims = ref<Claim[]>([])
+  const claims = ref<ProcessedClaim[]>([])
   const policies = ref<Policy[]>([])
   const insights = ref<Insight[]>([])
   const learningMarkers = ref<LearningMarker[]>([])
@@ -61,22 +81,22 @@ export const useAppStore = defineStore('app', () => {
   const error = ref<string | null>(null)
   const useDatabase = ref(true) // Toggle to use database APIs vs JSON files
   const pagination = ref({
-    claims: { total: 0, limit: 100, offset: 0, hasMore: false },
-    policies: { total: 0, limit: 50, offset: 0, hasMore: false },
+    claims: { total: 0, limit: 500, offset: 0, hasMore: false },
+    policies: { total: 0, limit: 100, offset: 0, hasMore: false },
   })
 
-  // Getters
-  const deniedClaims = computed(() => claims.value.filter(c => c.status === 'denied'))
-  const approvedClaims = computed(() => claims.value.filter(c => c.status === 'approved'))
-  const pendingClaims = computed(() => claims.value.filter(c => c.status === 'pending'))
-  const editModePolicies = computed(() => policies.value.filter(p => p.mode === 'Edit'))
+  // Getters - use helper functions for PaAPI format
+  const deniedClaims = computed(() => claims.value.filter(c => getClaimStatus(c) === 'denied'))
+  const approvedClaims = computed(() => claims.value.filter(c => getClaimStatus(c) === 'approved'))
+  const pendingClaims = computed(() => claims.value.filter(c => getClaimStatus(c) === 'pending'))
+  const editModePolicies = computed(() => policies.value.filter(p => getPolicyMode(p) === 'Active'))
   const highSeverityInsights = computed(() => insights.value.filter(i => i.severity === 'high' && !i.dismissed))
 
-  const totalClaimsAmount = computed(() => claims.value.reduce((sum, c) => sum + c.billedAmount, 0))
-  const totalPaidAmount = computed(() => claims.value.reduce((sum, c) => sum + (c.paidAmount || 0), 0))
+  const totalClaimsAmount = computed(() => claims.value.reduce((sum, c) => sum + getClaimBilledAmount(c), 0))
+  const totalPaidAmount = computed(() => claims.value.reduce((sum, c) => sum + getClaimPaidAmount(c), 0))
   const denialRate = computed(() => {
     if (claims.value.length === 0) return 0
-    const deniedCount = claims.value.filter(c => c.status === 'denied').length
+    const deniedCount = claims.value.filter(c => getClaimStatus(c) === 'denied').length
     return (deniedCount / claims.value.length) * 100
   })
 
@@ -111,9 +131,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   async function initializeFromDatabase() {
+    // Fetch all claims (up to 500) to match summary counts
     const [claimsResponse, policiesResponse, summaryResponse] = await Promise.all([
-      $fetch<ClaimsApiResponse>('/api/v1/claims'),
-      $fetch<PoliciesApiResponse>('/api/v1/policies'),
+      $fetch<ClaimsApiResponse>('/api/v1/claims', { params: { limit: 500 } }),
+      $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 100 } }),
       $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary'),
     ])
 
@@ -136,7 +157,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function initializeFromJson() {
     const [claimsData, policiesData, insightsData] = await Promise.all([
-      $fetch<{ claims: Claim[] }>('/data/claims.json'),
+      $fetch<{ claims: ProcessedClaim[] }>('/data/claims.json'),
       $fetch<Policy[]>('/data/policies.json'),
       $fetch<Insight[]>('/data/insights.json'),
     ])
@@ -144,43 +165,6 @@ export const useAppStore = defineStore('app', () => {
     claims.value = claimsData.claims
     policies.value = policiesData
     insights.value = insightsData
-  }
-
-  async function loadMoreClaims() {
-    if (!pagination.value.claims.hasMore) return
-
-    try {
-      const offset = pagination.value.claims.offset + pagination.value.claims.limit
-      const response = await $fetch<ClaimsApiResponse>('/api/v1/claims', {
-        params: { offset, limit: pagination.value.claims.limit }
-      })
-      claims.value.push(...response.data)
-      pagination.value.claims = response.pagination
-    } catch (err) {
-      console.error('Failed to load more claims:', err)
-    }
-  }
-
-  async function refreshClaims(filters?: { status?: string; startDate?: string; endDate?: string }) {
-    try {
-      const response = await $fetch<ClaimsApiResponse>('/api/v1/claims', {
-        params: filters
-      })
-      claims.value = response.data
-      pagination.value.claims = response.pagination
-    } catch (err) {
-      console.error('Failed to refresh claims:', err)
-    }
-  }
-
-  async function refreshSummary(days?: number) {
-    try {
-      claimsSummary.value = await $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary', {
-        params: days ? { days } : undefined
-      })
-    } catch (err) {
-      console.error('Failed to refresh summary:', err)
-    }
   }
 
   function setUseDatabase(value: boolean) {
@@ -224,7 +208,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  function getClaimById(id: string): Claim | undefined {
+  function getClaimById(id: string): ProcessedClaim | undefined {
     return claims.value.find(c => c.id === id)
   }
 
@@ -260,9 +244,6 @@ export const useAppStore = defineStore('app', () => {
     initialize,
     initializeFromDatabase,
     initializeFromJson,
-    loadMoreClaims,
-    refreshClaims,
-    refreshSummary,
     setUseDatabase,
     loadLearningMarkers,
     saveLearningMarkers,
