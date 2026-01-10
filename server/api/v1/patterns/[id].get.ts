@@ -10,16 +10,17 @@ import { defineEventHandler, getRouterParam, createError } from 'h3'
 import { db } from '~/server/database'
 import {
   patterns,
-  patternClaims,
+  patternClaimLines,
   patternPolicies,
   patternRelatedCodes,
   patternEvidence,
   patternImprovements,
   patternActions,
   claims,
+  claimLineItems,
   policies,
 } from '~/server/database/schema'
-import { eq, desc, count, sum } from 'drizzle-orm'
+import { eq, desc, count, sum, sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -46,22 +47,42 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get related claims (limited to 20 for performance)
-    const relatedClaims = await db
+    // Get related claims via claim lines (limited to 20 for performance)
+    // Patterns link to claim LINES, not claims directly
+    const relatedClaimLines = await db
       .select({
-        id: claims.id,
+        claimId: claims.id,
         patientName: claims.patientName,
         dateOfService: claims.dateOfService,
-        billedAmount: claims.billedAmount,
         status: claims.status,
         denialReason: claims.denialReason,
         providerName: claims.providerName,
+        lineItemId: claimLineItems.id,
+        lineNumber: claimLineItems.lineNumber,
+        procedureCode: claimLineItems.procedureCode,
+        lineBilledAmount: claimLineItems.billedAmount,
+        deniedAmount: patternClaimLines.deniedAmount,
       })
-      .from(patternClaims)
-      .innerJoin(claims, eq(patternClaims.claimId, claims.id))
-      .where(eq(patternClaims.patternId, id))
+      .from(patternClaimLines)
+      .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+      .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+      .where(eq(patternClaimLines.patternId, id))
       .orderBy(desc(claims.dateOfService))
       .limit(20)
+
+    // Group by claim for display while preserving line-level detail
+    const relatedClaims = relatedClaimLines.map(line => ({
+      id: line.claimId,
+      patientName: line.patientName,
+      dateOfService: line.dateOfService,
+      billedAmount: line.lineBilledAmount,
+      deniedAmount: line.deniedAmount,
+      status: line.status,
+      denialReason: line.denialReason,
+      providerName: line.providerName,
+      lineNumber: line.lineNumber,
+      procedureCode: line.procedureCode,
+    }))
 
     // Get related policies
     const relatedPolicies = await db
@@ -102,21 +123,24 @@ export default defineEventHandler(async (event) => {
       .from(patternActions)
       .where(eq(patternActions.patternId, id))
 
-    // Calculate live statistics
-    const [claimStats] = await db
+    // Calculate live statistics from claim lines
+    // totalAtRisk is computed from denied line amounts
+    const [lineStats] = await db
       .select({
         count: count(),
-        totalBilled: sum(claims.billedAmount),
+        totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
+        totalBilled: sql<number>`COALESCE(SUM(${claimLineItems.billedAmount}), 0)`,
       })
-      .from(patternClaims)
-      .innerJoin(claims, eq(patternClaims.claimId, claims.id))
-      .where(eq(patternClaims.patternId, id))
+      .from(patternClaimLines)
+      .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+      .where(eq(patternClaimLines.patternId, id))
 
     return {
       ...pattern,
       statistics: {
-        claimCount: claimStats?.count || 0,
-        totalImpact: Number(claimStats?.totalBilled) || 0,
+        lineCount: lineStats?.count || 0,
+        totalAtRisk: Number(lineStats?.totalAtRisk) || 0,
+        totalBilled: Number(lineStats?.totalBilled) || 0,
       },
       relatedClaims,
       relatedPolicies,

@@ -6,8 +6,8 @@
  */
 
 import { db } from '~/server/database'
-import { claims, patterns, patternClaims, providers, claimAppeals } from '~/server/database/schema'
-import { sql, count, eq, and, gte, lte, desc } from 'drizzle-orm'
+import { claims, patterns, patternClaimLines, claimLineItems, providers, claimAppeals } from '~/server/database/schema'
+import { sql, count, eq, and, gte, lte, desc, sum } from 'drizzle-orm'
 
 // =============================================================================
 // TYPES
@@ -204,12 +204,13 @@ export class AnalyticsEngine {
 
   /**
    * Get pattern impact analysis
+   * Patterns link to claim LINES, not claims - totalImpact is sum of denied line amounts
    */
   async getPatternImpact(
     startDate: string,
     endDate: string
   ): Promise<PatternImpact[]> {
-    // Get patterns with their linked claims
+    // Get patterns with their linked claim lines
     const patternData = await db
       .select({
         patternId: patterns.id,
@@ -222,23 +223,23 @@ export class AnalyticsEngine {
     const impacts: PatternImpact[] = []
 
     for (const pattern of patternData) {
-      // Count denied claims linked to this pattern in the date range
-      const linkedClaimsResult = await db
+      // Count denied claim lines linked to this pattern in the date range
+      const linkedLinesResult = await db
         .select({
-          claimCount: count(),
-          totalAmount: sql<number>`SUM(${claims.billedAmount})`,
+          lineCount: count(),
+          totalDeniedAmount: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
         })
-        .from(patternClaims)
-        .innerJoin(claims, eq(patternClaims.claimId, claims.id))
+        .from(patternClaimLines)
+        .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+        .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
         .where(and(
-          eq(patternClaims.patternId, pattern.patternId),
-          eq(claims.status, 'denied'),
+          eq(patternClaimLines.patternId, pattern.patternId),
           gte(claims.dateOfService, startDate),
           lte(claims.dateOfService, endDate)
         ))
 
-      const denialCount = linkedClaimsResult[0]?.claimCount || 0
-      const denialAmount = linkedClaimsResult[0]?.totalAmount || 0
+      const denialCount = linkedLinesResult[0]?.lineCount || 0
+      const denialAmount = linkedLinesResult[0]?.totalDeniedAmount || 0
 
       if (denialCount > 0) {
         impacts.push({

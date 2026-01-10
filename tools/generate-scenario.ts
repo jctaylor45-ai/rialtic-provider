@@ -970,14 +970,14 @@ function writeToDatabase(ctx: GenerationContext): void {
       VALUES (?, ?)
     `)
 
-    const insertClaimPolicy = db.prepare(`
-      INSERT OR IGNORE INTO claim_policies (claim_id, policy_id)
-      VALUES (?, ?)
+    const insertClaimLinePolicy = db.prepare(`
+      INSERT OR IGNORE INTO claim_line_policies (line_item_id, policy_id, is_denied, denied_amount, denial_reason)
+      VALUES (?, ?, ?, ?, ?)
     `)
 
-    const insertPatternClaim = db.prepare(`
-      INSERT OR IGNORE INTO pattern_claims (pattern_id, claim_id)
-      VALUES (?, ?)
+    const insertPatternClaimLine = db.prepare(`
+      INSERT OR IGNORE INTO pattern_claim_lines (pattern_id, line_item_id, denied_amount, denial_date)
+      VALUES (?, ?, ?, ?)
     `)
 
     const insertModifier = db.prepare(`
@@ -1018,17 +1018,8 @@ function writeToDatabase(ctx: GenerationContext): void {
         insertProcedure.run(claim.id, code)
       })
 
-      // Insert policy links
-      claim.policyIds.forEach(policyId => {
-        insertClaimPolicy.run(claim.id, policyId)
-      })
-
-      // Insert pattern link
-      if (claim.patternId) {
-        insertPatternClaim.run(claim.patternId, claim.id)
-      }
-
-      // Insert line items
+      // Insert line items first (policies and patterns link to lines, not claims)
+      const lineItemIds: number[] = []
       for (const line of claim.lineItems) {
         const result = insertLineItem.run(
           claim.id,
@@ -1043,10 +1034,32 @@ function writeToDatabase(ctx: GenerationContext): void {
           line.renderingProviderNPI,
           line.status
         )
+        lineItemIds.push(result.lastInsertRowid as number)
 
         // Insert modifiers
         line.modifiers.forEach((modifier, idx) => {
           insertModifier.run(result.lastInsertRowid, modifier, idx + 1)
+        })
+      }
+
+      // Insert policy links at LINE level (policies link to lines, not claims)
+      // Distribute policies across line items
+      if (claim.policyIds.length > 0 && lineItemIds.length > 0) {
+        claim.policyIds.forEach((policyId, idx) => {
+          const lineItemId = lineItemIds[idx % lineItemIds.length]
+          const isDenied = claim.status === 'denied' ? 1 : 0
+          const lineItem = claim.lineItems[idx % claim.lineItems.length]
+          const deniedAmount = isDenied ? (lineItem?.billedAmount || 0) : 0
+          insertClaimLinePolicy.run(lineItemId, policyId, isDenied, deniedAmount, claim.denialReason || null)
+        })
+      }
+
+      // Insert pattern links at LINE level (patterns link to lines, not claims)
+      if (claim.patternId && lineItemIds.length > 0) {
+        lineItemIds.forEach((lineItemId, idx) => {
+          const lineItem = claim.lineItems[idx]
+          const deniedAmount = claim.status === 'denied' ? (lineItem?.billedAmount || 0) : 0
+          insertPatternClaimLine.run(claim.patternId, lineItemId, deniedAmount, claim.dateOfService)
         })
       }
     }

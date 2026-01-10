@@ -108,9 +108,8 @@ export const claimsRelations = relations(claims, ({ one, many }) => ({
   lineItems: many(claimLineItems),
   diagnosisCodes: many(claimDiagnosisCodes),
   procedureCodes: many(claimProcedureCodes),
-  policies: many(claimPolicies),
-  patterns: many(patternClaims),
   appeals: many(claimAppeals),
+  // Note: Policies are linked at the LINE level via claimLineItems.policies
 }))
 
 // =============================================================================
@@ -157,6 +156,8 @@ export const claimLineItemsRelations = relations(claimLineItems, ({ one, many })
   }),
   modifiers: many(lineItemModifiers),
   diagnosisCodes: many(lineItemDiagnosisCodes),
+  policies: many(claimLinePolicies),
+  patterns: many(patternClaimLines),
 }))
 
 // =============================================================================
@@ -279,7 +280,7 @@ export const policiesRelations = relations(policies, ({ many }) => ({
   placesOfService: many(policyPlacesOfService),
   referenceDocs: many(policyReferenceDocs),
   relatedPolicies: many(policyRelatedPolicies),
-  claims: many(claimPolicies),
+  claimLines: many(claimLinePolicies),  // Policies link to claim LINES, not claims
   patterns: many(patternPolicies),
 }))
 
@@ -373,25 +374,30 @@ export const policyRelatedPoliciesRelations = relations(policyRelatedPolicies, (
 }))
 
 // =============================================================================
-// CLAIM-POLICY RELATIONSHIPS
+// CLAIM LINE - POLICY RELATIONSHIPS (Policies apply at line level only)
 // =============================================================================
 
-export const claimPolicies = sqliteTable('claim_policies', {
-  claimId: text('claim_id').notNull().references(() => claims.id, { onDelete: 'cascade' }),
+export const claimLinePolicies = sqliteTable('claim_line_policies', {
+  lineItemId: integer('line_item_id').notNull().references(() => claimLineItems.id, { onDelete: 'cascade' }),
   policyId: text('policy_id').notNull().references(() => policies.id, { onDelete: 'cascade' }),
   triggeredAt: text('triggered_at').default('CURRENT_TIMESTAMP'),
+  // Denial information at line level
+  isDenied: integer('is_denied', { mode: 'boolean' }).default(false),
+  denialReason: text('denial_reason'),
+  deniedAmount: real('denied_amount'),
 }, (table) => ({
-  pk: primaryKey({ columns: [table.claimId, table.policyId] }),
-  policyIdx: index('idx_claim_policies_policy').on(table.policyId),
+  pk: primaryKey({ columns: [table.lineItemId, table.policyId] }),
+  policyIdx: index('idx_claim_line_policies_policy').on(table.policyId),
+  deniedIdx: index('idx_claim_line_policies_denied').on(table.isDenied),
 }))
 
-export const claimPoliciesRelations = relations(claimPolicies, ({ one }) => ({
-  claim: one(claims, {
-    fields: [claimPolicies.claimId],
-    references: [claims.id],
+export const claimLinePoliciesRelations = relations(claimLinePolicies, ({ one }) => ({
+  lineItem: one(claimLineItems, {
+    fields: [claimLinePolicies.lineItemId],
+    references: [claimLineItems.id],
   }),
   policy: one(policies, {
-    fields: [claimPolicies.policyId],
+    fields: [claimLinePolicies.policyId],
     references: [policies.id],
   }),
 }))
@@ -476,7 +482,7 @@ export const patternsRelations = relations(patterns, ({ one, many }) => ({
     fields: [patterns.scenarioId],
     references: [scenarios.id],
   }),
-  claims: many(patternClaims),
+  claimLines: many(patternClaimLines),  // Patterns link to claim LINES, not claims
   policies: many(patternPolicies),
   relatedCodes: many(patternRelatedCodes),
   evidence: many(patternEvidence),
@@ -486,25 +492,28 @@ export const patternsRelations = relations(patterns, ({ one, many }) => ({
 }))
 
 // =============================================================================
-// PATTERN RELATIONSHIPS
+// PATTERN - CLAIM LINE RELATIONSHIPS (Patterns link to claim lines)
 // =============================================================================
 
-export const patternClaims = sqliteTable('pattern_claims', {
+export const patternClaimLines = sqliteTable('pattern_claim_lines', {
   patternId: text('pattern_id').notNull().references(() => patterns.id, { onDelete: 'cascade' }),
-  claimId: text('claim_id').notNull().references(() => claims.id, { onDelete: 'cascade' }),
+  lineItemId: integer('line_item_id').notNull().references(() => claimLineItems.id, { onDelete: 'cascade' }),
+  // Denormalized data for efficient queries
+  deniedAmount: real('denied_amount'),
+  denialDate: text('denial_date'),
 }, (table) => ({
-  pk: primaryKey({ columns: [table.patternId, table.claimId] }),
-  claimIdx: index('idx_pattern_claims_claim').on(table.claimId),
+  pk: primaryKey({ columns: [table.patternId, table.lineItemId] }),
+  lineItemIdx: index('idx_pattern_claim_lines_line').on(table.lineItemId),
 }))
 
-export const patternClaimsRelations = relations(patternClaims, ({ one }) => ({
+export const patternClaimLinesRelations = relations(patternClaimLines, ({ one }) => ({
   pattern: one(patterns, {
-    fields: [patternClaims.patternId],
+    fields: [patternClaimLines.patternId],
     references: [patterns.id],
   }),
-  claim: one(claims, {
-    fields: [patternClaims.claimId],
-    references: [claims.id],
+  lineItem: one(claimLineItems, {
+    fields: [patternClaimLines.lineItemId],
+    references: [claimLineItems.id],
   }),
 }))
 

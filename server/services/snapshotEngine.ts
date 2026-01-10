@@ -6,7 +6,7 @@
  */
 
 import { db } from '~/server/database'
-import { patternSnapshots, patterns, claims, claimAppeals, patternClaims } from '~/server/database/schema'
+import { patternSnapshots, patterns, claims, claimAppeals, patternClaimLines, claimLineItems } from '~/server/database/schema'
 import { eq, and, gte, lt, sql, count, sum, desc } from 'drizzle-orm'
 
 // =============================================================================
@@ -61,6 +61,7 @@ export interface TrendData {
 
 /**
  * Create a snapshot for a single pattern
+ * Patterns link to claim LINES - dollarsDenied comes from denied line amounts
  */
 export async function createPatternSnapshot(
   patternId: string,
@@ -74,34 +75,38 @@ export async function createPatternSnapshot(
   const periodStartStr = periodStart.toISOString().split('T')[0] as string
   const periodEndStr = periodEnd.toISOString().split('T')[0] as string
 
-  // Get claims linked to this pattern in the period
-  const linkedClaims = await db
+  // Get claim lines linked to this pattern in the period
+  const linkedLines = await db
     .select({
-      claimId: patternClaims.claimId,
-      status: claims.status,
-      billedAmount: claims.billedAmount,
+      lineItemId: patternClaimLines.lineItemId,
+      deniedAmount: patternClaimLines.deniedAmount,
+      billedAmount: claimLineItems.billedAmount,
       dateOfService: claims.dateOfService,
     })
-    .from(patternClaims)
-    .innerJoin(claims, eq(patternClaims.claimId, claims.id))
+    .from(patternClaimLines)
+    .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+    .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
     .where(and(
-      eq(patternClaims.patternId, patternId),
+      eq(patternClaimLines.patternId, patternId),
       gte(claims.dateOfService, periodStartStr),
       lt(claims.dateOfService, periodEndStr)
     ))
 
-  const claimCount = linkedClaims.length
-  const deniedClaims = linkedClaims.filter(c => c.status === 'denied')
-  const deniedCount = deniedClaims.length
-  const dollarsDenied = deniedClaims.reduce((sum, c) => sum + (c.billedAmount || 0), 0)
-  const dollarsAtRisk = linkedClaims.reduce((sum, c) => sum + (c.billedAmount || 0), 0)
+  const claimCount = linkedLines.length // Now counting lines, not claims
+  const deniedCount = linkedLines.filter(l => (l.deniedAmount || 0) > 0).length
+  const dollarsDenied = linkedLines.reduce((s, l) => s + (l.deniedAmount || 0), 0)
+  const dollarsAtRisk = linkedLines.reduce((s, l) => s + (l.billedAmount || 0), 0)
   const denialRate = claimCount > 0 ? (deniedCount / claimCount) * 100 : 0
 
-  // Count appeals for linked claims
+  // Count appeals for claims with linked lines
   const [appealResult] = await db
     .select({ count: count() })
     .from(claimAppeals)
-    .where(sql`${claimAppeals.claimId} IN (SELECT claim_id FROM pattern_claims WHERE pattern_id = ${patternId})`)
+    .where(sql`${claimAppeals.claimId} IN (
+      SELECT cli.claim_id FROM claim_line_items cli
+      INNER JOIN pattern_claim_lines pcl ON pcl.line_item_id = cli.id
+      WHERE pcl.pattern_id = ${patternId}
+    )`)
 
   const appealCount = appealResult?.count || 0
   const appealRate = deniedCount > 0 ? (appealCount / deniedCount) * 100 : 0

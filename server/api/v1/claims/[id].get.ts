@@ -14,7 +14,7 @@ import {
   claimDiagnosisCodes,
   claimProcedureCodes,
   claimAppeals,
-  claimPolicies,
+  claimLinePolicies,
   policies,
 } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
@@ -50,7 +50,6 @@ export default defineEventHandler(async (event) => {
       diagnosisCodes,
       procedureCodes,
       appeals,
-      claimPoliciesData,
     ] = await Promise.all([
       db
         .select()
@@ -68,25 +67,39 @@ export default defineEventHandler(async (event) => {
         .select()
         .from(claimAppeals)
         .where(eq(claimAppeals.claimId, id)),
-      db
-        .select({
-          policyId: claimPolicies.policyId,
-          policyName: policies.name,
-          policyMode: policies.mode,
-          triggeredAt: claimPolicies.triggeredAt,
-        })
-        .from(claimPolicies)
-        .innerJoin(policies, eq(claimPolicies.policyId, policies.id))
-        .where(eq(claimPolicies.claimId, id)),
     ])
+
+    // Get policies at the LINE level (policies link to lines, not claims)
+    // For each line item, get its linked policies
+    const lineItemsWithPolicies = await Promise.all(
+      lineItems.map(async (line) => {
+        const linePolicies = await db
+          .select({
+            policyId: claimLinePolicies.policyId,
+            policyName: policies.name,
+            policyMode: policies.mode,
+            triggeredAt: claimLinePolicies.triggeredAt,
+            isDenied: claimLinePolicies.isDenied,
+            deniedAmount: claimLinePolicies.deniedAmount,
+            denialReason: claimLinePolicies.denialReason,
+          })
+          .from(claimLinePolicies)
+          .innerJoin(policies, eq(claimLinePolicies.policyId, policies.id))
+          .where(eq(claimLinePolicies.lineItemId, line.id))
+
+        return {
+          ...line,
+          policies: linePolicies,
+        }
+      })
+    )
 
     return {
       ...claim,
-      lineItems,
+      lineItems: lineItemsWithPolicies,
       diagnosisCodes,
       procedureCodes,
       appeals,
-      policies: claimPoliciesData,
     }
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) {

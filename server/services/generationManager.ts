@@ -14,8 +14,9 @@ import {
   claimAppeals,
   learningEvents,
   patterns,
-  patternClaims,
+  patternClaimLines,
 } from '../database/schema'
+import { sql } from 'drizzle-orm'
 import { generateClaimBatch, type GeneratorConfig, type GeneratedClaim } from './claimGenerator'
 import { generateAppealsForClaims, type GeneratedAppeal } from './appealGenerator'
 import { generateEventBatch, type GeneratedEvent, type PatternInfo } from './userEventGenerator'
@@ -168,21 +169,36 @@ async function insertEvents(generatedEvents: GeneratedEvent[]): Promise<number> 
 }
 
 /**
- * Link claims to patterns in database
+ * Link claim lines to patterns in database
+ * Patterns link to claim LINES, not claims - denials happen at line level
  */
-async function linkClaimsToPatterns(generatedClaims: GeneratedClaim[], patternConfigs: PatternInjectionConfig[]): Promise<void> {
+async function linkClaimLinesToPatterns(generatedClaims: GeneratedClaim[], patternConfigs: PatternInjectionConfig[]): Promise<void> {
   for (const claim of generatedClaims) {
     if (claim.claim.status === 'denied' && claim.claim.denialReason) {
       // Find matching pattern
       for (const config of patternConfigs) {
         if (claim.claim.denialReason.toLowerCase().includes(config.denialReason.toLowerCase().split(' ')[0]!.toLowerCase())) {
-          try {
-            await db.insert(patternClaims).values({
-              patternId: config.patternId,
-              claimId: claim.claim.id,
-            }).onConflictDoNothing()
-          } catch {
-            // Ignore - pattern might not exist yet
+          // Link each line item to the pattern
+          for (const lineItem of claim.lineItems) {
+            try {
+              // Get the line item ID from database (it was just inserted)
+              const [existingLine] = await db
+                .select({ id: claimLineItems.id })
+                .from(claimLineItems)
+                .where(sql`${claimLineItems.claimId} = ${claim.claim.id} AND ${claimLineItems.lineNumber} = ${lineItem.lineNumber}`)
+                .limit(1)
+
+              if (existingLine) {
+                await db.insert(patternClaimLines).values({
+                  patternId: config.patternId,
+                  lineItemId: existingLine.id,
+                  deniedAmount: lineItem.billedAmount || 0,
+                  denialDate: new Date().toISOString().split('T')[0],
+                }).onConflictDoNothing()
+              }
+            } catch {
+              // Ignore - pattern might not exist yet
+            }
           }
           break
         }
@@ -226,9 +242,9 @@ async function runGenerationBatch(config: GenerationConfig): Promise<void> {
     const claimsInserted = await insertClaims(generatedClaims)
     generationStatus.stats.claimsGenerated += claimsInserted
 
-    // Link claims to patterns
+    // Link claim lines to patterns
     if (config.patterns.length > 0) {
-      await linkClaimsToPatterns(generatedClaims, config.patterns)
+      await linkClaimLinesToPatterns(generatedClaims, config.patterns)
     }
 
     // Generate appeals for denied claims

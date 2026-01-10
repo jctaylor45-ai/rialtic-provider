@@ -6,8 +6,8 @@
  */
 
 import { db } from '~/server/database'
-import { claims, patterns, patternClaims, claimAppeals } from '~/server/database/schema'
-import { sql, and, eq, gte, lte, count, desc, asc } from 'drizzle-orm'
+import { claims, patterns, patternClaimLines, claimLineItems, claimAppeals } from '~/server/database/schema'
+import { sql, and, eq, gte, lte, count, desc, asc, sum } from 'drizzle-orm'
 
 // =============================================================================
 // TYPES
@@ -254,20 +254,21 @@ export class QueryOptimizer {
   }
 
   /**
-   * Get pattern metrics with single query
+   * Get pattern metrics from linked claim lines
+   * Patterns link to claim LINES, not claims - totalAtRisk is sum of denied line amounts
    */
   async getPatternMetrics(patternId: string, startDate: string, endDate: string) {
     const results = await db
       .select({
         totalLinked: count(),
-        deniedCount: sql<number>`SUM(CASE WHEN ${claims.status} = 'denied' THEN 1 ELSE 0 END)`,
-        totalBilled: sql<number>`COALESCE(SUM(${claims.billedAmount}), 0)`,
-        totalDenied: sql<number>`COALESCE(SUM(CASE WHEN ${claims.status} = 'denied' THEN ${claims.billedAmount} ELSE 0 END), 0)`,
+        totalBilled: sql<number>`COALESCE(SUM(${claimLineItems.billedAmount}), 0)`,
+        totalDenied: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
       })
-      .from(patternClaims)
-      .innerJoin(claims, eq(patternClaims.claimId, claims.id))
+      .from(patternClaimLines)
+      .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+      .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
       .where(and(
-        eq(patternClaims.patternId, patternId),
+        eq(patternClaimLines.patternId, patternId),
         gte(claims.dateOfService, startDate),
         lte(claims.dateOfService, endDate)
       ))
@@ -276,12 +277,45 @@ export class QueryOptimizer {
 
     return {
       patternId,
-      totalLinked: r.totalLinked,
-      deniedCount: r.deniedCount || 0,
-      denialRate: r.totalLinked > 0 ? Math.round(((r.deniedCount || 0) / r.totalLinked) * 10000) / 100 : 0,
+      totalLinkedLines: r.totalLinked,
       totalBilled: Math.round((r.totalBilled || 0) * 100) / 100,
       totalDenied: Math.round((r.totalDenied || 0) * 100) / 100,
     }
+  }
+
+  /**
+   * Compute total at risk for a pattern from its linked denied claim lines
+   * This is the source of truth for pattern.totalAtRisk
+   */
+  async computePatternTotalAtRisk(patternId: string): Promise<number> {
+    const result = await db
+      .select({
+        totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
+      })
+      .from(patternClaimLines)
+      .where(eq(patternClaimLines.patternId, patternId))
+
+    return Math.round((result[0]?.totalAtRisk || 0) * 100) / 100
+  }
+
+  /**
+   * Get all patterns with computed totalAtRisk from linked claim lines
+   */
+  async getPatternsWithComputedTotals() {
+    const results = await db
+      .select({
+        patternId: patternClaimLines.patternId,
+        totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
+        lineCount: count(),
+      })
+      .from(patternClaimLines)
+      .groupBy(patternClaimLines.patternId)
+
+    return results.map(r => ({
+      patternId: r.patternId,
+      totalAtRisk: Math.round((r.totalAtRisk || 0) * 100) / 100,
+      lineCount: r.lineCount,
+    }))
   }
 }
 

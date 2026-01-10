@@ -8,7 +8,7 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { patterns, patternClaims, claims } from '~/server/database/schema'
+import { patterns, patternClaimLines, claimLineItems } from '~/server/database/schema'
 import { eq, desc, and, sql, count, sum } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
@@ -78,25 +78,30 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Calculate live claim counts for each pattern
+    // Calculate live line counts and totalAtRisk for each pattern
+    // Patterns link to claim LINES - totalAtRisk is sum of denied line amounts
     const patternsWithLiveCounts = await Promise.all(
       patternsList.map(async (pattern) => {
-        const [claimCountResult] = await db
+        const [lineCountResult] = await db
           .select({ count: count() })
-          .from(patternClaims)
-          .where(eq(patternClaims.patternId, pattern.id))
+          .from(patternClaimLines)
+          .where(eq(patternClaimLines.patternId, pattern.id))
 
-        // Calculate impact from linked claims
+        // Calculate totalAtRisk from linked line denied amounts
         const [impactResult] = await db
-          .select({ total: sum(claims.billedAmount) })
-          .from(patternClaims)
-          .innerJoin(claims, eq(patternClaims.claimId, claims.id))
-          .where(eq(patternClaims.patternId, pattern.id))
+          .select({
+            totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
+            totalBilled: sql<number>`COALESCE(SUM(${claimLineItems.billedAmount}), 0)`,
+          })
+          .from(patternClaimLines)
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .where(eq(patternClaimLines.patternId, pattern.id))
 
         return {
           ...pattern,
-          liveClaimCount: claimCountResult?.count || 0,
-          liveImpactAmount: Number(impactResult?.total) || 0,
+          liveLineCount: lineCountResult?.count || 0,
+          liveTotalAtRisk: Number(impactResult?.totalAtRisk) || 0,
+          liveTotalBilled: Number(impactResult?.totalBilled) || 0,
         }
       })
     )

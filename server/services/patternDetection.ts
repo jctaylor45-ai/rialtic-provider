@@ -6,7 +6,7 @@
  */
 
 import { db } from '~/server/database'
-import { claims, patterns, patternClaims } from '~/server/database/schema'
+import { claims, patterns, patternClaimLines, claimLineItems } from '~/server/database/schema'
 import { eq, sql, and, gte, count, sum, desc } from 'drizzle-orm'
 
 // =============================================================================
@@ -227,12 +227,13 @@ export async function calculateDenialMetrics(lookbackDays: number = 30): Promise
 }
 
 // =============================================================================
-// PATTERN-CLAIM LINKING
+// PATTERN-CLAIM LINE LINKING
 // =============================================================================
 
 /**
- * Link detected patterns to claims in the database
- * Updates the patternClaims junction table
+ * Link detected patterns to claim lines in the database
+ * Patterns link to claim LINES, not claims - denials happen at line level
+ * Updates the patternClaimLines junction table
  */
 export async function linkPatternsToDatabase(detectedPatterns: DetectedPattern[]): Promise<number> {
   let linked = 0
@@ -246,27 +247,46 @@ export async function linkPatternsToDatabase(detectedPatterns: DetectedPattern[]
       .limit(1)
 
     if (existingPattern) {
-      // Link claims to pattern
+      // For each claim, link its denied line items to the pattern
       for (const claimId of detected.claimIds) {
-        try {
-          await db.insert(patternClaims).values({
-            patternId: existingPattern.id,
-            claimId,
-          }).onConflictDoNothing()
-          linked++
-        } catch {
-          // Ignore duplicate links
+        // Get line items for this claim
+        const lineItems = await db
+          .select()
+          .from(claimLineItems)
+          .where(eq(claimLineItems.claimId, claimId))
+
+        for (const lineItem of lineItems) {
+          try {
+            await db.insert(patternClaimLines).values({
+              patternId: existingPattern.id,
+              lineItemId: lineItem.id,
+              deniedAmount: lineItem.billedAmount || 0,
+              denialDate: new Date().toISOString().split('T')[0],
+            }).onConflictDoNothing()
+            linked++
+          } catch {
+            // Ignore duplicate links
+          }
         }
       }
 
-      // Update pattern metrics
+      // Update pattern metrics - totalAtRisk is computed from linked lines
+      const [totalResult] = await db
+        .select({
+          totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
+          lineCount: count(),
+        })
+        .from(patternClaimLines)
+        .where(eq(patternClaimLines.patternId, existingPattern.id))
+
       await db
         .update(patterns)
         .set({
-          currentClaimCount: detected.denialCount,
-          currentDollarsDenied: detected.totalDeniedAmount,
+          currentClaimCount: totalResult?.lineCount || 0,
+          currentDollarsDenied: totalResult?.totalAtRisk || 0,
+          totalAtRisk: totalResult?.totalAtRisk || 0,
           scoreFrequency: detected.frequency,
-          scoreImpact: detected.totalDeniedAmount,
+          scoreImpact: totalResult?.totalAtRisk || 0,
           scoreConfidence: detected.confidence / 100,
         })
         .where(eq(patterns.id, existingPattern.id))
