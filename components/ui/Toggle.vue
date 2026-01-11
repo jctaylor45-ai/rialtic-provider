@@ -15,10 +15,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
+  'update:modelValue': [value: boolean]
 }>()
-
-defineOptions({ name: 'UiToggle' })
 
 const toggle = () => {
   if (!props.disabled) {

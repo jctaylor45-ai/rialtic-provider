@@ -74,6 +74,8 @@ const navItems = [
 
 const adminItems = [
   { id: 'config', label: 'Configuration', icon: 'heroicons:adjustments-horizontal', path: '/admin/config' },
+  { id: 'data-source', label: 'Data Source', icon: 'heroicons:server-stack', path: '/admin/data-source' },
+  { id: 'database', label: 'Database', icon: 'heroicons:circle-stack', path: '/admin/database' },
   { id: 'scenario-builder', label: 'Scenario Builder', icon: 'heroicons:wrench-screwdriver', path: '/admin/scenario-builder' },
 ]
 

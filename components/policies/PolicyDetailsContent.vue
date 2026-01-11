@@ -2,26 +2,31 @@
 /**
  * Policy details content component
  * Displays full policy information inside a drawer
- * Maintains data parity with all Policy type fields
+ * Uses PaAPI-compatible Policy format
  */
 import { format, parseISO } from 'date-fns'
 import type { Policy } from '~/types'
 import type { Pattern } from '~/types/enhancements'
+import { normalizePolicyForDisplay, type DisplayPolicy } from '~/composables/usePolicyDisplay'
+import { normalizeClaimForDisplay, type DisplayClaim } from '~/composables/useClaimDisplay'
 
 const props = defineProps<{
   policy: Policy
 }>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
+  close: []
 }>()
-
-defineOptions({ name: 'PolicyDetailsContent' })
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const analyticsStore = useAnalyticsStore()
 const router = useRouter()
+
+// Normalize policy for template display
+const displayPolicy = computed<DisplayPolicy>(() => {
+  return normalizePolicyForDisplay(props.policy)
+})
 
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
@@ -49,31 +54,40 @@ const formatDateLong = (dateStr: string | undefined | null): string => {
 // Get patterns related to this policy
 const relatedPatterns = computed(() => {
   return patternsStore.patterns.filter(pattern =>
-    pattern.relatedPolicies.includes(props.policy.id)
+    pattern.relatedPolicies?.some(rp => rp === props.policy.id)
   )
 })
 
-// Get related policies (other policies this one references)
-const linkedPolicies = computed(() => {
-  if (!props.policy.relatedPolicies || props.policy.relatedPolicies.length === 0) return []
-  return appStore.policies.filter(p => props.policy.relatedPolicies.includes(p.id))
+// Get related policies (other policies this one references) - empty for PaAPI format
+const linkedPolicies = computed<Policy[]>(() => {
+  return []
 })
 
 // Get claims that hit this policy
 const policyClaimsData = computed(() => {
-  const claims = appStore.claims.filter(claim =>
-    claim.policyId === props.policy.id ||
-    claim.policyIds?.includes(props.policy.id)
-  )
+  // For PaAPI format, we filter claims that have this policy in their insights
+  const rawClaims = appStore.claims
+  const matchingClaims: DisplayClaim[] = []
+
+  for (const rawClaim of rawClaims) {
+    // Check if this claim has insights related to this policy
+    const hasPolicy = (rawClaim as any).claimLines?.some((line: any) =>
+      line.insights?.some((insight: any) => insight.policyId === props.policy.id)
+    ) || (rawClaim as any).policies?.some((p: any) => p.id === props.policy.id)
+
+    if (hasPolicy) {
+      matchingClaims.push(normalizeClaimForDisplay(rawClaim as any))
+    }
+  }
 
   // Calculate summary stats
-  const totalBilled = claims.reduce((sum, c) => sum + c.billedAmount, 0)
-  const deniedClaims = claims.filter(c => c.status === 'denied')
+  const totalBilled = matchingClaims.reduce((sum, c) => sum + c.billedAmount, 0)
+  const deniedClaims = matchingClaims.filter(c => c.status === 'denied')
   const deniedAmount = deniedClaims.reduce((sum, c) => sum + c.billedAmount, 0)
 
   return {
-    claims,
-    totalCount: claims.length,
+    claims: matchingClaims,
+    totalCount: matchingClaims.length,
     totalBilled,
     deniedCount: deniedClaims.length,
     deniedAmount,
@@ -85,29 +99,6 @@ const showAllClaims = ref(false)
 const displayedClaims = computed(() => {
   if (showAllClaims.value) return policyClaimsData.value.claims
   return policyClaimsData.value.claims.slice(0, 5)
-})
-
-// CARC/RARC/Specialty code display toggles
-const showAllCarc = ref(false)
-const showAllRarc = ref(false)
-const showAllSpecialty = ref(false)
-
-const displayedCarcCodes = computed(() => {
-  if (!props.policy.carcCodes) return []
-  if (showAllCarc.value) return props.policy.carcCodes
-  return props.policy.carcCodes.slice(0, 3)
-})
-
-const displayedRarcCodes = computed(() => {
-  if (!props.policy.rarcCodes) return []
-  if (showAllRarc.value) return props.policy.rarcCodes
-  return props.policy.rarcCodes.slice(0, 3)
-})
-
-const displayedSpecialtyCodes = computed(() => {
-  if (!props.policy.specialtyCodes) return []
-  if (showAllSpecialty.value) return props.policy.specialtyCodes
-  return props.policy.specialtyCodes.slice(0, 5)
 })
 
 // Claim type icons
@@ -220,19 +211,19 @@ const showCodeIntelligence = (code: string) => {
       <div class="grid grid-cols-4 gap-3 mt-4">
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Hit Rate</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ formatPercentage(policy.hitRate) }}</div>
+          <div class="text-lg font-semibold text-neutral-900">{{ formatPercentage(displayPolicy.hitRate) }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Denial Rate</div>
-          <div class="text-lg font-semibold text-error-700">{{ formatPercentage(policy.denialRate) }}</div>
+          <div class="text-lg font-semibold text-error-700">{{ formatPercentage(displayPolicy.denialRate) }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Appeal Rate</div>
-          <div class="text-lg font-semibold text-warning-700">{{ formatPercentage(policy.appealRate) }}</div>
+          <div class="text-lg font-semibold text-warning-700">{{ formatPercentage(displayPolicy.appealRate) }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Overturn Rate</div>
-          <div class="text-lg font-semibold text-success-700">{{ formatPercentage(policy.overturnRate) }}</div>
+          <div class="text-lg font-semibold text-success-700">{{ formatPercentage(displayPolicy.overturnRate) }}</div>
         </div>
       </div>
 
@@ -240,19 +231,19 @@ const showCodeIntelligence = (code: string) => {
       <div class="grid grid-cols-4 gap-3 mt-3">
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(policy.impact) }}</div>
+          <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(displayPolicy.impact) }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Insight Count</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ policy.insightCount }}</div>
+          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.insightCount }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Providers Impacted</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ policy.providersImpacted }}</div>
+          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.providersImpacted }}</div>
         </div>
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Recent Tests</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ policy.recentTests }}</div>
+          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.recentTests }}</div>
         </div>
       </div>
     </div>
@@ -309,92 +300,26 @@ const showCodeIntelligence = (code: string) => {
         <div class="grid grid-cols-3 gap-x-6 gap-y-3 text-sm">
           <div>
             <div class="text-neutral-500 text-xs mb-1">Topic</div>
-            <div class="text-neutral-900 font-medium">{{ policy.topic }}</div>
+            <div class="text-neutral-900 font-medium">{{ displayPolicy.topicName || '–' }}</div>
           </div>
           <div>
-            <div class="text-neutral-500 text-xs mb-1">Source</div>
-            <div class="text-neutral-900 font-medium">{{ policy.source }}</div>
+            <div class="text-neutral-500 text-xs mb-1">Mode</div>
+            <div class="text-neutral-900 font-medium">{{ displayPolicy.mode }}</div>
           </div>
           <div>
             <div class="text-neutral-500 text-xs mb-1">Logic Type</div>
-            <div class="text-neutral-900 font-medium">{{ policy.logicType || '–' }}</div>
+            <div class="text-neutral-900 font-medium">{{ displayPolicy.logicType || '–' }}</div>
           </div>
           <div>
             <div class="text-neutral-500 text-xs mb-1">Effective Date</div>
-            <div class="text-neutral-900 font-medium">{{ formatDateLong(policy.effectiveDate) }}</div>
+            <div class="text-neutral-900 font-medium">{{ formatDateLong(displayPolicy.effectiveDate) }}</div>
           </div>
           <div>
             <div class="text-neutral-500 text-xs mb-1">Trend</div>
             <div class="flex items-center gap-1">
-              <Icon :name="getTrendIcon(policy.trend)" class="w-4 h-4" :class="getTrendClass(policy.trend)" />
-              <span class="text-neutral-900 font-medium capitalize">{{ policy.trend }}</span>
+              <Icon :name="getTrendIcon(displayPolicy.trend || '')" class="w-4 h-4" :class="getTrendClass(displayPolicy.trend || '')" />
+              <span class="text-neutral-900 font-medium capitalize">{{ displayPolicy.trend || '–' }}</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Geography -->
-      <div v-if="policy.geography" class="p-6 border-b border-neutral-200">
-        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Geography</h3>
-        <div class="grid grid-cols-3 gap-x-6 gap-y-3 text-sm">
-          <!-- Regions -->
-          <div v-if="policy.geography.regions?.length">
-            <div class="text-neutral-500 text-xs mb-2">Applicable Regions</div>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="region in policy.geography.regions"
-                :key="region"
-                class="px-2 py-1 bg-secondary-50 text-secondary-700 text-xs rounded border border-secondary-200"
-              >
-                {{ region }}
-              </span>
-            </div>
-          </div>
-
-          <!-- States -->
-          <div v-if="policy.geography.states?.length">
-            <div class="text-neutral-500 text-xs mb-2">States</div>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="state in policy.geography.states"
-                :key="state"
-                class="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs font-mono rounded border border-neutral-200"
-              >
-                {{ state }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Jurisdictions -->
-          <div v-if="policy.geography.jurisdictions?.length">
-            <div class="text-neutral-500 text-xs mb-2">Jurisdictions</div>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="jurisdiction in policy.geography.jurisdictions"
-                :key="jurisdiction"
-                class="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs rounded border border-neutral-200"
-              >
-                {{ jurisdiction }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Applicable Claim Types -->
-      <div v-if="policy.applicableClaimTypes?.length" class="p-6 border-b border-neutral-200">
-        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Applicable Claim Types</h3>
-        <div class="flex flex-wrap gap-3">
-          <div
-            v-for="claimType in policy.applicableClaimTypes"
-            :key="claimType"
-            class="flex items-center gap-2 px-3 py-2 bg-neutral-50 rounded-lg border border-neutral-200"
-          >
-            <Icon
-              :name="getClaimTypeIcon(claimType)"
-              class="w-5 h-5 text-primary-600"
-            />
-            <span class="text-sm font-medium text-neutral-900">{{ claimType }}</span>
           </div>
         </div>
       </div>
@@ -406,21 +331,21 @@ const showCodeIntelligence = (code: string) => {
       </div>
 
       <!-- Clinical Rationale -->
-      <div class="p-6 border-b border-neutral-200">
+      <div v-if="displayPolicy.clinicalRationale" class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-2">Clinical Rationale</h3>
-        <p class="text-sm text-neutral-700">{{ policy.clinicalRationale }}</p>
+        <p class="text-sm text-neutral-700">{{ displayPolicy.clinicalRationale }}</p>
       </div>
 
       <!-- Guidance -->
-      <div class="p-6 border-b border-neutral-200">
+      <div v-if="displayPolicy.commonMistake || displayPolicy.fixGuidance" class="p-6 border-b border-neutral-200">
         <div class="grid grid-cols-1 gap-4">
-          <div>
+          <div v-if="displayPolicy.commonMistake">
             <h3 class="text-sm font-semibold text-neutral-900 mb-2">Common Mistake</h3>
-            <p class="text-sm text-neutral-700">{{ policy.commonMistake }}</p>
+            <p class="text-sm text-neutral-700">{{ displayPolicy.commonMistake }}</p>
           </div>
-          <div>
+          <div v-if="displayPolicy.fixGuidance">
             <h3 class="text-sm font-semibold text-neutral-900 mb-2">Fix Guidance</h3>
-            <p class="text-sm text-neutral-700">{{ policy.fixGuidance }}</p>
+            <p class="text-sm text-neutral-700">{{ displayPolicy.fixGuidance }}</p>
           </div>
         </div>
       </div>
@@ -430,11 +355,11 @@ const showCodeIntelligence = (code: string) => {
         <h3 class="text-sm font-semibold text-neutral-900 mb-4">Applicable Codes</h3>
 
         <!-- Procedure Codes -->
-        <div v-if="policy.procedureCodes && policy.procedureCodes.length > 0" class="mb-4">
+        <div v-if="displayPolicy.procedureCodes && displayPolicy.procedureCodes.length > 0" class="mb-4">
           <div class="text-xs text-neutral-600 mb-2">Procedure Codes (CPT/HCPCS)</div>
           <div class="flex flex-wrap gap-2">
             <button
-              v-for="code in policy.procedureCodes"
+              v-for="code in displayPolicy.procedureCodes"
               :key="code"
               class="px-2 py-1 bg-primary-50 text-primary-700 text-xs font-mono rounded border border-primary-200 hover:bg-primary-100 transition-colors"
               :class="{ 'cursor-pointer': codeIntelligence.has(code) }"
@@ -447,11 +372,11 @@ const showCodeIntelligence = (code: string) => {
         </div>
 
         <!-- Diagnosis Codes -->
-        <div v-if="policy.diagnosisCodes && policy.diagnosisCodes.length > 0" class="mb-4">
+        <div v-if="displayPolicy.diagnosisCodes && displayPolicy.diagnosisCodes.length > 0" class="mb-4">
           <div class="text-xs text-neutral-600 mb-2">Diagnosis Codes (ICD-10)</div>
           <div class="flex flex-wrap gap-2">
             <span
-              v-for="code in policy.diagnosisCodes"
+              v-for="code in displayPolicy.diagnosisCodes"
               :key="code"
               class="px-2 py-1 bg-secondary-50 text-secondary-700 text-xs font-mono rounded border border-secondary-200"
             >
@@ -461,11 +386,11 @@ const showCodeIntelligence = (code: string) => {
         </div>
 
         <!-- Modifiers -->
-        <div v-if="policy.modifiers && policy.modifiers.length > 0" class="mb-4">
+        <div v-if="displayPolicy.modifiers && displayPolicy.modifiers.length > 0" class="mb-4">
           <div class="text-xs text-neutral-600 mb-2">Modifiers</div>
           <div class="flex flex-wrap gap-2">
             <span
-              v-for="modifier in policy.modifiers"
+              v-for="modifier in displayPolicy.modifiers"
               :key="modifier"
               class="px-2 py-1 bg-warning-50 text-warning-700 text-xs font-mono rounded border border-warning-200"
             >
@@ -475,11 +400,11 @@ const showCodeIntelligence = (code: string) => {
         </div>
 
         <!-- Place of Service -->
-        <div v-if="policy.placeOfService && policy.placeOfService.length > 0">
+        <div v-if="displayPolicy.placesOfService && displayPolicy.placesOfService.length > 0">
           <div class="text-xs text-neutral-600 mb-2">Place of Service</div>
           <div class="flex flex-wrap gap-2">
             <span
-              v-for="pos in policy.placeOfService"
+              v-for="pos in displayPolicy.placesOfService"
               :key="pos"
               class="px-2 py-1 bg-neutral-100 text-neutral-700 text-xs font-mono rounded border border-neutral-200"
             >
@@ -489,144 +414,47 @@ const showCodeIntelligence = (code: string) => {
         </div>
 
         <!-- No codes message -->
-        <div v-if="!policy.procedureCodes?.length && !policy.diagnosisCodes?.length && !policy.modifiers?.length && !policy.placeOfService?.length" class="text-sm text-neutral-500">
+        <div v-if="!displayPolicy.procedureCodes?.length && !displayPolicy.diagnosisCodes?.length && !displayPolicy.modifiers?.length && !displayPolicy.placesOfService?.length" class="text-sm text-neutral-500">
           No specific codes configured for this policy.
         </div>
       </div>
 
-      <!-- CARC/RARC Codes -->
-      <div v-if="policy.carcCodes?.length || policy.rarcCodes?.length" class="p-6 border-b border-neutral-200">
-        <h3 class="text-sm font-semibold text-neutral-900 mb-4">Claim Adjustment Reason Codes</h3>
-
-        <div class="grid grid-cols-2 gap-6">
-          <!-- CARC Codes -->
-          <div v-if="policy.carcCodes?.length">
-            <div class="text-xs text-neutral-600 mb-3 flex items-center gap-2">
-              <span class="font-semibold">CARC Codes</span>
-              <span class="text-neutral-400">(Claim Adjustment Reason)</span>
-            </div>
-            <div class="space-y-2">
-              <div
-                v-for="carc in displayedCarcCodes"
-                :key="carc.code"
-                class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
-              >
-                <div class="flex items-start gap-3">
-                  <span class="px-2 py-0.5 bg-error-100 text-error-700 text-xs font-mono font-semibold rounded">
-                    {{ carc.code }}
-                  </span>
-                  <p class="text-sm text-neutral-700 flex-1">{{ carc.description }}</p>
-                </div>
-              </div>
-              <button
-                v-if="policy.carcCodes.length > 3"
-                class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
-                @click="showAllCarc = !showAllCarc"
-              >
-                {{ showAllCarc ? 'Show Less' : `Show All ${policy.carcCodes.length} Codes` }}
-              </button>
-            </div>
-          </div>
-
-          <!-- RARC Codes -->
-          <div v-if="policy.rarcCodes?.length">
-            <div class="text-xs text-neutral-600 mb-3 flex items-center gap-2">
-              <span class="font-semibold">RARC Codes</span>
-              <span class="text-neutral-400">(Remittance Advice Remark)</span>
-            </div>
-            <div class="space-y-2">
-              <div
-                v-for="rarc in displayedRarcCodes"
-                :key="rarc.code"
-                class="p-3 bg-neutral-50 rounded-lg border border-neutral-200"
-              >
-                <div class="flex items-start gap-3">
-                  <span class="px-2 py-0.5 bg-warning-100 text-warning-700 text-xs font-mono font-semibold rounded">
-                    {{ rarc.code }}
-                  </span>
-                  <p class="text-sm text-neutral-700 flex-1">{{ rarc.description }}</p>
-                </div>
-              </div>
-              <button
-                v-if="policy.rarcCodes.length > 3"
-                class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
-                @click="showAllRarc = !showAllRarc"
-              >
-                {{ showAllRarc ? 'Show Less' : `Show All ${policy.rarcCodes.length} Codes` }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Specialty Codes -->
-      <div v-if="policy.specialtyCodes?.length" class="p-6 border-b border-neutral-200">
-        <h3 class="text-sm font-semibold text-neutral-900 mb-4">CMS Specialty Codes</h3>
-        <div class="text-xs text-neutral-600 mb-3">
-          Provider specialties to which this policy applies
-        </div>
-        <div class="space-y-2">
-          <div
-            v-for="specialty in displayedSpecialtyCodes"
-            :key="specialty.code"
-            class="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg border border-neutral-200"
-          >
-            <span class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-mono font-semibold rounded min-w-[3rem] text-center">
-              {{ specialty.code }}
-            </span>
-            <div class="flex-1">
-              <p class="text-sm font-medium text-neutral-900">{{ specialty.description }}</p>
-              <p v-if="specialty.cmsCategory" class="text-xs text-neutral-500 mt-0.5">
-                {{ specialty.cmsCategory }}
-              </p>
-            </div>
-          </div>
-          <button
-            v-if="policy.specialtyCodes.length > 5"
-            class="text-xs text-primary-600 hover:text-primary-700 font-medium mt-2"
-            @click="showAllSpecialty = !showAllSpecialty"
-          >
-            {{ showAllSpecialty ? 'Show Less' : `Show All ${policy.specialtyCodes.length} Specialties` }}
-          </button>
-        </div>
-      </div>
-
       <!-- Restrictions -->
-      <div v-if="policy.ageRestrictions || policy.frequencyLimits" class="p-6 border-b border-neutral-200">
+      <div v-if="displayPolicy.age_restrictions || displayPolicy.frequency_limits" class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-4">Restrictions</h3>
         <div class="grid grid-cols-2 gap-4">
           <!-- Age Restrictions -->
-          <div v-if="policy.ageRestrictions" class="bg-neutral-50 rounded-lg p-3">
+          <div v-if="displayPolicy.age_restrictions" class="bg-neutral-50 rounded-lg p-3">
             <div class="text-xs text-neutral-600 mb-1">Age Restrictions</div>
             <div class="text-sm font-medium text-neutral-900">
-              <span v-if="policy.ageRestrictions.min !== undefined && policy.ageRestrictions.max !== undefined">
-                {{ policy.ageRestrictions.min }} - {{ policy.ageRestrictions.max }} years
+              <span v-if="displayPolicy.age_restrictions.min !== undefined && displayPolicy.age_restrictions.max !== undefined">
+                {{ displayPolicy.age_restrictions.min }} - {{ displayPolicy.age_restrictions.max }} years
               </span>
-              <span v-else-if="policy.ageRestrictions.min !== undefined">
-                {{ policy.ageRestrictions.min }}+ years
+              <span v-else-if="displayPolicy.age_restrictions.min !== undefined">
+                {{ displayPolicy.age_restrictions.min }}+ years
               </span>
-              <span v-else-if="policy.ageRestrictions.max !== undefined">
-                Up to {{ policy.ageRestrictions.max }} years
+              <span v-else-if="displayPolicy.age_restrictions.max !== undefined">
+                Up to {{ displayPolicy.age_restrictions.max }} years
               </span>
             </div>
           </div>
 
           <!-- Frequency Limits -->
-          <div v-if="policy.frequencyLimits" class="bg-neutral-50 rounded-lg p-3">
+          <div v-if="displayPolicy.frequency_limits" class="bg-neutral-50 rounded-lg p-3">
             <div class="text-xs text-neutral-600 mb-1">Frequency Limits</div>
             <div class="text-sm font-medium text-neutral-900">
-              {{ policy.frequencyLimits.count }} per {{ policy.frequencyLimits.period }}
+              {{ displayPolicy.frequency_limits.count }} per {{ displayPolicy.frequency_limits.period }}
             </div>
           </div>
         </div>
       </div>
 
       <!-- Reference Documents -->
-      <div v-if="policy.referenceDocs && policy.referenceDocs.length > 0" class="p-6 border-b border-neutral-200">
+      <div v-if="displayPolicy.referenceDocs && displayPolicy.referenceDocs.length > 0" class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-4">Reference Documents</h3>
         <div class="space-y-2">
           <a
-            v-for="doc in policy.referenceDocs"
+            v-for="doc in displayPolicy.referenceDocs"
             :key="doc.url"
             :href="doc.url"
             target="_blank"

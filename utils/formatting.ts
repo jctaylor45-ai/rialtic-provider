@@ -1,6 +1,6 @@
 import { format, parseISO } from 'date-fns'
 import numeral from 'numeral'
-import type { Claim, LineItem } from '~/types'
+import type { ProcessedClaim, ClaimLine } from '~/types'
 
 // Date formatting
 export function formatDate(dateString: string | undefined | null): string {
@@ -68,41 +68,95 @@ export function truncateText(text: string | undefined | null, maxLength: number)
   return text.substring(0, maxLength) + '...'
 }
 
-// Claim utilities
-export function ensureLineItems(claim: Claim | null | undefined): Claim | null {
+// PaAPI claim property helpers
+export function getClaimStatus(claim: ProcessedClaim): string {
+  return (claim.additionalDetails as { status?: string })?.status || 'pending'
+}
+
+export function getClaimBilledAmount(claim: ProcessedClaim): number {
+  return claim.total?.value || 0
+}
+
+export function getClaimPaidAmount(claim: ProcessedClaim): number {
+  return (claim.additionalDetails as { paidAmount?: number })?.paidAmount || 0
+}
+
+export function getClaimDenialReason(claim: ProcessedClaim): string | undefined {
+  return (claim.additionalDetails as { denialReason?: string })?.denialReason
+}
+
+export function getClaimDateOfService(claim: ProcessedClaim): string | undefined {
+  return claim.billablePeriod?.start || claim.servicedPeriod?.start
+}
+
+export function getClaimSubmissionDate(claim: ProcessedClaim): string | undefined {
+  return claim.created
+}
+
+export function getClaimAppealStatus(claim: ProcessedClaim): string | undefined {
+  return (claim.additionalDetails as { appealStatus?: string })?.appealStatus
+}
+
+export function getClaimProviderId(claim: ProcessedClaim): string | undefined {
+  return claim.billingProviderIdentifiers?.npi ?? undefined
+}
+
+export function getClaimProviderName(claim: ProcessedClaim): string | undefined {
+  return claim.provider?.practitioner?.name?.family ?? undefined
+}
+
+export function getClaimProcedureCodes(claim: ProcessedClaim): string[] {
+  // First check additionalDetails.procedureCodes (available in list view)
+  const additionalCodes = (claim.additionalDetails as { procedureCodes?: string[] })?.procedureCodes
+  if (additionalCodes && additionalCodes.length > 0) {
+    return additionalCodes
+  }
+
+  // Fall back to extracting from claimLines (available in detail view)
+  if (!claim.claimLines) return []
+  return claim.claimLines
+    .map(line => line.productOrService?.coding?.[0]?.code)
+    .filter((code): code is string => !!code)
+}
+
+export function getClaimMemberId(claim: ProcessedClaim): string | undefined {
+  return claim.subscriberId ?? undefined
+}
+
+// Claim utilities - now works with PaAPI ProcessedClaim
+export function ensureClaimLines(claim: ProcessedClaim | null | undefined): ProcessedClaim | null {
   if (!claim) return null
 
-  // If lineItems already exist, return as is
-  if (claim.lineItems && claim.lineItems.length > 0) {
+  // If claimLines already exist, return as is
+  if (claim.claimLines && claim.claimLines.length > 0) {
     return claim
   }
 
-  // Create lineItems from procedureCodes
-  const procedureCodes = claim.procedureCodes || (claim.procedureCode ? [claim.procedureCode] : [])
+  // Create a synthetic claim line from claim-level data
+  const billedAmount = getClaimBilledAmount(claim)
+  const dateOfService = getClaimDateOfService(claim)
 
-  const lineItems: LineItem[] = procedureCodes.map((code, idx) => ({
-    lineNumber: idx + 1,
-    procedureCode: code,
-    modifiers: claim.modifiers || [],
-    diagnosisCodes: claim.diagnosisCodes || [],
-    units: 1,
-    unitsType: 'UN',
-    billedAmount: claim.billedAmount / procedureCodes.length,
-    paidAmount: (claim.paidAmount || 0) / procedureCodes.length,
-    status: claim.status,
-    dateOfService: claim.dateOfService,
-    dateOfServiceEnd: claim.dateOfServiceEnd || claim.dateOfService,
-    placeOfService: '11',  // Office
-    renderingProviderName: claim.providerName,
-    renderingProviderNPI: claim.billingProviderNPI,
-    renderingProviderTaxonomy: claim.billingProviderTaxonomy,
-    parIndicator: claim.parIndicator,
-    editsFired: claim.denialReason ? [claim.denialReason] : [],
-    policiesTriggered: claim.policyIds || [],
-  }))
+  const claimLines: ClaimLine[] = [{
+    sequence: 1,
+    lineNumber: 1,
+    productOrService: { coding: [{ code: '' }] },
+    modifierCodes: [],
+    quantity: { value: 1 },
+    net: { value: billedAmount, currency: 'USD' },
+    servicedPeriod: dateOfService ? { start: dateOfService, end: dateOfService } : undefined,
+    diagnosis1: { codeableConcept: '', sequence: 1, type: '' },
+    diagnosisAdditional: [],
+    diagnosisSequence: [],
+    renderingProvider: { sequence: 1, provider: {}, role: { coding: [] } },
+    renderingProviderIdentifiers: null,
+    ndcCode: null,
+    locationCodeableConcept: undefined,
+    careTeamSequence: [],
+    additionalDetails: {},
+  }]
 
   return {
     ...claim,
-    lineItems,
+    claimLines,
   }
 }

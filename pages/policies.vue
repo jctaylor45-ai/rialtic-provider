@@ -237,6 +237,28 @@ import {
 import type { Policy } from '~/types'
 import type { Pattern } from '~/types/enhancements'
 
+// PaAPI policy property helpers
+function getPolicyTopic(policy: Policy): string {
+  return policy.topic?.name || ''
+}
+
+function getPolicySource(policy: Policy): string | undefined {
+  return policy.source
+}
+
+function getPolicyHitRate(policy: Policy): number {
+  return policy.hit_rate || 0
+}
+
+function getPolicyDenialRate(policy: Policy): number {
+  return policy.denial_rate || 0
+}
+
+function getPolicyImpact(policy: Policy): number {
+  // Use the impact value from the database if available
+  return policy.impact || 0
+}
+
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const router = useRouter()
@@ -270,15 +292,14 @@ const hasSelection = computed(() => selectedCount.value > 0)
 const handleExportSelected = () => {
   const policies = selectedPolicies.value
   // Create CSV content
-  const headers = ['Policy ID', 'Name', 'Topic', 'Source', 'Hit Rate', 'Denial Rate', 'Impact']
+  const headers = ['Policy ID', 'Name', 'Topic', 'Hit Rate', 'Denial Rate', 'Impact']
   const rows = policies.map(p => [
     p.id,
     p.name,
-    p.topic,
-    p.source,
-    (p.hitRate * 100).toFixed(1) + '%',
-    (p.denialRate * 100).toFixed(1) + '%',
-    p.impact.toString(),
+    getPolicyTopic(p),
+    (getPolicyHitRate(p) * 100).toFixed(1) + '%',
+    (getPolicyDenialRate(p) * 100).toFixed(1) + '%',
+    getPolicyImpact(p).toString(),
   ])
   const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
 
@@ -378,13 +399,13 @@ const sorting = computed<SortingState>(() => {
 
 // Dynamic filter options from policy data
 const uniqueTopics = computed(() => {
-  const topics = new Set(appStore.policies.map(p => p.topic).filter(Boolean))
+  const topics = new Set(appStore.policies.map(p => getPolicyTopic(p)).filter(Boolean))
   return Array.from(topics).sort()
 })
 
 const uniqueSources = computed(() => {
-  const sources = new Set(appStore.policies.map(p => p.source).filter(Boolean))
-  return Array.from(sources).sort()
+  const sources = new Set(appStore.policies.map(p => getPolicySource(p)).filter(Boolean))
+  return Array.from(sources).sort() as string[]
 })
 
 // Filter policies based on search and filters (now using URL-synced refs)
@@ -396,16 +417,16 @@ const filteredPolicies = computed(() => {
     result = result.filter(p =>
       p.name.toLowerCase().includes(query) ||
       p.id.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query)
+      (p.description || '').toLowerCase().includes(query)
     )
   }
 
   if (filterTopic.value !== 'all') {
-    result = result.filter(p => p.topic === filterTopic.value)
+    result = result.filter(p => getPolicyTopic(p) === filterTopic.value)
   }
 
   if (filterSource.value !== 'all') {
-    result = result.filter(p => p.source === filterSource.value)
+    result = result.filter(p => getPolicySource(p) === filterSource.value)
   }
 
   return result
@@ -478,11 +499,11 @@ const columns: ColumnDef<Policy>[] = [
   },
   {
     id: 'topic',
-    accessorKey: 'topic',
+    accessorFn: (row) => getPolicyTopic(row),
     header: 'Topic',
     size: 140,
     enableSorting: false,
-    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, row.original.topic),
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, getPolicyTopic(row.original)),
   },
   {
     id: 'patterns',
@@ -518,24 +539,24 @@ const columns: ColumnDef<Policy>[] = [
   },
   {
     id: 'hitRate',
-    accessorKey: 'hitRate',
+    accessorFn: (row) => getPolicyHitRate(row),
     header: 'Hit Rate',
     size: 100,
-    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(row.original.hitRate)),
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(getPolicyHitRate(row.original))),
   },
   {
     id: 'denialRate',
-    accessorKey: 'denialRate',
+    accessorFn: (row) => getPolicyDenialRate(row),
     header: 'Denial Rate',
     size: 100,
-    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(row.original.denialRate)),
+    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-900' }, formatPercentage(getPolicyDenialRate(row.original))),
   },
   {
     id: 'impact',
-    accessorKey: 'impact',
+    accessorFn: (row) => getPolicyImpact(row),
     header: 'Impact',
     size: 110,
-    cell: ({ row }) => h('span', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(row.original.impact)),
+    cell: ({ row }) => h('span', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(getPolicyImpact(row.original))),
   },
 ]
 

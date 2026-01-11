@@ -3,8 +3,6 @@
  * Expand transition component for collapsible content
  * Animates height from 0 to auto
  */
-defineOptions({ name: 'TransitionExpand' })
-
 const onEnter = (el: Element) => {
   const element = el as HTMLElement
   element.style.height = '0'

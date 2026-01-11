@@ -14,8 +14,6 @@ const props = defineProps<{
   mode?: 'default' | 'out-in' | 'in-out'
 }>()
 
-defineOptions({ name: 'TransitionFade' })
-
 const durationClass = computed(() => {
   if (props.duration) {
     return `duration-${props.duration}`

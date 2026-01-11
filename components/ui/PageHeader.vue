@@ -10,8 +10,6 @@ defineProps<{
   subtitle?: string
   breadcrumbs?: BreadcrumbItem[]
 }>()
-
-defineOptions({ name: 'UiPageHeader' })
 </script>
 
 <template>

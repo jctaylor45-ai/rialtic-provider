@@ -6,8 +6,6 @@
 defineProps<{
   size?: 'sm' | 'md' | 'lg'
 }>()
-
-defineOptions({ name: 'UiLoading' })
 </script>
 
 <template>

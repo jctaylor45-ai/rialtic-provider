@@ -9,9 +9,16 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { policies, policyProcedureCodes, policyDiagnosisCodes } from '~/server/database/schema'
+import {
+  policies,
+  policyProcedureCodes,
+  policyDiagnosisCodes,
+  policyModifiers,
+  policyPlacesOfService,
+  policyReferenceDocs,
+} from '~/server/database/schema'
 import { eq, desc, and, like, sql } from 'drizzle-orm'
-import { policyListAdapter, type DbPolicy } from '~/server/utils/policyAdapter'
+import { policyListAdapter, type DbPolicy, type DbReferenceDoc } from '~/server/utils/policyAdapter'
 import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
 
 interface PaapiPoliciesResponse {
@@ -90,23 +97,35 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Get procedure and diagnosis codes for each policy and transform to PaAPI format
+    // Get all related data for each policy and transform to PaAPI format
     const transformedPolicies = await Promise.all(
       policiesList.map(async (policy) => {
-        const procedureCodes = await db
-          .select({ code: policyProcedureCodes.code })
-          .from(policyProcedureCodes)
-          .where(eq(policyProcedureCodes.policyId, policy.id))
-
-        const diagnosisCodes = await db
-          .select({ code: policyDiagnosisCodes.code })
-          .from(policyDiagnosisCodes)
-          .where(eq(policyDiagnosisCodes.policyId, policy.id))
+        // Fetch all related codes in parallel
+        const [procedureCodes, diagnosisCodes, modifiers, placesOfService, referenceDocs] = await Promise.all([
+          db.select({ code: policyProcedureCodes.code })
+            .from(policyProcedureCodes)
+            .where(eq(policyProcedureCodes.policyId, policy.id)),
+          db.select({ code: policyDiagnosisCodes.code })
+            .from(policyDiagnosisCodes)
+            .where(eq(policyDiagnosisCodes.policyId, policy.id)),
+          db.select({ modifier: policyModifiers.modifier })
+            .from(policyModifiers)
+            .where(eq(policyModifiers.policyId, policy.id)),
+          db.select({ placeOfService: policyPlacesOfService.placeOfService })
+            .from(policyPlacesOfService)
+            .where(eq(policyPlacesOfService.policyId, policy.id)),
+          db.select()
+            .from(policyReferenceDocs)
+            .where(eq(policyReferenceDocs.policyId, policy.id)),
+        ])
 
         return policyListAdapter(
           policy as unknown as DbPolicy,
           procedureCodes.map(c => c.code),
           diagnosisCodes.map(c => c.code),
+          modifiers.map(m => m.modifier),
+          placesOfService.map(p => p.placeOfService),
+          referenceDocs as DbReferenceDoc[],
         )
       })
     )

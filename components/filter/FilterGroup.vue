@@ -8,8 +8,6 @@ defineProps<{
   collapsible?: boolean
 }>()
 
-defineOptions({ name: 'FilterGroup' })
-
 const isExpanded = ref(true)
 </script>
 

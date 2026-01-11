@@ -18,8 +18,6 @@ defineProps<{
   collapsed?: boolean
 }>()
 
-defineOptions({ name: 'SideNav' })
-
 const route = useRoute()
 const expandedGroups = ref<Set<string>>(new Set())
 

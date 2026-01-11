@@ -20,10 +20,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: [Date | null, Date | null]): void
+  'update:modelValue': [value: [Date | null, Date | null]]
 }>()
-
-defineOptions({ name: 'DateRangeFilter' })
 
 const { presets } = useDatePresets()
 const isOpen = ref(false)

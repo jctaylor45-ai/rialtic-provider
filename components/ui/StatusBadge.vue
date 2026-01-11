@@ -10,8 +10,6 @@ const props = defineProps<{
   size?: 'sm' | 'md'
 }>()
 
-defineOptions({ name: 'UiStatusBadge' })
-
 const statusConfig = computed(() => {
   const statusLower = props.status.toLowerCase()
 

@@ -21,7 +21,8 @@ import {
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
-    const days = parseInt(query.days as string) || 30
+    // Default to 365 days to capture more sample data in demos
+    const days = parseInt(query.days as string) || 365
 
     // Check data source configuration
     const dataSourceConfig = await getDataSourceConfig()

@@ -401,6 +401,8 @@ export function claimAdapter(
       ltssIndicator: claim.ltssIndicator,
       parIndicator: claim.parIndicator,
       aiInsight: claim.aiInsight,
+      // Include procedure codes for list view filtering/display
+      procedureCodes: procedureCodes.length > 0 ? procedureCodes : undefined,
     } as ClaimAdditionalDetails,
     warnings: [],
   }
@@ -454,9 +456,14 @@ export function claimWithInsightsAdapter(
 
 /**
  * Transform database claim for list responses (without line items)
+ * Now accepts diagnosis and procedure codes for filtering/display
  */
-export function claimListAdapter(claim: DbClaim): ProcessedClaim {
-  return claimAdapter(claim, [], [])
+export function claimListAdapter(
+  claim: DbClaim,
+  diagnosisCodes: DbDiagnosisCode[] = [],
+  procedureCodes: string[] = [],
+): ProcessedClaim {
+  return claimAdapter(claim, diagnosisCodes, procedureCodes)
 }
 
 export type { DbClaim, DbLineItem, DbLinePolicy, DbDiagnosisCode, DbAppeal }

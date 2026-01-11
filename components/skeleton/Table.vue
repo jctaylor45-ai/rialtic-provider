@@ -7,8 +7,6 @@ defineProps<{
   rows?: number
   columns?: number
 }>()
-
-defineOptions({ name: 'SkeletonTable' })
 </script>
 
 <template>

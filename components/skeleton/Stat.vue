@@ -3,7 +3,6 @@
  * Skeleton loader for stat/metric cards
  * Aligned with console-ui @rialtic/ui
  */
-defineOptions({ name: 'SkeletonStat' })
 </script>
 
 <template>

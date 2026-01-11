@@ -3,7 +3,7 @@
  *
  * GET /api/v1/policies/:id
  *
- * Returns a single policy with all related codes and documentation.
+ * Returns a single policy in PaAPI-compatible format with all related data.
  */
 
 import { defineEventHandler, getRouterParam, createError } from 'h3'
@@ -20,6 +20,13 @@ import {
   patterns,
 } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
+import {
+  policyDetailAdapter,
+  type DbPolicy,
+  type DbReferenceDoc,
+  type DbRelatedPolicy,
+  type DbRelatedPattern,
+} from '~/server/utils/policyAdapter'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -112,16 +119,17 @@ export default defineEventHandler(async (event) => {
       })
     )
 
-    return {
-      ...policy,
-      procedureCodes: procedureCodes.map(c => c.code),
-      diagnosisCodes: diagnosisCodes.map(c => c.code),
-      modifiers: modifiers.map(m => m.modifier),
-      placesOfService: placesOfService.map(p => p.placeOfService),
-      referenceDocs,
-      relatedPolicies: relatedPoliciesFull.filter(Boolean),
-      relatedPatterns,
-    }
+    // Transform to PaAPI format using the adapter
+    return policyDetailAdapter(
+      policy as unknown as DbPolicy,
+      procedureCodes.map(c => c.code),
+      diagnosisCodes.map(c => c.code),
+      modifiers.map(m => m.modifier),
+      placesOfService.map(p => p.placeOfService),
+      referenceDocs as DbReferenceDoc[],
+      relatedPoliciesFull.filter(Boolean) as DbRelatedPolicy[],
+      relatedPatterns as DbRelatedPattern[],
+    )
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) {
       throw error

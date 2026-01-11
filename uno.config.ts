@@ -9,6 +9,53 @@ import {
 } from 'unocss'
 import presetWebFonts from '@unocss/preset-web-fonts'
 
+// CSS Variables for runtime theming (aligned with console-ui patterns)
+const cssVariables = {
+  // Primary colors
+  '--color-primary-50': '#E8EAF7',
+  '--color-primary-100': '#C6CAEB',
+  '--color-primary-200': '#949FDE',
+  '--color-primary-300': '#6F7CCD',
+  '--color-primary-400': '#5C6CC6',
+  '--color-primary-500': '#3F52BC',
+  '--color-primary-600': '#3848A4',
+  '--color-primary-700': '#2F3D8A',
+  '--color-primary-800': '#273170',
+  '--color-primary-900': '#1C214B',
+  // Secondary colors
+  '--color-secondary-50': '#E1F5FD',
+  '--color-secondary-100': '#A3E0F9',
+  '--color-secondary-200': '#81D5F6',
+  '--color-secondary-300': '#4FC4F1',
+  '--color-secondary-400': '#28B7F0',
+  '--color-secondary-500': '#00ABEE',
+  '--color-secondary-600': '#009DDF',
+  '--color-secondary-700': '#0E93C8',
+  '--color-secondary-800': '#0270A2',
+  '--color-secondary-900': '#005181',
+  // Neutral colors
+  '--color-neutral-50': '#F5F6F8',
+  '--color-neutral-100': '#EBEFF2',
+  '--color-neutral-200': '#DCE1EA',
+  '--color-neutral-300': '#CDD4E1',
+  '--color-neutral-400': '#B4BFD2',
+  '--color-neutral-500': '#9BAAC4',
+  '--color-neutral-600': '#8590A3',
+  '--color-neutral-700': '#707683',
+  '--color-neutral-800': '#4C5862',
+  '--color-neutral-900': '#293446',
+  // Semantic colors
+  '--color-success-500': '#00A788',
+  '--color-success-600': '#00856D',
+  '--color-warning-400': '#F2A425',
+  '--color-warning-500': '#CD830C',
+  '--color-error-500': '#DC627D',
+  '--color-error-700': '#BD2949',
+  // Surface colors
+  '--color-surface': '#FFFFFF',
+  '--color-surface-bg': '#F5F6F8',
+}
+
 // Typography shortcuts (aligned with @rialtic/theme)
 const typography = {
   'text-large-1': 'text-5xl md:text-6xl font-medium',
@@ -91,6 +138,16 @@ export default defineConfig({
     }),
   ],
   transformers: [transformerDirectives()],
+  preflights: [
+    {
+      getCSS: () => {
+        const vars = Object.entries(cssVariables)
+          .map(([key, value]) => `  ${key}: ${value};`)
+          .join('\n')
+        return `:root {\n${vars}\n}`
+      },
+    },
+  ],
   shortcuts: {
     ...typography,
     ...components,

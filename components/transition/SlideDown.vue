@@ -3,7 +3,6 @@
  * SlideDown transition component
  * Animates content sliding down from above
  */
-defineOptions({ name: 'TransitionSlideDown' })
 </script>
 
 <template>

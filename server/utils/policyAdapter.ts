@@ -116,6 +116,9 @@ export function policyAdapter(
     specialty_codes: [],
     cpt_codes: procedureCodes.filter(c => c.length === 5 && /^\d+$/.test(c)),
     hcpcs_codes: procedureCodes.filter(c => /^[A-Z]\d{4}$/.test(c)),
+    icd_codes: diagnosisCodes,
+    modifiers,
+    places_of_service: placesOfService,
     insight_type: policy.logicType ? [policy.logicType] : [],
     logic_type_primary: policy.logicType || '',
     logic_type_supporting: '',
@@ -175,6 +178,9 @@ export function policyAdapter(
     learning_markers_count: policy.learningMarkersCount || undefined,
     recent_tests: policy.recentTests || undefined,
 
+    // Source
+    source: policy.source || undefined,
+
     // Dates
     effective_date: policy.effectiveDate,
     created_at: policy.createdAt || undefined,
@@ -182,14 +188,17 @@ export function policyAdapter(
 }
 
 /**
- * Transform database policy for list responses (minimal data)
+ * Transform database policy for list responses (includes codes for filtering/display)
  */
 export function policyListAdapter(
   policy: DbPolicy,
   procedureCodes: string[] = [],
   diagnosisCodes: string[] = [],
+  modifiers: string[] = [],
+  placesOfService: string[] = [],
+  referenceDocs: DbReferenceDoc[] = [],
 ): Policy {
-  return policyAdapter(policy, procedureCodes, diagnosisCodes)
+  return policyAdapter(policy, procedureCodes, diagnosisCodes, modifiers, placesOfService, referenceDocs)
 }
 
 /**

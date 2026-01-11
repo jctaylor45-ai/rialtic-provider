@@ -8,10 +8,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'clear-all'): void
+  'clear-all': []
 }>()
-
-defineOptions({ name: 'FilterBar' })
 </script>
 
 <template>

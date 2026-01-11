@@ -29,10 +29,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: (string | number)[]): void
+  'update:modelValue': [value: (string | number)[]]
 }>()
-
-defineOptions({ name: 'FilterDropdown' })
 
 const isOpen = ref(false)
 const searchQuery = ref('')

@@ -37,12 +37,10 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:sorting', value: SortingState): void
-  (e: 'update:rowSelection', value: RowSelectionState): void
-  (e: 'rowClick', row: TData): void
+  'update:sorting': [value: SortingState]
+  'update:rowSelection': [value: RowSelectionState]
+  rowClick: [row: TData]
 }>()
-
-defineOptions({ name: 'UiDataTable' })
 
 // State
 const sorting = ref<SortingState>([])

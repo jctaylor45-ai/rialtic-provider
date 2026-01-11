@@ -24,11 +24,9 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'open'): void
-  (e: 'close'): void
+  open: []
+  close: []
 }>()
-
-defineOptions({ name: 'UiPopover' })
 
 const isOpen = ref(false)
 const referenceEl = ref<HTMLElement | null>(null)

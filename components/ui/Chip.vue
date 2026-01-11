@@ -29,8 +29,6 @@ defineEmits<{
   remove: []
 }>()
 
-defineOptions({ name: 'UiChip' })
-
 const variantClasses = computed(() => {
   if (props.colorConfig) {
     return [

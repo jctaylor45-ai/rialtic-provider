@@ -20,10 +20,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'close'): void
+  close: []
 }>()
-
-defineOptions({ name: 'AppDetailsDrawer' })
 
 // Close on escape key
 onKeyStroke('Escape', () => {

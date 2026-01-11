@@ -65,12 +65,13 @@ export function useClaimRecovery() {
       .map(id => {
         const policy = appStore.policies.find(p => p.id === id)
         if (!policy) return null
+        const logicType = policy.edit_types?.[0]?.edit_type || policy.policy_details?.logic_type_primary || ''
         return {
           policyId: policy.id,
           policyName: policy.name,
-          logicType: policy.logicType,
-          description: policy.description || policy.clinicalRationale || '',
-          fixGuidance: policy.fixGuidance || generateDefaultGuidance(policy.logicType),
+          logicType,
+          description: policy.description || policy.clinical_rationale || '',
+          fixGuidance: policy.fix_guidance || generateDefaultGuidance(logicType),
         }
       })
       .filter((p): p is PolicyFailureDetail => p !== null)

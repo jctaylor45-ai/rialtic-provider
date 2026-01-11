@@ -186,7 +186,44 @@
 </template>
 
 <script setup lang="ts">
-import type { Claim, LineItem } from '~/types'
+import type { ProcessedClaim, ClaimLine } from '~/types'
+import {
+  getClaimStatus,
+  getClaimBilledAmount,
+  getClaimDateOfService,
+  getClaimDenialReason,
+  getClaimMemberId,
+} from '~/utils/formatting'
+
+// ClaimLine helpers
+function getLineItemProcedureCode(line: ClaimLine): string {
+  return line.productOrService?.coding?.[0]?.code || ''
+}
+
+function getLineItemModifiers(line: ClaimLine): string[] {
+  return line.modifierCodes || []
+}
+
+function getLineItemUnits(line: ClaimLine): number {
+  return line.quantity?.value || 1
+}
+
+function getLineItemBilledAmount(line: ClaimLine): number {
+  return line.net?.value || 0
+}
+
+function getLineItemDateOfService(line: ClaimLine): string | undefined {
+  return line.servicedPeriod?.start
+}
+
+function getLineItemDiagnosisCodes(line: ClaimLine): string[] {
+  const codes: string[] = []
+  if (line.diagnosis1?.codeableConcept) codes.push(line.diagnosis1.codeableConcept)
+  if (line.diagnosisAdditional) {
+    codes.push(...line.diagnosisAdditional.map(d => d.codeableConcept).filter(Boolean))
+  }
+  return codes
+}
 
 const route = useRoute()
 const appStore = useAppStore()
@@ -218,7 +255,7 @@ const claimSearch = ref('')
 const searchError = ref('')
 
 // Claim data fetched from API (includes line items)
-const fetchedClaim = ref<Claim | null>(null)
+const fetchedClaim = ref<ProcessedClaim | null>(null)
 const isLoadingClaim = ref(false)
 const claimFetchError = ref('')
 
@@ -237,7 +274,7 @@ async function fetchClaimDetails(id: string) {
   claimFetchError.value = ''
 
   try {
-    const response = await $fetch<Claim>(`/api/v1/claims/${id}`)
+    const response = await $fetch<ProcessedClaim>(`/api/v1/claims/${id}`)
     fetchedClaim.value = response
   } catch (error) {
     console.error('Failed to fetch claim details:', error)
@@ -344,41 +381,54 @@ watch([focusLineNumber, () => claimLines.value.length], ([lineNum, linesCount]) 
   }
 }, { immediate: true })
 
-function initializeClaimLines(claim: Claim) {
-  claimLines.value = (claim.lineItems || []).map((item, index) => ({
-    id: `line-${index + 1}`,
-    isNew: false,
-    originalData: { ...item },
-    editedData: {
-      lineNumber: index + 1,
-      dateOfServiceFrom: claim.dateOfService,
-      dateOfServiceTo: claim.dateOfService,
-      procedureCode: item.procedureCode,
-      ndcCode: '',
-      placeOfService: '11',
-      units: item.units,
-      modifier1: item.modifiers?.[0] || '',
-      modifier2: item.modifiers?.[1] || '',
-      modifier3: item.modifiers?.[2] || '',
-      modifier4: item.modifiers?.[3] || '',
-      diagnosisCode1: claim.diagnosisCodes?.[0] || '',
-      diagnosisCode2: claim.diagnosisCodes?.[1] || '',
-      diagnosisCode3: claim.diagnosisCodes?.[2] || '',
-      diagnosisCode4: claim.diagnosisCodes?.[3] || '',
-      renderingProviderNpi: claim.billingProviderNPI || '',
-      billedAmount: item.billedAmount,
-      patientName: claim.patientName,
-      memberId: claim.memberId || '',
-      patientDob: claim.patientDOB || '',
-      priorAuthNumber: claim.priorAuthNumber || '',
-    },
-    existingInsights: claim.status === 'denied' ? [{
-      type: 'denial' as const,
-      reason: claim.denialReason || 'Unknown denial reason',
-      code: 'DENIAL',
-    }] : [],
-    testInsights: [],
-  }))
+function initializeClaimLines(claim: ProcessedClaim) {
+  const dateOfService = getClaimDateOfService(claim) || ''
+  const diagnosisCodes = claim.diagnosisCodes?.map(d => d.codeableConcept) || []
+  const billingNpi = claim.billingProviderIdentifiers?.npi || ''
+  const priorAuth = claim.insurance?.[0]?.preAuthRef?.[0] || ''
+  const patientDob = claim.patient?.birthDate || ''
+  const status = getClaimStatus(claim)
+  const denialReason = getClaimDenialReason(claim)
+
+  claimLines.value = (claim.claimLines || []).map((item, index) => {
+    const modifiers = getLineItemModifiers(item)
+    const lineDiagnoses = getLineItemDiagnosisCodes(item)
+
+    return {
+      id: `line-${index + 1}`,
+      isNew: false,
+      originalData: { ...item },
+      editedData: {
+        lineNumber: index + 1,
+        dateOfServiceFrom: getLineItemDateOfService(item) || dateOfService,
+        dateOfServiceTo: getLineItemDateOfService(item) || dateOfService,
+        procedureCode: getLineItemProcedureCode(item),
+        ndcCode: item.ndcCode || '',
+        placeOfService: item.locationCodeableConcept?.coding?.[0]?.code || '11',
+        units: getLineItemUnits(item),
+        modifier1: modifiers[0] || '',
+        modifier2: modifiers[1] || '',
+        modifier3: modifiers[2] || '',
+        modifier4: modifiers[3] || '',
+        diagnosisCode1: lineDiagnoses[0] || diagnosisCodes[0] || '',
+        diagnosisCode2: lineDiagnoses[1] || diagnosisCodes[1] || '',
+        diagnosisCode3: lineDiagnoses[2] || diagnosisCodes[2] || '',
+        diagnosisCode4: lineDiagnoses[3] || diagnosisCodes[3] || '',
+        renderingProviderNpi: item.renderingProviderIdentifiers?.npi || billingNpi,
+        billedAmount: getLineItemBilledAmount(item),
+        patientName: claim.patientName || '',
+        memberId: getClaimMemberId(claim) || '',
+        patientDob: patientDob,
+        priorAuthNumber: priorAuth,
+      },
+      existingInsights: status === 'denied' ? [{
+        type: 'denial' as const,
+        reason: denialReason || 'Unknown denial reason',
+        code: 'DENIAL',
+      }] : [],
+      testInsights: [],
+    }
+  })
 
   // Reset state
   newLineCounter.value = 0
@@ -398,7 +448,7 @@ const hasChanges = computed(() => {
 
 // Methods
 function getOriginalLineData(line: ClaimLabLine) {
-  const original = originalClaim.value?.lineItems?.find(
+  const original = originalClaim.value?.claimLines?.find(
     (_, i) => `line-${i + 1}` === line.id
   )
   return original || null
@@ -410,14 +460,21 @@ function addClaimLine() {
   newLineCounter.value++
   const newLineNumber = claimLines.value.length + 1
 
+  const claim = originalClaim.value
+  const dateOfService = claim ? getClaimDateOfService(claim) || '' : ''
+  const diagnosisCodes = claim?.diagnosisCodes?.map(d => d.codeableConcept) || []
+  const billingNpi = claim?.billingProviderIdentifiers?.npi || ''
+  const priorAuth = claim?.insurance?.[0]?.preAuthRef?.[0] || ''
+  const patientDob = claim?.patient?.birthDate || ''
+
   claimLines.value.push({
     id: `new-line-${newLineCounter.value}`,
     isNew: true,
     originalData: null,
     editedData: {
       lineNumber: newLineNumber,
-      dateOfServiceFrom: originalClaim.value?.dateOfService || '',
-      dateOfServiceTo: originalClaim.value?.dateOfService || '',
+      dateOfServiceFrom: dateOfService,
+      dateOfServiceTo: dateOfService,
       procedureCode: '',
       ndcCode: '',
       placeOfService: '11',
@@ -426,16 +483,16 @@ function addClaimLine() {
       modifier2: '',
       modifier3: '',
       modifier4: '',
-      diagnosisCode1: originalClaim.value?.diagnosisCodes?.[0] || '',
+      diagnosisCode1: diagnosisCodes[0] || '',
       diagnosisCode2: '',
       diagnosisCode3: '',
       diagnosisCode4: '',
-      renderingProviderNpi: originalClaim.value?.billingProviderNPI || '',
+      renderingProviderNpi: billingNpi,
       billedAmount: 0,
-      patientName: originalClaim.value?.patientName || '',
-      memberId: originalClaim.value?.memberId || '',
-      patientDob: originalClaim.value?.patientDOB || '',
-      priorAuthNumber: originalClaim.value?.priorAuthNumber || '',
+      patientName: claim?.patientName || '',
+      memberId: claim ? getClaimMemberId(claim) || '' : '',
+      patientDob: patientDob,
+      priorAuthNumber: priorAuth,
     },
     existingInsights: [],
     testInsights: [],
@@ -473,12 +530,13 @@ function lineHasEdits(lineId: string): boolean {
   const original = getOriginalLineData(line)
   if (!original) return false
 
-  return line.editedData.procedureCode !== original.procedureCode ||
-    line.editedData.units !== original.units ||
-    line.editedData.modifier1 !== (original.modifiers?.[0] || '') ||
-    line.editedData.modifier2 !== (original.modifiers?.[1] || '') ||
-    line.editedData.modifier3 !== (original.modifiers?.[2] || '') ||
-    line.editedData.modifier4 !== (original.modifiers?.[3] || '')
+  const originalModifiers = getLineItemModifiers(original)
+  return line.editedData.procedureCode !== getLineItemProcedureCode(original) ||
+    line.editedData.units !== getLineItemUnits(original) ||
+    line.editedData.modifier1 !== (originalModifiers[0] || '') ||
+    line.editedData.modifier2 !== (originalModifiers[1] || '') ||
+    line.editedData.modifier3 !== (originalModifiers[2] || '') ||
+    line.editedData.modifier4 !== (originalModifiers[3] || '')
 }
 
 function resetChanges() {
@@ -494,7 +552,7 @@ async function handleClaimSearch() {
 
   // Try to fetch from API directly
   try {
-    await $fetch<Claim>(`/api/v1/claims/${searchId}`)
+    await $fetch<ProcessedClaim>(`/api/v1/claims/${searchId}`)
     // If successful, navigate to it
     navigateTo({ path: '/claim-lab', query: { claim: searchId, pattern: patternId.value || undefined } })
     claimSearch.value = ''
@@ -534,7 +592,8 @@ function selectLine(lineId: string) {
 function getExistingStatus(line: ClaimLabLine): 'approved' | 'denied' | 'pending' | 'new' {
   if (line.isNew) return 'new'
   if (line.existingInsights.some(i => i.type === 'denial')) return 'denied'
-  return originalClaim.value?.status === 'approved' ? 'approved' : 'pending'
+  const status = originalClaim.value ? getClaimStatus(originalClaim.value) : 'pending'
+  return status === 'approved' ? 'approved' : 'pending'
 }
 
 function getTestStatus(line: ClaimLabLine): 'approved' | 'denied' | 'untested' | 'improved' {
@@ -836,7 +895,7 @@ interface RowField {
 interface ClaimLabLine {
   id: string
   isNew: boolean
-  originalData: LineItem | null
+  originalData: ClaimLine | null
   editedData: ClaimLineData
   existingInsights: TestInsight[]
   testInsights: TestInsight[]

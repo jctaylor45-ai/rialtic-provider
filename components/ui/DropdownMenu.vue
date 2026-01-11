@@ -32,10 +32,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'select', item: MenuItem): void
+  select: [item: MenuItem]
 }>()
-
-defineOptions({ name: 'UiDropdownMenu' })
 
 const isOpen = ref(false)
 const referenceEl = ref<HTMLElement | null>(null)

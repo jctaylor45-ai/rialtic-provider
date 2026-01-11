@@ -12,12 +12,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'viewClaims', pattern: Pattern): void
-  (e: 'recordAction', pattern: Pattern): void
+  close: []
+  viewClaims: [pattern: Pattern]
+  recordAction: [pattern: Pattern]
 }>()
-
-defineOptions({ name: 'InsightDetailsContent' })
 
 // Stores
 const patternsStore = usePatternsStore()

@@ -7,18 +7,17 @@
  */
 import { format, parseISO } from 'date-fns'
 import type { Pattern } from '~/types/enhancements'
-import type { Claim } from '~/types'
+import type { ProcessedClaimWithInsights } from '~/types'
 import { useClaimRecovery } from '~/composables/useClaimRecovery'
+import { normalizeClaimForDisplay, type DisplayClaim } from '~/composables/useClaimDisplay'
 
 const props = defineProps<{
   claimId: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'close'): void
+  close: []
 }>()
-
-defineOptions({ name: 'ClaimDetailsContent' })
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
@@ -57,7 +56,7 @@ const formatDateLong = (dateStr: string | undefined | null): string => {
 }
 
 // Fetch full claim details from API (includes line items)
-const claimData = ref<Claim | null>(null)
+const claimData = ref<ProcessedClaimWithInsights | null>(null)
 const isLoadingClaim = ref(false)
 const claimError = ref<string | null>(null)
 
@@ -65,16 +64,11 @@ async function fetchClaimDetails() {
   isLoadingClaim.value = true
   claimError.value = null
   try {
-    const response = await $fetch<Claim>(`/api/v1/claims/${props.claimId}`)
+    const response = await $fetch<ProcessedClaimWithInsights>(`/api/v1/claims/${props.claimId}`)
     claimData.value = response
   } catch (err) {
     console.error('Failed to fetch claim details:', err)
     claimError.value = 'Failed to load claim details'
-    // Fall back to store data if API fails
-    const storeClaim = appStore.getClaimById(props.claimId)
-    if (storeClaim) {
-      claimData.value = ensureLineItems(storeClaim)
-    }
   } finally {
     isLoadingClaim.value = false
   }
@@ -85,8 +79,10 @@ watch(() => props.claimId, () => {
   fetchClaimDetails()
 }, { immediate: true })
 
-const claim = computed(() => {
-  return claimData.value ? ensureLineItems(claimData.value) : null
+// Normalize claim for template display
+const claim = computed<DisplayClaim | null>(() => {
+  if (!claimData.value) return null
+  return normalizeClaimForDisplay(claimData.value)
 })
 
 // Track expanded lines
@@ -118,26 +114,26 @@ const enrichedLineItems = computed(() => {
   if (!claim.value?.lineItems) return []
 
   return claim.value.lineItems.map(line => {
-    // Use policies from API response (line.policies) instead of policiesTriggered
+    // Use policies from normalized line
     const apiPolicies = line.policies || []
 
     // Transform API policy data to the format expected by the template
-    const policyDetails = apiPolicies.map((p: NonNullable<typeof line.policies>[number]) => {
+    const policyDetails = apiPolicies.map(p => {
       // Get additional policy info from store if available
       const storePolicy = appStore.policies.find(sp => sp.id === p.policyId)
       return {
         policyId: p.policyId,
         policyName: p.policyName,
-        logicType: storePolicy?.logicType || p.policyMode || 'Edit',
+        logicType: storePolicy?.edit_types?.[0]?.edit_type || p.policyMode || 'Edit',
         description: p.denialReason || storePolicy?.description || '',
-        fixGuidance: storePolicy?.fixGuidance || 'Review and correct the issue before resubmission',
+        fixGuidance: storePolicy?.fix_guidance || 'Review and correct the issue before resubmission',
         isDenied: p.isDenied,
         deniedAmount: p.deniedAmount,
       }
     })
 
     // Extract policy IDs for recovery computation
-    const policyIds = apiPolicies.map((p: NonNullable<typeof line.policies>[number]) => p.policyId)
+    const policyIds = apiPolicies.map(p => p.policyId)
     const recovery = computeLineRecovery(
       policyIds,
       line.editsFired || []
@@ -155,10 +151,10 @@ const enrichedLineItems = computed(() => {
 const lineSummary = computed(() => {
   const lines = enrichedLineItems.value
   const deniedLines = lines.filter(l => l.status === 'denied')
-  const deniedAmount = deniedLines.reduce((sum, l) => sum + (l.billedAmount || 0), 0)
+  const deniedAmount = deniedLines.reduce((sum: number, l) => sum + (l.billedAmount || 0), 0)
   const recoverableAmount = deniedLines
     .filter(l => l.recovery.status !== 'not_recoverable')
-    .reduce((sum, l) => sum + (l.billedAmount || 0), 0)
+    .reduce((sum: number, l) => sum + (l.billedAmount || 0), 0)
 
   return {
     total: lines.length,
@@ -205,7 +201,17 @@ const totalPatternRisk = computed(() => {
 // Get related policy for this claim
 const relatedPolicy = computed(() => {
   if (!claim.value || !claim.value.policyIds || claim.value.policyIds.length === 0) return null
-  return appStore.policies.find(p => claim.value!.policyIds!.includes(p.id)) || null
+  const policy = appStore.policies.find(p => claim.value!.policyIds!.includes(p.id))
+  if (!policy) return null
+  // Return with normalized property names for template compatibility
+  return {
+    ...policy,
+    // Ensure mode is available for display
+    mode: policy.connector_insight_mode?.[0]?.insight_mode || 'Active',
+    commonMistake: policy.common_mistake,
+    fixGuidance: policy.fix_guidance,
+    logicType: policy.edit_types?.[0]?.edit_type || '',
+  }
 })
 
 // Code intelligence access
@@ -291,7 +297,7 @@ onMounted(() => {
         <!-- Row 1 -->
         <div>
           <div class="text-neutral-500 text-xs mb-1">Claim type</div>
-          <div class="text-neutral-900 font-medium">{{ claim.claimType || 'Professional' }}</div>
+          <div class="text-neutral-900 font-medium">{{ claim.type || 'Professional' }}</div>
         </div>
         <div>
           <div class="text-neutral-500 text-xs mb-1">Patient name</div>
@@ -343,7 +349,7 @@ onMounted(() => {
         </div>
         <div>
           <div class="text-neutral-500 text-xs mb-1">Specialty codes</div>
-          <div class="text-neutral-900 font-medium">{{ claim.specialtyCodes?.join(', ') || '–' }}</div>
+          <div class="text-neutral-900 font-medium">{{ claim.billingProviderTaxonomy || '–' }}</div>
         </div>
 
         <!-- Row 4 -->
@@ -368,7 +374,7 @@ onMounted(() => {
         <div class="col-span-4">
           <div class="text-neutral-500 text-xs mb-1">Diagnosis codes</div>
           <div class="text-neutral-900 font-medium font-mono">
-            {{ claim.diagnosisCodes?.join(' ,  ') || '–' }}
+            {{ claim.diagnosisCodes?.join(', ') || '–' }}
           </div>
         </div>
       </div>
@@ -671,9 +677,9 @@ onMounted(() => {
                   <span
                     class="px-2 py-1 text-xs font-medium rounded"
                     :class="{
-                      'bg-error-100 text-error-700': relatedPolicy.mode === 'Edit',
-                      'bg-secondary-100 text-secondary-700': relatedPolicy.mode === 'Informational',
-                      'bg-warning-100 text-warning-700': relatedPolicy.mode === 'Pay & Advise',
+                      'bg-error-100 text-error-700': relatedPolicy.mode === 'Active',
+                      'bg-secondary-100 text-secondary-700': relatedPolicy.mode === 'Observation',
+                      'bg-warning-100 text-warning-700': relatedPolicy.mode === 'Inspection',
                     }"
                   >
                     {{ relatedPolicy.mode }}

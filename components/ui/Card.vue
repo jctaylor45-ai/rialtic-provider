@@ -8,8 +8,6 @@ defineProps<{
   shadow?: boolean
   hoverable?: boolean
 }>()
-
-defineOptions({ name: 'UiCard' })
 </script>
 
 <template>

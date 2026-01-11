@@ -11,11 +11,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'remove'): void
-  (e: 'click'): void
+  remove: []
+  click: []
 }>()
-
-defineOptions({ name: 'FilterChip' })
 </script>
 
 <template>

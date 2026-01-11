@@ -23,8 +23,6 @@ const props = withDefaults(defineProps<{
   required: false,
 })
 
-defineOptions({ name: 'UiFormSelect' })
-
 // Create validator
 const rules = computed(() => {
   if (props.required) {

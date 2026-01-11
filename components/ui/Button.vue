@@ -20,8 +20,6 @@ withDefaults(
     type: 'button',
   },
 )
-
-defineOptions({ name: 'UiButton' })
 </script>
 
 <template>

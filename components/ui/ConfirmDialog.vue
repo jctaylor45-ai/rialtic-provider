@@ -20,11 +20,9 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'confirm'): void
-  (e: 'cancel'): void
+  confirm: []
+  cancel: []
 }>()
-
-defineOptions({ name: 'UiConfirmDialog' })
 
 const dialogRef = ref<{ show: () => void; hide: () => void } | null>(null)
 

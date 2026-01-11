@@ -13,8 +13,6 @@ defineProps<{
   items: BreadcrumbItem[]
   separator?: 'chevron' | 'slash'
 }>()
-
-defineOptions({ name: 'UiBreadcrumbs' })
 </script>
 
 <template>

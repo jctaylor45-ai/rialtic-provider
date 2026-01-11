@@ -26,8 +26,6 @@ const props = withDefaults(defineProps<{
   rows: 3,
 })
 
-defineOptions({ name: 'UiFormInput' })
-
 // Create validator from schema if provided
 const rules = computed(() => {
   if (props.schema) {

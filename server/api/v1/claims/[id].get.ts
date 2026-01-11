@@ -3,7 +3,7 @@
  *
  * GET /api/v1/claims/:id
  *
- * Returns a single claim with all related data (line items, codes, appeals).
+ * Returns a single claim in PaAPI-compatible ProcessedClaimWithInsights format.
  */
 
 import { defineEventHandler, getRouterParam, createError } from 'h3'
@@ -15,9 +15,19 @@ import {
   claimProcedureCodes,
   claimAppeals,
   claimLinePolicies,
+  lineItemModifiers,
+  lineItemDiagnosisCodes,
   policies,
 } from '~/server/database/schema'
 import { eq } from 'drizzle-orm'
+import {
+  claimWithInsightsAdapter,
+  type DbClaim,
+  type DbLineItem,
+  type DbLinePolicy,
+  type DbDiagnosisCode,
+  type DbAppeal,
+} from '~/server/utils/claimAdapter'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -69,46 +79,52 @@ export default defineEventHandler(async (event) => {
         .where(eq(claimAppeals.claimId, id)),
     ])
 
-    // Get policies at the LINE level (policies link to lines, not claims)
-    // For each line item, get its linked policies
-    const lineItemsWithPolicies = await Promise.all(
+    // Get policies and modifiers for each line item
+    const lineItemsWithDetails = await Promise.all(
       lineItems.map(async (line) => {
-        const linePolicies = await db
-          .select({
-            policyId: claimLinePolicies.policyId,
-            policyName: policies.name,
-            policyMode: policies.mode,
-            triggeredAt: claimLinePolicies.triggeredAt,
-            isDenied: claimLinePolicies.isDenied,
-            deniedAmount: claimLinePolicies.deniedAmount,
-            denialReason: claimLinePolicies.denialReason,
-          })
-          .from(claimLinePolicies)
-          .innerJoin(policies, eq(claimLinePolicies.policyId, policies.id))
-          .where(eq(claimLinePolicies.lineItemId, line.id))
+        const [linePolicies, modifiers, lineDiagnoses] = await Promise.all([
+          db
+            .select({
+              policyId: claimLinePolicies.policyId,
+              policyName: policies.name,
+              policyMode: policies.mode,
+              triggeredAt: claimLinePolicies.triggeredAt,
+              isDenied: claimLinePolicies.isDenied,
+              deniedAmount: claimLinePolicies.deniedAmount,
+              denialReason: claimLinePolicies.denialReason,
+            })
+            .from(claimLinePolicies)
+            .innerJoin(policies, eq(claimLinePolicies.policyId, policies.id))
+            .where(eq(claimLinePolicies.lineItemId, line.id)),
+          db
+            .select({ modifier: lineItemModifiers.modifier })
+            .from(lineItemModifiers)
+            .where(eq(lineItemModifiers.lineItemId, line.id)),
+          db
+            .select({ code: lineItemDiagnosisCodes.code })
+            .from(lineItemDiagnosisCodes)
+            .where(eq(lineItemDiagnosisCodes.lineItemId, line.id)),
+        ])
 
         return {
           ...line,
-          policies: linePolicies,
-        }
+          policies: linePolicies as DbLinePolicy[],
+          modifiers: modifiers.map(m => m.modifier),
+          diagnosisCodes: lineDiagnoses.map(d => d.code),
+        } as DbLineItem
       })
     )
 
-    // Transform diagnosis codes to array of strings, sorted by sequence
-    const diagnosisCodeStrings = diagnosisCodes
-      .sort((a, b) => a.sequence - b.sequence)
-      .map(dc => dc.code)
+    // Transform to PaAPI format using the adapter
+    const processedClaim = claimWithInsightsAdapter(
+      claim as unknown as DbClaim,
+      lineItemsWithDetails,
+      diagnosisCodes as DbDiagnosisCode[],
+      procedureCodes.map(pc => pc.code),
+      appeals as unknown as DbAppeal[],
+    )
 
-    // Transform procedure codes to array of strings
-    const procedureCodeStrings = procedureCodes.map(pc => pc.code)
-
-    return {
-      ...claim,
-      lineItems: lineItemsWithPolicies,
-      diagnosisCodes: diagnosisCodeStrings,
-      procedureCodes: procedureCodeStrings,
-      appeals,
-    }
+    return processedClaim
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) {
       throw error

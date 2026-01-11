@@ -39,10 +39,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Date | string | null): void
+  'update:modelValue': [value: Date | string | null]
 }>()
-
-defineOptions({ name: 'UiDatePicker' })
 
 const internalValue = computed({
   get: () => props.modelValue ?? null,

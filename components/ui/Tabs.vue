@@ -19,10 +19,8 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  'update:modelValue': [value: string]
 }>()
-
-defineOptions({ name: 'UiTabs' })
 
 const selectTab = (tab: Tab) => {
   if (!tab.disabled) {

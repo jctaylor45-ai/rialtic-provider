@@ -20,10 +20,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'remove', id: string): void
+  remove: [id: string]
 }>()
-
-defineOptions({ name: 'UiFilePreview' })
 
 // Format file size
 const formatSize = (bytes: number): string => {

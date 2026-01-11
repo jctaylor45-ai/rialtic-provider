@@ -261,12 +261,12 @@
               <div>
                 <div class="font-mono text-sm text-primary-600 font-medium">{{ claim.id }}</div>
                 <div class="text-sm text-neutral-700">{{ claim.patientName }}</div>
-                <div v-if="claim.denialReason" class="text-xs text-neutral-500 mt-0.5">{{ claim.denialReason }}</div>
+                <div v-if="getClaimDenialReason(claim)" class="text-xs text-neutral-500 mt-0.5">{{ getClaimDenialReason(claim) }}</div>
               </div>
             </div>
             <div class="text-right">
-              <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(claim.billedAmount) }}</div>
-              <div class="text-xs text-neutral-500">{{ formatDate(claim.dateOfService) }}</div>
+              <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(getClaimBilledAmount(claim)) }}</div>
+              <div class="text-xs text-neutral-500">{{ formatDate(getClaimDateOfService(claim)) }}</div>
             </div>
           </div>
         </div>
@@ -319,7 +319,14 @@
 <script setup lang="ts">
 import { subDays } from 'date-fns'
 import type { MetricTrend, Pattern } from '~/types/enhancements'
-import type { Claim } from '~/types'
+import type { ProcessedClaim } from '~/types'
+import {
+  getClaimStatus,
+  getClaimBilledAmount,
+  getClaimDateOfService,
+  getClaimDenialReason,
+  getClaimSubmissionDate,
+} from '~/utils/formatting'
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
@@ -356,7 +363,7 @@ const handlePatternClick = (pattern: Pattern) => {
   navigateTo(`/insights?pattern=${pattern.id}`)
 }
 
-const handleClaimClick = (claim: Claim) => {
+const handleClaimClick = (claim: ProcessedClaim) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     claimId: claim.id,
   })
@@ -410,8 +417,9 @@ const filteredClaims = computed(() => {
   const cutoffDate = subDays(now, selectedTimeRange.value)
 
   return appStore.claims.filter(claim => {
-    if (!claim.submissionDate) return false
-    const claimDate = new Date(claim.submissionDate)
+    const submissionDate = getClaimSubmissionDate(claim)
+    if (!submissionDate) return false
+    const claimDate = new Date(submissionDate)
     return claimDate >= cutoffDate
   })
 })
@@ -422,27 +430,28 @@ const previousPeriodClaims = computed(() => {
   const previousCutoff = subDays(now, selectedTimeRange.value * 2)
 
   return appStore.claims.filter(claim => {
-    if (!claim.submissionDate) return false
-    const claimDate = new Date(claim.submissionDate)
+    const submissionDate = getClaimSubmissionDate(claim)
+    if (!submissionDate) return false
+    const claimDate = new Date(submissionDate)
     return claimDate >= previousCutoff && claimDate < currentCutoff
   })
 })
 
 const filteredDeniedClaims = computed(() => {
-  return filteredClaims.value.filter(c => c.status === 'denied')
+  return filteredClaims.value.filter(c => getClaimStatus(c) === 'denied')
 })
 
 const filteredDeniedAmount = computed(() => {
-  return filteredDeniedClaims.value.reduce((sum, claim) => sum + claim.billedAmount, 0)
+  return filteredDeniedClaims.value.reduce((sum, claim) => sum + getClaimBilledAmount(claim), 0)
 })
 
 // Previous period denied claims and amount (for Revenue Recovered calculation)
 const previousPeriodDeniedClaims = computed(() => {
-  return previousPeriodClaims.value.filter(c => c.status === 'denied')
+  return previousPeriodClaims.value.filter(c => getClaimStatus(c) === 'denied')
 })
 
 const previousPeriodDeniedAmount = computed(() => {
-  return previousPeriodDeniedClaims.value.reduce((sum, claim) => sum + claim.billedAmount, 0)
+  return previousPeriodDeniedClaims.value.reduce((sum, claim) => sum + getClaimBilledAmount(claim), 0)
 })
 
 const filteredDenialRate = computed(() => {
@@ -459,7 +468,7 @@ const filteredApprovalRate = computed(() => {
 // =============================================================================
 
 const filteredTrends = computed(() => {
-  const prevDenied = previousPeriodClaims.value.filter(c => c.status === 'denied')
+  const prevDenied = previousPeriodClaims.value.filter(c => getClaimStatus(c) === 'denied')
   const prevDenialRate = previousPeriodClaims.value.length > 0
     ? (prevDenied.length / previousPeriodClaims.value.length) * 100
     : 0
@@ -517,8 +526,12 @@ const revenueRecovered = computed(() => {
 
 const recentDeniedClaims = computed(() => {
   return filteredDeniedClaims.value
-    .filter(c => c.submissionDate)
-    .sort((a, b) => new Date(b.submissionDate!).getTime() - new Date(a.submissionDate!).getTime())
+    .filter(c => getClaimSubmissionDate(c))
+    .sort((a, b) => {
+      const dateA = getClaimSubmissionDate(a) || ''
+      const dateB = getClaimSubmissionDate(b) || ''
+      return new Date(dateB).getTime() - new Date(dateA).getTime()
+    })
     .slice(0, 5)
 })
 
@@ -535,12 +548,12 @@ const recentIssuesByPattern = computed(() => {
 
     if (existing) {
       existing.claimCount++
-      existing.totalAmount += claim.billedAmount
+      existing.totalAmount += getClaimBilledAmount(claim)
     } else {
       issueMap.set(pattern.id, {
         pattern,
         claimCount: 1,
-        totalAmount: claim.billedAmount,
+        totalAmount: getClaimBilledAmount(claim),
       })
     }
   }

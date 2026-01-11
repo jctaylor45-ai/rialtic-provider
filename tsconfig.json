@@ -12,6 +12,9 @@
   },
   "exclude": [
     "node_modules",
-    "console-ui"
+    "console-ui",
+    "**/*.test.ts",
+    "vitest.config.ts",
+    "vitest.setup.ts"
   ]
 }

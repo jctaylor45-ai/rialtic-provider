@@ -11,8 +11,6 @@ defineProps<{
   disabled?: boolean
 }>()
 
-defineOptions({ name: 'UiTooltip' })
-
 const isVisible = ref(false)
 
 const show = () => {

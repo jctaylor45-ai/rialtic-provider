@@ -7,8 +7,6 @@ defineProps<{
   lines?: number
   showHeader?: boolean
 }>()
-
-defineOptions({ name: 'SkeletonCard' })
 </script>
 
 <template>

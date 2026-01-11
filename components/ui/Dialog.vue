@@ -19,11 +19,9 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'open'): void
-  (e: 'close'): void
+  open: []
+  close: []
 }>()
-
-defineOptions({ name: 'UiDialog' })
 
 const dialogRef = ref<HTMLElement | null>(null)
 const dialogInstance = ref<A11yDialog | null>(null)

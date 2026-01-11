@@ -948,7 +948,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { format } from 'date-fns'
-import type { Claim, Provider } from '~/types'
+import type { ProcessedClaim } from '~/types'
+import {
+  getClaimStatus,
+  getClaimBilledAmount,
+  getClaimSubmissionDate,
+  getClaimAppealStatus,
+  getClaimProviderId,
+  getClaimProviderName,
+  getClaimDenialReason,
+} from '~/utils/formatting'
+
+// Provider type for this page
+interface Provider {
+  id: string
+  name: string
+  specialty: string
+  npi: string
+}
 
 // Stores
 const appStore = useAppStore()
@@ -1001,16 +1018,17 @@ watch(selectedPeriod, (newPeriod) => {
 })
 
 // Get claims within a date range
-function getClaimsInRange(claims: Claim[], startDate: Date, endDate: Date): Claim[] {
+function getClaimsInRange(claims: ProcessedClaim[], startDate: Date, endDate: Date): ProcessedClaim[] {
   return claims.filter(c => {
-    const claimDate = c.submissionDate ? new Date(c.submissionDate) : null
+    const submissionDate = getClaimSubmissionDate(c)
+    const claimDate = submissionDate ? new Date(submissionDate) : null
     if (!claimDate) return false
     return claimDate >= startDate && claimDate <= endDate
   })
 }
 
 // Get line items from claims
-function getLineItems(claims: Claim[]) {
+function getLineItems(claims: ProcessedClaim[]) {
   const lineItems: Array<{
     claimId: string
     lineNumber: number
@@ -1021,15 +1039,15 @@ function getLineItems(claims: Claim[]) {
   }> = []
 
   for (const claim of claims) {
-    if (claim.lineItems && claim.lineItems.length > 0) {
-      for (const line of claim.lineItems) {
+    if (claim.claimLines && claim.claimLines.length > 0) {
+      for (const line of claim.claimLines) {
         lineItems.push({
           claimId: claim.id,
           lineNumber: line.lineNumber,
-          billedAmount: line.billedAmount,
-          status: line.status,
-          providerId: claim.providerId,
-          denialReason: claim.denialReason,
+          billedAmount: line.net?.value || 0,
+          status: getClaimStatus(claim),
+          providerId: getClaimProviderId(claim),
+          denialReason: getClaimDenialReason(claim),
         })
       }
     } else {
@@ -1037,10 +1055,10 @@ function getLineItems(claims: Claim[]) {
       lineItems.push({
         claimId: claim.id,
         lineNumber: 1,
-        billedAmount: claim.billedAmount,
-        status: claim.status,
-        providerId: claim.providerId,
-        denialReason: claim.denialReason,
+        billedAmount: getClaimBilledAmount(claim),
+        status: getClaimStatus(claim),
+        providerId: getClaimProviderId(claim),
+        denialReason: getClaimDenialReason(claim),
       })
     }
   }
@@ -1049,7 +1067,7 @@ function getLineItems(claims: Claim[]) {
 }
 
 // Calculate metrics from claims
-function calculateMetrics(claims: Claim[]) {
+function calculateMetrics(claims: ProcessedClaim[]) {
   const lineItems = getLineItems(claims)
   const totalLines = lineItems.length
   const deniedLines = lineItems.filter(l => l.status === 'denied')
@@ -1057,7 +1075,10 @@ function calculateMetrics(claims: Claim[]) {
   const deniedDollars = deniedLines.reduce((sum, l) => sum + l.billedAmount, 0)
 
   // Appeal tracking (check if claims have appeal data)
-  const appealsFiledCount = claims.filter(c => c.appealStatus && c.appealStatus !== null).length
+  const appealsFiledCount = claims.filter(c => {
+    const appealStatus = getClaimAppealStatus(c)
+    return appealStatus && appealStatus !== null
+  }).length
   const hasAppeal = appealsFiledCount > 0
 
   return {
@@ -1376,12 +1397,14 @@ const providers = computed<Provider[]>(() => {
   const providerMap = new Map<string, Provider>()
 
   for (const claim of appStore.claims) {
-    if (claim.providerId && !providerMap.has(claim.providerId)) {
-      providerMap.set(claim.providerId, {
-        id: claim.providerId,
-        name: claim.providerName || `Provider ${claim.providerId}`,
+    const providerId = getClaimProviderId(claim)
+    if (providerId && !providerMap.has(providerId)) {
+      const npi = claim.billingProviderIdentifiers?.npi || '0000000000'
+      providerMap.set(providerId, {
+        id: providerId,
+        name: getClaimProviderName(claim) || `Provider ${providerId}`,
         specialty: 'General Practice',
-        npi: claim.billingProviderNPI || '0000000000',
+        npi,
       })
     }
   }
@@ -1414,7 +1437,7 @@ function calculateProviderMetrics(providerId: string) {
   const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
   const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const providerClaims = appStore.claims.filter(c => c.providerId === providerId)
+  const providerClaims = appStore.claims.filter(c => getClaimProviderId(c) === providerId)
 
   const baselineClaims = getClaimsInRange(providerClaims, windowStart, baselineEnd)
   const currentClaims = getClaimsInRange(providerClaims, currentStart, now)
@@ -1615,7 +1638,7 @@ const filteredPatternProviders = computed(() => {
 
   return providers.value.map(provider => {
     const providerClaims = appStore.claims.filter(c =>
-      c.providerId === provider.id && affectedClaimIds.includes(c.id)
+      getClaimProviderId(c) === provider.id && affectedClaimIds.includes(c.id)
     )
     const metrics = calculateMetrics(providerClaims)
 

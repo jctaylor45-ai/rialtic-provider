@@ -1,7 +1,7 @@
 <template>
-  <div class="flex-1 overflow-y-auto p-8">
+  <div class="flex flex-col h-full">
     <!-- Loading State -->
-    <div v-if="appStore.isLoading" class="flex items-center justify-center h-64">
+    <div v-if="appStore.isLoading && !appStore.claimsFirstDataLoaded" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <UiLoading size="lg" class="mx-auto mb-2" />
         <p class="text-sm text-neutral-600">Loading claims...</p>
@@ -9,259 +9,177 @@
     </div>
 
     <!-- Content -->
-    <div v-else>
-      <!-- Pattern Filter Banner -->
-      <div
-        v-if="patternClaimIds"
-        class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-center justify-between"
-      >
-        <div class="flex items-center gap-3">
-          <Icon v-if="isLoadingPatternClaims" name="heroicons:arrow-path" class="w-5 h-5 text-orange-600 animate-spin" />
-          <Icon v-else name="heroicons:funnel" class="w-5 h-5 text-orange-600" />
-          <div>
-            <span class="text-sm font-medium text-orange-900">
-              {{ isLoadingPatternClaims ? 'Loading' : 'Viewing' }} {{ patternLinkedClaims.length || patternClaimIds.length }} claims linked to pattern
-            </span>
-            <span class="text-xs text-orange-700 ml-2">
-              From Insights page
-            </span>
-          </div>
-        </div>
-        <button
-          @click="clearPatternFilter"
-          class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-700 hover:bg-orange-100 rounded-lg transition-colors"
-        >
-          <Icon name="heroicons:x-mark" class="w-4 h-4" />
-          Clear filter
-        </button>
-      </div>
-
-      <!-- Search Bar -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-6">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="flex-1">
-            <label class="text-sm text-neutral-600 mb-1 block">Claim ID</label>
-            <input
-              v-model="searchClaimId"
-              type="text"
-              placeholder="CLM-2025-XXXX"
-              class="form-input w-full"
-            />
-          </div>
-
-          <div class="flex-1">
-            <label class="text-sm text-neutral-600 mb-1 block">Patient</label>
-            <input
-              v-model="searchPatient"
-              type="text"
-              placeholder="Search by patient..."
-              class="form-input w-full"
-            />
-          </div>
-
-          <div class="flex-1">
-            <label class="text-sm text-neutral-600 mb-1 block">Procedure Code</label>
-            <input
-              v-model="searchProcedureCode"
-              type="text"
-              placeholder="CPT/HCPCS code"
-              class="form-input w-full"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center gap-4">
-          <select v-model="filterStatus" class="form-input">
-            <option value="all">All Statuses</option>
-            <option value="paid">Paid/Approved</option>
-            <option value="denied">Denied</option>
-            <option value="pending">Pending</option>
-            <option value="appealed">Appealed</option>
-          </select>
-
-          <select v-model="filterDateRange" class="form-input">
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-            <option value="90">Last 90 Days</option>
-            <option value="all">All Time</option>
-          </select>
-
-          <!-- Clear Filters Button -->
-          <button
-            v-if="hasActiveFilters"
-            @click="handleClearFilters"
-            class="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
-          >
-            <Icon name="heroicons:x-mark" class="w-4 h-4" />
-            Clear filters
-            <span class="bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium">
-              {{ activeFilterCount }}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Results Count & Bulk Actions -->
-      <div class="flex items-center justify-between mb-4">
-        <div class="text-sm text-neutral-600">
-          {{ filteredClaims.length }} claims found
-        </div>
-
-        <!-- Bulk Action Bar -->
+    <template v-else>
+      <!-- Header Section -->
+      <div ref="headerRef" class="flex-shrink-0 p-6 pb-4 bg-white">
+        <!-- Pattern Filter Banner -->
         <div
-          v-if="hasSelection"
-          class="flex items-center gap-3 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2"
+          v-if="patternClaimIds"
+          class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-center justify-between"
         >
-          <span class="text-sm font-medium text-primary-700">
-            {{ selectedCount }} selected
-          </span>
-          <div class="h-4 w-px bg-primary-300" />
+          <div class="flex items-center gap-3">
+            <Icon v-if="isLoadingPatternClaims" name="heroicons:arrow-path" class="w-5 h-5 text-orange-600 animate-spin" />
+            <Icon v-else name="heroicons:funnel" class="w-5 h-5 text-orange-600" />
+            <div>
+              <span class="text-sm font-medium text-orange-900">
+                {{ isLoadingPatternClaims ? 'Loading' : 'Viewing' }} {{ patternLinkedClaims.length || patternClaimIds.length }} claims linked to pattern
+              </span>
+              <span class="text-xs text-orange-700 ml-2">
+                From Insights page
+              </span>
+            </div>
+          </div>
           <button
-            @click="handleExportSelected"
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-100 rounded transition-colors"
-          >
-            <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
-            Export
-          </button>
-          <button
-            @click="handleClearSelection"
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-primary-100 rounded transition-colors"
+            @click="clearPatternFilter"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-700 hover:bg-orange-100 rounded-lg transition-colors"
           >
             <Icon name="heroicons:x-mark" class="w-4 h-4" />
-            Clear
+            Clear filter
           </button>
         </div>
-      </div>
 
-      <!-- Results Table using TanStack -->
-      <div class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-neutral-50">
-              <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-                <th
-                  v-for="header in headerGroup.headers"
-                  :key="header.id"
-                  class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 uppercase tracking-wider select-none"
-                  :class="{
-                    'cursor-pointer hover:bg-neutral-100': header.column.getCanSort(),
-                    'text-right': header.column.id === 'billedAmount',
-                    'text-center': header.column.id === 'status',
-                  }"
-                  @click="header.column.getToggleSortingHandler()?.($event)"
-                >
-                  <div
-                    class="flex items-center gap-1"
-                    :class="{
-                      'justify-end': header.column.id === 'billedAmount',
-                      'justify-center': header.column.id === 'status',
-                    }"
-                  >
-                    <FlexRender
-                      v-if="!header.isPlaceholder"
-                      :render="header.column.columnDef.header"
-                      :props="header.getContext()"
-                    />
-                    <Icon
-                      v-if="header.column.getCanSort()"
-                      :name="getSortIcon(header.column)"
-                      class="w-4 h-4"
-                      :class="header.column.getIsSorted() ? 'text-primary-600' : 'text-neutral-400'"
-                    />
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-neutral-200">
-              <tr
-                v-for="row in table.getRowModel().rows"
-                :key="row.id"
-                class="hover:bg-primary-50 cursor-pointer transition-colors"
-                :class="{ 'bg-primary-50': selectedClaimId === row.original.id }"
-                @click="openClaimDrawer(row.original.id)"
-              >
-                <td
-                  v-for="cell in row.getVisibleCells()"
-                  :key="cell.id"
-                  class="px-6 py-4"
-                  :class="{
-                    'text-right': cell.column.id === 'billedAmount',
-                    'text-center': cell.column.id === 'status',
-                  }"
-                  @click="cell.column.id === 'patterns' ? $event.stopPropagation() : null"
-                >
-                  <FlexRender
-                    :render="cell.column.columnDef.cell"
-                    :props="cell.getContext()"
-                  />
-                </td>
-              </tr>
-              <tr v-if="filteredClaims.length === 0">
-                <td colspan="7" class="px-6 py-12 text-center text-neutral-500">
-                  No claims found matching your criteria
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <!-- Search Bar -->
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-4">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="flex-1">
+              <label class="text-sm text-neutral-600 mb-1 block">Claim ID</label>
+              <input
+                v-model="searchClaimId"
+                type="text"
+                placeholder="CLM-2025-XXXX"
+                class="form-input w-full"
+              />
+            </div>
 
-        <!-- Pagination Controls -->
-        <div class="flex items-center justify-between px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+            <div class="flex-1">
+              <label class="text-sm text-neutral-600 mb-1 block">Patient</label>
+              <input
+                v-model="searchPatient"
+                type="text"
+                placeholder="Search by patient..."
+                class="form-input w-full"
+              />
+            </div>
+
+            <div class="flex-1">
+              <label class="text-sm text-neutral-600 mb-1 block">Procedure Code</label>
+              <input
+                v-model="searchProcedureCode"
+                type="text"
+                placeholder="CPT/HCPCS code"
+                class="form-input w-full"
+              />
+            </div>
+          </div>
+
           <div class="flex items-center gap-4">
-            <span class="text-sm text-neutral-600">
-              Showing {{ table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1 }}
-              to {{ Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredClaims.length) }}
-              of {{ filteredClaims.length }} claims
-            </span>
-            <select
-              :value="table.getState().pagination.pageSize"
-              @change="table.setPageSize(Number(($event.target as HTMLSelectElement).value))"
-              class="form-input py-1 text-sm"
-            >
-              <option v-for="size in pageSizeOptions" :key="size" :value="size">
-                {{ size }} per page
-              </option>
+            <select v-model="filterStatus" class="form-input">
+              <option value="all">All Statuses</option>
+              <option value="paid">Paid/Approved</option>
+              <option value="denied">Denied</option>
+              <option value="pending">Pending</option>
+              <option value="appealed">Appealed</option>
             </select>
+
+            <select v-model="filterDateRange" class="form-input">
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="all">All Time</option>
+            </select>
+
+            <!-- Clear Filters Button -->
+            <button
+              v-if="hasActiveFilters"
+              @click="handleClearFilters"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+            >
+              <Icon name="heroicons:x-mark" class="w-4 h-4" />
+              Clear filters
+              <span class="bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded text-xs font-medium">
+                {{ activeFilterCount }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Count & Bulk Actions -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-sm text-neutral-600">
+            <span class="font-semibold">{{ appStore.claimsTotalRecords }}</span>
+            <span>{{ appStore.claimsTotalRecords === 1 ? 'claim' : 'claims' }}</span>
+            <span v-if="filteredClaims.length !== appStore.claimsTotalRecords" class="text-neutral-400">
+              ({{ filteredClaims.length }} filtered)
+            </span>
           </div>
 
-          <div class="flex items-center gap-2">
-            <button
-              @click="table.setPageIndex(0)"
-              :disabled="!table.getCanPreviousPage()"
-              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Icon name="heroicons:chevron-double-left" class="w-4 h-4" />
-            </button>
-            <button
-              @click="table.previousPage()"
-              :disabled="!table.getCanPreviousPage()"
-              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <Icon name="heroicons:chevron-left" class="w-4 h-4" />
-            </button>
-
-            <span class="text-sm text-neutral-600 px-2">
-              Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}
+          <!-- Bulk Action Bar -->
+          <div
+            v-if="hasSelection"
+            class="flex items-center gap-3 bg-primary-50 border border-primary-200 rounded-lg px-4 py-2"
+          >
+            <span class="text-sm font-medium text-primary-700">
+              {{ selectedCount }} selected
             </span>
-
+            <div class="h-4 w-px bg-primary-300" />
             <button
-              @click="table.nextPage()"
-              :disabled="!table.getCanNextPage()"
-              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              @click="handleExportSelected"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 hover:bg-primary-100 rounded transition-colors"
             >
-              <Icon name="heroicons:chevron-right" class="w-4 h-4" />
+              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4" />
+              Export
             </button>
             <button
-              @click="table.setPageIndex(table.getPageCount() - 1)"
-              :disabled="!table.getCanNextPage()"
-              class="p-2 rounded border border-neutral-300 hover:bg-neutral-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              @click="handleClearSelection"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-primary-100 rounded transition-colors"
             >
-              <Icon name="heroicons:chevron-double-right" class="w-4 h-4" />
+              <Icon name="heroicons:x-mark" class="w-4 h-4" />
+              Clear
             </button>
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- Virtual Table -->
+      <div class="flex-1 bg-white border-t border-neutral-200">
+        <UiVirtualTable
+          v-model:sorting="sorting"
+          :data="filteredClaims"
+          :columns="columns"
+          :height="tableHeight"
+          :loading="appStore.claimsLoading"
+          :first-data-loaded="appStore.claimsFirstDataLoaded"
+          :active-id="selectedClaimId"
+          :overscan="15"
+          :row-height="57"
+          @click:row="handleRowClick"
+          @load-more="handleLoadMore"
+        >
+          <template #append>
+            <UiLoadMore
+              :loading="appStore.claimsLoading"
+              :loaded-all="appStore.claimsLoadedAll"
+              :total="appStore.claimsTotalRecords"
+              :loaded="appStore.claims.length"
+            />
+          </template>
+
+          <template #empty>
+            <div class="text-center py-12">
+              <Icon name="heroicons:document-magnifying-glass" class="w-12 h-12 text-neutral-300 mx-auto mb-4" />
+              <p class="text-neutral-500">No claims found matching your criteria</p>
+              <button
+                v-if="hasActiveFilters"
+                @click="handleClearFilters"
+                class="mt-4 text-primary-600 hover:text-primary-700 text-sm font-medium"
+              >
+                Clear filters
+              </button>
+            </div>
+          </template>
+        </UiVirtualTable>
+      </div>
+    </template>
 
     <!-- Claim Details Drawer -->
     <AppDetailsDrawer
@@ -281,20 +199,21 @@
 
 <script setup lang="ts">
 import {
-  FlexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  useVueTable,
   type ColumnDef,
   type SortingState,
-  type RowSelectionState,
-  type PaginationState,
-  type Column,
+  type Row,
 } from '@tanstack/vue-table'
-import type { Claim } from '~/types'
+import { useWindowSize, useElementBounding } from '@vueuse/core'
+import type { ProcessedClaim } from '~/types'
 import type { Pattern } from '~/types/enhancements'
+import {
+  getClaimStatus,
+  getClaimBilledAmount,
+  getClaimDateOfService,
+  getClaimDenialReason,
+  getClaimMemberId,
+  getClaimProcedureCodes,
+} from '~/utils/formatting'
 
 const appStore = useAppStore()
 const patternsStore = usePatternsStore()
@@ -304,25 +223,27 @@ const route = useRoute()
 // Composables
 const { getPatternCategoryIcon } = usePatterns()
 const toast = useToast()
+const { height: windowHeight } = useWindowSize()
 
-// Row selection state for bulk actions
-const rowSelection = ref<RowSelectionState>({})
+// Header ref for calculating table height
+const headerRef = ref<HTMLElement | null>(null)
+const { height: headerHeight } = useElementBounding(headerRef)
 
-// Pagination state
-const pagination = ref<PaginationState>({
-  pageIndex: 0,
-  pageSize: 25,
+// Calculate table height (window height - header - some padding)
+const tableHeight = computed(() => {
+  const topOffset = headerHeight.value || 300
+  return windowHeight.value - topOffset - 40 // 40px for bottom padding
 })
 
-const pageSizeOptions = [10, 25, 50, 100]
+// Row selection state for bulk actions
+const selectedRows = ref<Set<string>>(new Set())
 
 // Computed for selected claims
 const selectedClaims = computed(() => {
-  const selectedIds = Object.keys(rowSelection.value).filter(id => rowSelection.value[id])
-  return filteredClaims.value.filter((_, index) => selectedIds.includes(String(index)))
+  return filteredClaims.value.filter(c => selectedRows.value.has(c.id))
 })
 
-const selectedCount = computed(() => selectedClaims.value.length)
+const selectedCount = computed(() => selectedRows.value.size)
 const hasSelection = computed(() => selectedCount.value > 0)
 
 // Bulk action handlers
@@ -333,10 +254,10 @@ const handleExportSelected = () => {
   const rows = claims.map(c => [
     c.id,
     c.patientName,
-    c.dateOfService,
-    c.billedAmount.toString(),
-    c.status,
-    c.denialReason || '',
+    getClaimDateOfService(c) || '',
+    getClaimBilledAmount(c).toString(),
+    getClaimStatus(c),
+    getClaimDenialReason(c) || '',
   ])
   const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
 
@@ -353,7 +274,7 @@ const handleExportSelected = () => {
 }
 
 const handleClearSelection = () => {
-  rowSelection.value = {}
+  selectedRows.value = new Set()
 }
 
 // URL-persisted filter state
@@ -501,12 +422,20 @@ onMounted(async () => {
   }
 })
 
-// TanStack Table sorting state - synced with URL
-const sorting = computed<SortingState>(() => {
-  if (sortState.value) {
-    return [{ id: sortState.value.column, desc: sortState.value.direction === 'desc' }]
-  }
-  return [{ id: 'dateOfService', desc: true }]
+// Sorting state - synced with URL
+const sorting = computed<SortingState>({
+  get: () => {
+    if (sortState.value) {
+      return [{ id: sortState.value.column, desc: sortState.value.direction === 'desc' }]
+    }
+    return [{ id: 'dateOfService', desc: true }]
+  },
+  set: (newSorting) => {
+    const firstSort = newSorting[0]
+    if (firstSort) {
+      setSortState(firstSort.id, firstSort.desc ? 'desc' : 'asc')
+    }
+  },
 })
 
 // Filter claims based on search params and filters (now using URL-synced refs)
@@ -522,22 +451,23 @@ const filteredClaims = computed(() => {
   }
 
   if (searchPatient.value) {
-    result = result.filter(c =>
-      c.patientName.toLowerCase().includes(searchPatient.value.toLowerCase()) ||
-      c.memberId?.toLowerCase().includes(searchPatient.value.toLowerCase())
-    )
+    result = result.filter(c => {
+      const memberId = getClaimMemberId(c)
+      return (c.patientName || '').toLowerCase().includes(searchPatient.value.toLowerCase()) ||
+        memberId?.toLowerCase().includes(searchPatient.value.toLowerCase())
+    })
   }
 
   if (searchProcedureCode.value) {
     result = result.filter(c => {
-      const codes = c.procedureCodes || (c.procedureCode ? [c.procedureCode] : [])
+      const codes = getClaimProcedureCodes(c)
       return codes.some(code => code?.toLowerCase().includes(searchProcedureCode.value.toLowerCase()))
     })
   }
 
   // Status filter
   if (filterStatus.value !== 'all') {
-    result = result.filter(c => c.status === filterStatus.value)
+    result = result.filter(c => getClaimStatus(c) === filterStatus.value)
   }
 
   // Date range filter
@@ -545,15 +475,26 @@ const filteredClaims = computed(() => {
     const days = parseInt(filterDateRange.value)
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - days)
-    result = result.filter(c => new Date(c.dateOfService) >= cutoffDate)
+    result = result.filter(c => {
+      const dos = getClaimDateOfService(c)
+      return dos && new Date(dos) >= cutoffDate
+    })
   }
 
   return result
 })
 
-// Get patterns matching a claim
-const getClaimPatterns = (claimId: string): Pattern[] => {
-  return patternsStore.getPatternsByClaim(claimId)
+// Handle row click
+const handleRowClick = (row: Row<ProcessedClaim>) => {
+  openClaimDrawer(row.original.id)
+}
+
+// Handle load more (infinite scroll)
+const handleLoadMore = () => {
+  // Only load more if not filtering by pattern IDs
+  if (!patternClaimIds.value) {
+    appStore.loadMoreClaims()
+  }
 }
 
 // Get pattern info for sorting and display
@@ -593,29 +534,7 @@ const viewPattern = (pattern: Pattern) => {
 }
 
 // Column definitions for TanStack Table
-const columns: ColumnDef<Claim>[] = [
-  // Selection checkbox column
-  {
-    id: 'select',
-    size: 40,
-    enableSorting: false,
-    header: ({ table }) => h('input', {
-      type: 'checkbox',
-      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
-      checked: table.getIsAllPageRowsSelected(),
-      indeterminate: table.getIsSomePageRowsSelected(),
-      onChange: (e: Event) => table.toggleAllPageRowsSelected((e.target as HTMLInputElement).checked),
-      onClick: (e: Event) => e.stopPropagation(),
-    }),
-    cell: ({ row }) => h('input', {
-      type: 'checkbox',
-      class: 'w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 cursor-pointer',
-      checked: row.getIsSelected(),
-      disabled: !row.getCanSelect(),
-      onChange: row.getToggleSelectedHandler(),
-      onClick: (e: Event) => e.stopPropagation(),
-    }),
-  },
+const columns: ColumnDef<ProcessedClaim, any>[] = [
   {
     id: 'id',
     accessorKey: 'id',
@@ -625,36 +544,38 @@ const columns: ColumnDef<Claim>[] = [
   },
   {
     id: 'patient',
-    accessorFn: (row) => row.patientName,
+    accessorFn: (row) => row.patientName || '',
     header: 'Patient',
     size: 180,
     cell: ({ row }) => h('div', {}, [
-      h('div', { class: 'text-sm text-neutral-900' }, row.original.patientName),
-      row.original.memberId
-        ? h('div', { class: 'text-xs text-neutral-500' }, `ID: ${row.original.memberId}`)
+      h('div', { class: 'text-sm text-neutral-900' }, row.original.patientName || ''),
+      getClaimMemberId(row.original)
+        ? h('div', { class: 'text-xs text-neutral-500' }, `ID: ${getClaimMemberId(row.original)}`)
         : null,
     ]),
   },
   {
     id: 'dateOfService',
-    accessorKey: 'dateOfService',
+    accessorFn: (row) => getClaimDateOfService(row),
     header: 'Date of Service',
     size: 130,
-    cell: ({ row }) => h('div', { class: 'text-sm text-neutral-900' }, formatDate(row.original.dateOfService)),
+    cell: ({ row }) => h('div', { class: 'text-sm text-neutral-900' }, formatDate(getClaimDateOfService(row.original))),
   },
   {
     id: 'billedAmount',
-    accessorKey: 'billedAmount',
+    accessorFn: (row) => getClaimBilledAmount(row),
     header: 'Amount',
     size: 110,
-    cell: ({ row }) => h('div', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(row.original.billedAmount)),
+    meta: { align: 'right' as const },
+    cell: ({ row }) => h('div', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(getClaimBilledAmount(row.original))),
   },
   {
     id: 'status',
-    accessorKey: 'status',
+    accessorFn: (row) => getClaimStatus(row),
     header: 'Status',
     size: 100,
-    cell: ({ row }) => h(resolveComponent('UiStatusBadge'), { status: row.original.status }),
+    meta: { align: 'center' as const },
+    cell: ({ row }) => h(resolveComponent('UiStatusBadge'), { status: getClaimStatus(row.original) }),
   },
   {
     id: 'patterns',
@@ -662,7 +583,6 @@ const columns: ColumnDef<Claim>[] = [
     header: 'Patterns',
     size: 150,
     enableSorting: true,
-    sortingFn: 'alphanumeric',
     cell: ({ row }) => {
       const info = getClaimPatternInfo(row.original.id)
       if (!info.display) {
@@ -711,67 +631,15 @@ const columns: ColumnDef<Claim>[] = [
   },
   {
     id: 'denialReason',
-    accessorKey: 'denialReason',
+    accessorFn: (row) => getClaimDenialReason(row),
     header: 'Denial Reason',
     size: 200,
     enableSorting: true,
-    sortingFn: 'alphanumeric',
     cell: ({ row }) => {
-      const reason = row.original.denialReason
+      const reason = getClaimDenialReason(row.original)
       if (!reason) return h('span', { class: 'text-neutral-400' }, '—')
       return h('span', { class: 'text-sm text-neutral-700' }, reason)
     },
   },
 ]
-
-// Create TanStack Table instance
-const table = useVueTable({
-  get data() {
-    return filteredClaims.value
-  },
-  columns,
-  state: {
-    get sorting() {
-      return sorting.value
-    },
-    get rowSelection() {
-      return rowSelection.value
-    },
-    get pagination() {
-      return pagination.value
-    },
-  },
-  enableRowSelection: true,
-  onSortingChange: (updaterOrValue) => {
-    const newSorting = typeof updaterOrValue === 'function'
-      ? updaterOrValue(sorting.value)
-      : updaterOrValue
-    // Sync to URL
-    const firstSort = newSorting[0]
-    if (firstSort) {
-      setSortState(firstSort.id, firstSort.desc ? 'desc' : 'asc')
-    }
-  },
-  onRowSelectionChange: (updaterOrValue) => {
-    rowSelection.value = typeof updaterOrValue === 'function'
-      ? updaterOrValue(rowSelection.value)
-      : updaterOrValue
-  },
-  onPaginationChange: (updaterOrValue) => {
-    pagination.value = typeof updaterOrValue === 'function'
-      ? updaterOrValue(pagination.value)
-      : updaterOrValue
-  },
-  getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
-})
-
-// Get sort icon for column
-const getSortIcon = (column: Column<Claim, unknown>) => {
-  const sortDir = column.getIsSorted()
-  if (!sortDir) return 'heroicons:chevron-up-down'
-  return sortDir === 'asc' ? 'heroicons:chevron-up' : 'heroicons:chevron-down'
-}
 </script>

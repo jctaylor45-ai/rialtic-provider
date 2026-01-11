@@ -18,11 +18,9 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  (e: 'upload', files: File[]): void
-  (e: 'error', message: string): void
+  upload: [files: File[]]
+  error: [message: string]
 }>()
-
-defineOptions({ name: 'UiFileUpload' })
 
 const isDragging = ref(false)
 const inputRef = ref<HTMLInputElement | null>(null)

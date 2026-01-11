@@ -10,9 +10,9 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { claims } from '~/server/database/schema'
+import { claims, claimDiagnosisCodes, claimProcedureCodes } from '~/server/database/schema'
 import { eq, desc, and, gte, lte, like, sql, inArray } from 'drizzle-orm'
-import { claimListAdapter, type DbClaim } from '~/server/utils/claimAdapter'
+import { claimListAdapter, type DbClaim, type DbDiagnosisCode } from '~/server/utils/claimAdapter'
 import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
 
 interface PaapiClaimsResponse {
@@ -112,9 +112,43 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Transform to PaAPI format
+    // Get all diagnosis codes and procedure codes for the claims
+    const claimIds = claimsList.map(c => c.id)
+
+    // Fetch related codes in parallel
+    const [allDiagnosisCodes, allProcedureCodes] = await Promise.all([
+      claimIds.length > 0
+        ? db.select().from(claimDiagnosisCodes).where(inArray(claimDiagnosisCodes.claimId, claimIds))
+        : Promise.resolve([]),
+      claimIds.length > 0
+        ? db.select().from(claimProcedureCodes).where(inArray(claimProcedureCodes.claimId, claimIds))
+        : Promise.resolve([]),
+    ])
+
+    // Group codes by claim ID
+    const diagnosisCodesByClaimId = new Map<string, DbDiagnosisCode[]>()
+    for (const dc of allDiagnosisCodes) {
+      if (!diagnosisCodesByClaimId.has(dc.claimId)) {
+        diagnosisCodesByClaimId.set(dc.claimId, [])
+      }
+      diagnosisCodesByClaimId.get(dc.claimId)!.push(dc as DbDiagnosisCode)
+    }
+
+    const procedureCodesByClaimId = new Map<string, string[]>()
+    for (const pc of allProcedureCodes) {
+      if (!procedureCodesByClaimId.has(pc.claimId)) {
+        procedureCodesByClaimId.set(pc.claimId, [])
+      }
+      procedureCodesByClaimId.get(pc.claimId)!.push(pc.code)
+    }
+
+    // Transform to PaAPI format with related codes
     const processedClaims = claimsList.map(claim =>
-      claimListAdapter(claim as unknown as DbClaim)
+      claimListAdapter(
+        claim as unknown as DbClaim,
+        diagnosisCodesByClaimId.get(claim.id) || [],
+        procedureCodesByClaimId.get(claim.id) || [],
+      )
     )
 
     return {
