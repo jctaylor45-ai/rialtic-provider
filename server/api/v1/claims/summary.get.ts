@@ -10,7 +10,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { claims, claimAppeals } from '~/server/database/schema'
-import { eq, sql, count, sum, and, gte } from 'drizzle-orm'
+import { eq, sql, count, sum, and, gte, inArray } from 'drizzle-orm'
 import {
   getDataSourceConfig,
   fetchClaimsSummaryFromPaAPI,
@@ -60,11 +60,11 @@ export default defineEventHandler(async (event) => {
       .from(claims)
       .where(dateFilter)
 
-    // Status breakdown
+    // Status breakdown (count both 'approved' and 'paid' together)
     const [approvedResult] = await db
       .select({ count: count() })
       .from(claims)
-      .where(and(dateFilter, eq(claims.status, 'approved')))
+      .where(and(dateFilter, inArray(claims.status, ['approved', 'paid'])))
 
     const [deniedResult] = await db
       .select({ count: count() })

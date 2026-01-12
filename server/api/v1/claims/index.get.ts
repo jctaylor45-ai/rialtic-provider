@@ -74,7 +74,12 @@ export default defineEventHandler(async (event) => {
     }
 
     if (status) {
-      whereConditions.push(eq(claims.status, status as 'approved' | 'denied' | 'pending' | 'appealed' | 'paid'))
+      // Treat 'paid' and 'approved' as synonyms
+      if (status === 'paid' || status === 'approved') {
+        whereConditions.push(inArray(claims.status, ['paid', 'approved']))
+      } else {
+        whereConditions.push(eq(claims.status, status as 'denied' | 'pending' | 'appealed'))
+      }
     }
 
     if (startDate) {
