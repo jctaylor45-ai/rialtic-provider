@@ -15,9 +15,7 @@ import type {
   AnalyticsDashboardResponse,
   ProcessedClaimWithInsights,
 } from '~/types'
-import { useSettingsStore } from '~/stores/settings'
-
-export type DataSourceType = 'local' | 'paapi'
+import { useSettingsStore, type DataSourceType } from '~/stores/settings'
 
 export interface DataSourceState {
   source: DataSourceType
