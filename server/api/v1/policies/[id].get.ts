@@ -19,7 +19,7 @@ import {
   patternPolicies,
   patterns,
   claimLinePolicies,
-  claims,
+  claimLineItems,
 } from '~/server/database/schema'
 import { eq, sql, count } from 'drizzle-orm'
 import {
@@ -122,11 +122,13 @@ export default defineEventHandler(async (event) => {
     )
 
     // Compute metrics for this policy from claim_line_policies
-    const [totalClaimsResult] = await db
+    // Hit Rate = % of claim lines that hit the policy
+    // Denial Rate = % of claim lines that hit the policy that are denied
+    const [totalClaimLinesResult] = await db
       .select({ count: count() })
-      .from(claims)
+      .from(claimLineItems)
 
-    const totalClaims = totalClaimsResult?.count || 1
+    const totalClaimLines = totalClaimLinesResult?.count || 1
 
     const [policyMetrics] = await db
       .select({
@@ -154,7 +156,7 @@ export default defineEventHandler(async (event) => {
     if (policyMetrics && policyMetrics.totalHits > 0) {
       return {
         ...basePolicy,
-        hit_rate: (policyMetrics.totalHits / totalClaims) * 100,
+        hit_rate: (policyMetrics.totalHits / totalClaimLines) * 100,
         denial_rate: policyMetrics.totalHits > 0 ? ((policyMetrics.deniedHits || 0) / policyMetrics.totalHits) * 100 : 0,
         impact: policyMetrics.totalImpact || 0,
       }

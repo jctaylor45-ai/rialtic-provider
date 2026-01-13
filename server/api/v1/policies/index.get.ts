@@ -68,12 +68,13 @@ export default defineEventHandler(async (event) => {
     // Local database source
 
     // First, compute metrics for all policies from claim_line_policies
-    // This gives us hit rate, denial rate, and impact based on actual claims
-    const [totalClaimsResult] = await db
+    // Hit Rate = % of claim lines that hit the policy
+    // Denial Rate = % of claim lines that hit the policy that are denied
+    const [totalClaimLinesResult] = await db
       .select({ count: count() })
-      .from(claims)
+      .from(claimLineItems)
 
-    const totalClaims = totalClaimsResult?.count || 1 // Avoid division by zero
+    const totalClaimLines = totalClaimLinesResult?.count || 1 // Avoid division by zero
 
     // Get policy metrics aggregated from claim_line_policies
     const policyMetrics = await db
@@ -90,7 +91,7 @@ export default defineEventHandler(async (event) => {
     // Rates are stored as whole number percentages (3 = 3%) for consistency with rest of app
     const metricsMap = new Map(
       policyMetrics.map(m => [m.policyId, {
-        hitRate: (m.totalHits / totalClaims) * 100,
+        hitRate: (m.totalHits / totalClaimLines) * 100,
         denialRate: m.totalHits > 0 ? ((m.deniedHits || 0) / m.totalHits) * 100 : 0,
         impact: m.totalImpact || 0,
       }])
