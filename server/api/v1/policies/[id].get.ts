@@ -18,8 +18,10 @@ import {
   policyRelatedPolicies,
   patternPolicies,
   patterns,
+  claimLinePolicies,
+  claims,
 } from '~/server/database/schema'
-import { eq } from 'drizzle-orm'
+import { eq, sql, count } from 'drizzle-orm'
 import {
   policyDetailAdapter,
   type DbPolicy,
@@ -119,8 +121,24 @@ export default defineEventHandler(async (event) => {
       })
     )
 
+    // Compute metrics for this policy from claim_line_policies
+    const [totalClaimsResult] = await db
+      .select({ count: count() })
+      .from(claims)
+
+    const totalClaims = totalClaimsResult?.count || 1
+
+    const [policyMetrics] = await db
+      .select({
+        totalHits: count(),
+        deniedHits: sql<number>`SUM(CASE WHEN ${claimLinePolicies.isDenied} = 1 THEN 1 ELSE 0 END)`,
+        totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+      })
+      .from(claimLinePolicies)
+      .where(eq(claimLinePolicies.policyId, id))
+
     // Transform to PaAPI format using the adapter
-    return policyDetailAdapter(
+    const basePolicy = policyDetailAdapter(
       policy as unknown as DbPolicy,
       procedureCodes.map(c => c.code),
       diagnosisCodes.map(c => c.code),
@@ -130,6 +148,18 @@ export default defineEventHandler(async (event) => {
       relatedPoliciesFull.filter(Boolean) as DbRelatedPolicy[],
       relatedPatterns as DbRelatedPattern[],
     )
+
+    // Merge computed metrics if available
+    if (policyMetrics && policyMetrics.totalHits > 0) {
+      return {
+        ...basePolicy,
+        hit_rate: policyMetrics.totalHits / totalClaims,
+        denial_rate: policyMetrics.totalHits > 0 ? (policyMetrics.deniedHits || 0) / policyMetrics.totalHits : 0,
+        impact: policyMetrics.totalImpact || 0,
+      }
+    }
+
+    return basePolicy
   } catch (error) {
     if ((error as { statusCode?: number }).statusCode) {
       throw error

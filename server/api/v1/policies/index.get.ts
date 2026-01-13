@@ -16,8 +16,11 @@ import {
   policyModifiers,
   policyPlacesOfService,
   policyReferenceDocs,
+  claimLinePolicies,
+  claimLineItems,
+  claims,
 } from '~/server/database/schema'
-import { eq, desc, and, like, sql } from 'drizzle-orm'
+import { eq, desc, and, like, sql, count, sum } from 'drizzle-orm'
 import { policyListAdapter, type DbPolicy, type DbReferenceDoc } from '~/server/utils/policyAdapter'
 import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
 
@@ -63,6 +66,35 @@ export default defineEventHandler(async (event) => {
     }
 
     // Local database source
+
+    // First, compute metrics for all policies from claim_line_policies
+    // This gives us hit rate, denial rate, and impact based on actual claims
+    const [totalClaimsResult] = await db
+      .select({ count: count() })
+      .from(claims)
+
+    const totalClaims = totalClaimsResult?.count || 1 // Avoid division by zero
+
+    // Get policy metrics aggregated from claim_line_policies
+    const policyMetrics = await db
+      .select({
+        policyId: claimLinePolicies.policyId,
+        totalHits: count(),
+        deniedHits: sql<number>`SUM(CASE WHEN ${claimLinePolicies.isDenied} = 1 THEN 1 ELSE 0 END)`,
+        totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+      })
+      .from(claimLinePolicies)
+      .groupBy(claimLinePolicies.policyId)
+
+    // Create a map for quick lookup
+    const metricsMap = new Map(
+      policyMetrics.map(m => [m.policyId, {
+        hitRate: m.totalHits / totalClaims,
+        denialRate: m.totalHits > 0 ? (m.deniedHits || 0) / m.totalHits : 0,
+        impact: m.totalImpact || 0,
+      }])
+    )
+
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
 
@@ -119,7 +151,7 @@ export default defineEventHandler(async (event) => {
             .where(eq(policyReferenceDocs.policyId, policy.id)),
         ])
 
-        return policyListAdapter(
+        const basePolicy = policyListAdapter(
           policy as unknown as DbPolicy,
           procedureCodes.map(c => c.code),
           diagnosisCodes.map(c => c.code),
@@ -127,6 +159,19 @@ export default defineEventHandler(async (event) => {
           placesOfService.map(p => p.placeOfService),
           referenceDocs as DbReferenceDoc[],
         )
+
+        // Merge computed metrics from claim_line_policies
+        const metrics = metricsMap.get(policy.id)
+        if (metrics) {
+          return {
+            ...basePolicy,
+            hit_rate: metrics.hitRate,
+            denial_rate: metrics.denialRate,
+            impact: metrics.impact,
+          }
+        }
+
+        return basePolicy
       })
     )
 
