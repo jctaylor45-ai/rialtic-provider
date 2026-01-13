@@ -87,10 +87,11 @@ export default defineEventHandler(async (event) => {
       .groupBy(claimLinePolicies.policyId)
 
     // Create a map for quick lookup
+    // Rates are stored as whole number percentages (3 = 3%) for consistency with rest of app
     const metricsMap = new Map(
       policyMetrics.map(m => [m.policyId, {
-        hitRate: m.totalHits / totalClaims,
-        denialRate: m.totalHits > 0 ? (m.deniedHits || 0) / m.totalHits : 0,
+        hitRate: (m.totalHits / totalClaims) * 100,
+        denialRate: m.totalHits > 0 ? ((m.deniedHits || 0) / m.totalHits) * 100 : 0,
         impact: m.totalImpact || 0,
       }])
     )

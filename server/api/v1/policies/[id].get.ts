@@ -150,11 +150,12 @@ export default defineEventHandler(async (event) => {
     )
 
     // Merge computed metrics if available
+    // Rates are stored as whole number percentages (3 = 3%) for consistency with rest of app
     if (policyMetrics && policyMetrics.totalHits > 0) {
       return {
         ...basePolicy,
-        hit_rate: policyMetrics.totalHits / totalClaims,
-        denial_rate: policyMetrics.totalHits > 0 ? (policyMetrics.deniedHits || 0) / policyMetrics.totalHits : 0,
+        hit_rate: (policyMetrics.totalHits / totalClaims) * 100,
+        denial_rate: policyMetrics.totalHits > 0 ? ((policyMetrics.deniedHits || 0) / policyMetrics.totalHits) * 100 : 0,
         impact: policyMetrics.totalImpact || 0,
       }
     }

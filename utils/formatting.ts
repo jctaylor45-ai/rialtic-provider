@@ -52,6 +52,7 @@ export function formatCurrencyDetailed(amount: number | string | undefined | nul
 export function formatPercentage(value: number | string | undefined | null): string {
   if (value === null || value === undefined) return '0%'
   const num = typeof value === 'string' ? parseFloat(value) : value
+  // Value is expected as whole number percentage (25 = 25%)
   return numeral(num / 100).format('0%')
 }
 
