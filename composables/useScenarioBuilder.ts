@@ -488,7 +488,7 @@ export function useScenarioBuilder() {
     policiesError.value = null
     try {
       const response = await $fetch<PoliciesListResponse>('/api/v1/policies', {
-        params: { limit: 100 },
+        params: { limit: 0 },
       })
       policies.value = response.data
     } catch (error) {
@@ -515,9 +515,23 @@ export function useScenarioBuilder() {
       id: p.id,
       title: p.name,
       category: mapTopicToCategory(p.topic?.name),
+      topic: p.topic?.name || '',
+      logicType: p.policy_details?.logic_type_primary || '',
       description: p.description || '',
       denialReason: p.common_mistake || p.description || 'Claim denied per policy requirements',
     }))
+  })
+
+  // Unique topics for filtering
+  const uniqueTopics = computed(() => {
+    const topics = new Set(availablePolicies.value.map(p => p.topic).filter(Boolean))
+    return Array.from(topics).sort()
+  })
+
+  // Unique logic types for filtering
+  const uniqueLogicTypes = computed(() => {
+    const types = new Set(availablePolicies.value.map(p => p.logicType).filter(Boolean))
+    return Array.from(types).sort()
   })
 
   // Methods
@@ -887,6 +901,8 @@ export default scenario
     endDate,
     totalProviders,
     availablePolicies,
+    uniqueTopics,
+    uniqueLogicTypes,
 
     // Reference data
     specialtyConfigurations,

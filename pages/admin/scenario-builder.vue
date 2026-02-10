@@ -291,19 +291,82 @@
               </button>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-neutral-600 mb-1">Policy</label>
+            <!-- Policy Search with Filters -->
+            <div class="mb-4">
+              <label class="block text-xs font-medium text-neutral-600 mb-1">Policy</label>
+              <div class="flex gap-2 mb-2">
                 <select
-                  v-model="pattern.policyId"
-                  class="form-input w-full text-sm"
-                  @change="updatePatternFromPolicy(index, pattern.policyId)"
+                  :value="policyFilterTopic[index] || 'all'"
+                  class="form-input text-sm flex-shrink-0"
+                  style="max-width: 180px;"
+                  @change="policyFilterTopic[index] = ($event.target as HTMLSelectElement).value"
                 >
-                  <option v-for="policy in availablePolicies" :key="policy.id" :value="policy.id">
-                    {{ policy.title }}
+                  <option value="all">All Topics</option>
+                  <option v-for="topic in uniqueTopics" :key="topic" :value="topic">
+                    {{ topic }}
+                  </option>
+                </select>
+                <select
+                  :value="policyFilterLogicType[index] || 'all'"
+                  class="form-input text-sm flex-shrink-0"
+                  style="max-width: 180px;"
+                  @change="policyFilterLogicType[index] = ($event.target as HTMLSelectElement).value"
+                >
+                  <option value="all">All Logic Types</option>
+                  <option v-for="lt in uniqueLogicTypes" :key="lt" :value="lt">
+                    {{ lt }}
                   </option>
                 </select>
               </div>
+              <div class="relative">
+                <input
+                  type="text"
+                  class="form-input w-full text-sm"
+                  :placeholder="getPolicyInfo(pattern.policyId)?.title || 'Search policies by name or ID...'"
+                  :value="getPolicySearchQuery(index)"
+                  @input="policySearchQuery[index] = ($event.target as HTMLInputElement).value"
+                  @focus="openPolicySearch(index)"
+                  @blur="closePolicySearch(index)"
+                />
+                <!-- Selected policy indicator -->
+                <div
+                  v-if="!policyDropdownOpen[index] && pattern.policyId"
+                  class="mt-1 flex items-center gap-2 text-xs text-neutral-500"
+                >
+                  <span class="font-medium text-neutral-700">{{ getPolicyInfo(pattern.policyId)?.title }}</span>
+                  <span class="text-neutral-400">({{ pattern.policyId }})</span>
+                </div>
+                <!-- Dropdown Results -->
+                <div
+                  v-if="policyDropdownOpen[index]"
+                  class="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-neutral-200 rounded-lg shadow-lg"
+                >
+                  <div
+                    v-if="getFilteredPolicies(index).length === 0"
+                    class="px-3 py-2 text-sm text-neutral-500"
+                  >
+                    No policies match your search
+                  </div>
+                  <button
+                    v-for="policy in getFilteredPolicies(index).slice(0, 50)"
+                    :key="policy.id"
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 transition-colors border-b border-neutral-100 last:border-b-0"
+                    :class="{ 'bg-primary-50': pattern.policyId === policy.id }"
+                    @mousedown.prevent="selectPolicy(index, policy.id)"
+                  >
+                    <div class="font-medium text-neutral-900 truncate">{{ policy.title }}</div>
+                    <div class="flex items-center gap-2 text-xs text-neutral-500">
+                      <span>{{ policy.id }}</span>
+                      <span v-if="policy.topic" class="text-neutral-400">{{ policy.topic }}</span>
+                      <span v-if="policy.logicType" class="text-neutral-400">{{ policy.logicType }}</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-xs font-medium text-neutral-600 mb-1">Tier</label>
                 <select v-model="pattern.tier" class="form-input w-full text-sm">
@@ -781,6 +844,8 @@ const {
   endDate,
   totalProviders,
   availablePolicies,
+  uniqueTopics,
+  uniqueLogicTypes,
   policiesLoading,
   policiesError,
   loadPolicies,
@@ -803,6 +868,58 @@ onMounted(() => {
 // Helper to get policy info by ID
 function getPolicyInfo(policyId: string) {
   return availablePolicies.value.find(p => p.id === policyId)
+}
+
+// Policy type-ahead search state (per pattern index)
+const policySearchQuery = ref<Record<number, string>>({})
+const policyFilterTopic = ref<Record<number, string>>({})
+const policyFilterLogicType = ref<Record<number, string>>({})
+const policyDropdownOpen = ref<Record<number, boolean>>({})
+
+function getPolicySearchQuery(index: number): string {
+  return policySearchQuery.value[index] || ''
+}
+
+function getFilteredPolicies(index: number) {
+  const query = (policySearchQuery.value[index] || '').toLowerCase()
+  const topicFilter = policyFilterTopic.value[index] || 'all'
+  const logicFilter = policyFilterLogicType.value[index] || 'all'
+
+  return availablePolicies.value.filter(p => {
+    if (topicFilter !== 'all' && p.topic !== topicFilter) return false
+    if (logicFilter !== 'all' && p.logicType !== logicFilter) return false
+    if (query) {
+      return p.title.toLowerCase().includes(query) ||
+        p.id.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query)
+    }
+    return true
+  })
+}
+
+function selectPolicy(index: number, policyId: string) {
+  const pattern = input.patterns[index]
+  if (pattern) {
+    pattern.policyId = policyId
+    updatePatternFromPolicy(index, policyId)
+  }
+  policyDropdownOpen.value[index] = false
+  policySearchQuery.value[index] = ''
+}
+
+function openPolicySearch(index: number) {
+  // Close all other dropdowns
+  for (const key of Object.keys(policyDropdownOpen.value)) {
+    policyDropdownOpen.value[Number(key)] = false
+  }
+  policyDropdownOpen.value[index] = true
+}
+
+function closePolicySearch(index: number) {
+  // Small delay to allow click events on dropdown items
+  setTimeout(() => {
+    policyDropdownOpen.value[index] = false
+  }, 200)
 }
 
 const selectedSpecialty = ref('')
