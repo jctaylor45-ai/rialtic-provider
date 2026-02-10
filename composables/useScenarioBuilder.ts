@@ -528,9 +528,17 @@ export function useScenarioBuilder() {
     return Array.from(topics).sort()
   })
 
-  // Unique logic types for filtering
+  // Unique logic types for filtering (split concatenated values like "Authorization, Bundling")
   const uniqueLogicTypes = computed(() => {
-    const types = new Set(availablePolicies.value.map(p => p.logicType).filter(Boolean))
+    const types = new Set<string>()
+    for (const p of availablePolicies.value) {
+      if (p.logicType) {
+        for (const lt of p.logicType.split(/,\s*/)) {
+          const trimmed = lt.trim()
+          if (trimmed) types.add(trimmed)
+        }
+      }
+    }
     return Array.from(types).sort()
   })
 

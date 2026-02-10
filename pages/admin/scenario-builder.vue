@@ -887,7 +887,11 @@ function getFilteredPolicies(index: number) {
 
   return availablePolicies.value.filter(p => {
     if (topicFilter !== 'all' && p.topic !== topicFilter) return false
-    if (logicFilter !== 'all' && p.logicType !== logicFilter) return false
+    // Check if any of the policy's logic types match the filter
+    if (logicFilter !== 'all') {
+      const policyLogicTypes = p.logicType ? p.logicType.split(/,\s*/).map(lt => lt.trim()) : []
+      if (!policyLogicTypes.includes(logicFilter)) return false
+    }
     if (query) {
       return p.title.toLowerCase().includes(query) ||
         p.id.toLowerCase().includes(query) ||
