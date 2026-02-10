@@ -37,7 +37,9 @@ interface PaapiPoliciesResponse {
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
-    const limit = Math.min(parseInt(query.limit as string) || 50, 100)
+    const rawLimit = parseInt(query.limit as string)
+    // limit=0 means "return all"; otherwise default to 50
+    const limit = rawLimit === 0 ? 0 : (rawLimit || 50)
     const offset = parseInt(query.offset as string) || 0
     const mode = query.mode as string | undefined
     const topic = query.topic as string | undefined
@@ -114,14 +116,18 @@ export default defineEventHandler(async (event) => {
 
     const where = whereConditions.length > 0 ? and(...whereConditions) : undefined
 
-    // Query policies
-    const policiesList = await db
+    // Query policies (limit=0 means return all)
+    const policiesQuery = db
       .select()
       .from(policies)
       .where(where)
       .orderBy(desc(policies.impact), desc(policies.denialRate))
-      .limit(limit)
-      .offset(offset)
+
+    if (limit > 0) {
+      policiesQuery.limit(limit).offset(offset)
+    }
+
+    const policiesList = await policiesQuery
 
     // Get total count
     const [totalResult] = await db
@@ -131,51 +137,86 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Get all related data for each policy and transform to PaAPI format
-    const transformedPolicies = await Promise.all(
-      policiesList.map(async (policy) => {
-        // Fetch all related codes in parallel
-        const [procedureCodes, diagnosisCodes, modifiers, placesOfService, referenceDocs] = await Promise.all([
-          db.select({ code: policyProcedureCodes.code })
-            .from(policyProcedureCodes)
-            .where(eq(policyProcedureCodes.policyId, policy.id)),
-          db.select({ code: policyDiagnosisCodes.code })
-            .from(policyDiagnosisCodes)
-            .where(eq(policyDiagnosisCodes.policyId, policy.id)),
-          db.select({ modifier: policyModifiers.modifier })
-            .from(policyModifiers)
-            .where(eq(policyModifiers.policyId, policy.id)),
-          db.select({ placeOfService: policyPlacesOfService.placeOfService })
-            .from(policyPlacesOfService)
-            .where(eq(policyPlacesOfService.policyId, policy.id)),
-          db.select()
-            .from(policyReferenceDocs)
-            .where(eq(policyReferenceDocs.policyId, policy.id)),
-        ])
+    // Bulk-fetch all related data in parallel (5 queries total instead of 5 * N)
+    const [
+      allProcedureCodes,
+      allDiagnosisCodes,
+      allModifiers,
+      allPlacesOfService,
+      allReferenceDocs,
+    ] = await Promise.all([
+      db.select({ policyId: policyProcedureCodes.policyId, code: policyProcedureCodes.code })
+        .from(policyProcedureCodes),
+      db.select({ policyId: policyDiagnosisCodes.policyId, code: policyDiagnosisCodes.code })
+        .from(policyDiagnosisCodes),
+      db.select({ policyId: policyModifiers.policyId, modifier: policyModifiers.modifier })
+        .from(policyModifiers),
+      db.select({ policyId: policyPlacesOfService.policyId, placeOfService: policyPlacesOfService.placeOfService })
+        .from(policyPlacesOfService),
+      db.select()
+        .from(policyReferenceDocs),
+    ])
 
-        const basePolicy = policyListAdapter(
-          policy as unknown as DbPolicy,
-          procedureCodes.map(c => c.code),
-          diagnosisCodes.map(c => c.code),
-          modifiers.map(m => m.modifier),
-          placesOfService.map(p => p.placeOfService),
-          referenceDocs as DbReferenceDoc[],
-        )
+    // Group related data by policyId for O(1) lookup
+    const procedureCodesByPolicy = new Map<string, string[]>()
+    for (const row of allProcedureCodes) {
+      const arr = procedureCodesByPolicy.get(row.policyId) || []
+      arr.push(row.code)
+      procedureCodesByPolicy.set(row.policyId, arr)
+    }
 
-        // Merge computed metrics from claim_line_policies
-        const metrics = metricsMap.get(policy.id)
-        if (metrics) {
-          return {
-            ...basePolicy,
-            hit_rate: metrics.hitRate,
-            denial_rate: metrics.denialRate,
-            impact: metrics.impact,
-          }
+    const diagnosisCodesByPolicy = new Map<string, string[]>()
+    for (const row of allDiagnosisCodes) {
+      const arr = diagnosisCodesByPolicy.get(row.policyId) || []
+      arr.push(row.code)
+      diagnosisCodesByPolicy.set(row.policyId, arr)
+    }
+
+    const modifiersByPolicy = new Map<string, string[]>()
+    for (const row of allModifiers) {
+      const arr = modifiersByPolicy.get(row.policyId) || []
+      arr.push(row.modifier)
+      modifiersByPolicy.set(row.policyId, arr)
+    }
+
+    const placesByPolicy = new Map<string, string[]>()
+    for (const row of allPlacesOfService) {
+      const arr = placesByPolicy.get(row.policyId) || []
+      arr.push(row.placeOfService)
+      placesByPolicy.set(row.policyId, arr)
+    }
+
+    const refDocsByPolicy = new Map<string, typeof allReferenceDocs>()
+    for (const row of allReferenceDocs) {
+      const arr = refDocsByPolicy.get(row.policyId) || []
+      arr.push(row)
+      refDocsByPolicy.set(row.policyId, arr)
+    }
+
+    // Transform policies using bulk-fetched related data
+    const transformedPolicies = policiesList.map((policy) => {
+      const basePolicy = policyListAdapter(
+        policy as unknown as DbPolicy,
+        procedureCodesByPolicy.get(policy.id) || [],
+        diagnosisCodesByPolicy.get(policy.id) || [],
+        modifiersByPolicy.get(policy.id) || [],
+        placesByPolicy.get(policy.id) || [],
+        (refDocsByPolicy.get(policy.id) || []) as DbReferenceDoc[],
+      )
+
+      // Merge computed metrics from claim_line_policies
+      const metrics = metricsMap.get(policy.id)
+      if (metrics) {
+        return {
+          ...basePolicy,
+          hit_rate: metrics.hitRate,
+          denial_rate: metrics.denialRate,
+          impact: metrics.impact,
         }
+      }
 
-        return basePolicy
-      })
-    )
+      return basePolicy
+    })
 
     return {
       data: transformedPolicies,

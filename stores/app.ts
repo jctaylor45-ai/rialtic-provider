@@ -174,9 +174,9 @@ export const useAppStore = defineStore('app', {
       this.claimsFirstDataLoaded = false
       this.claims = []
 
-      // Fetch policies, summary, and first page of claims in parallel
+      // Fetch policies (all), summary, and first page of claims in parallel
       const [policiesResponse, summaryResponse, claimsResponse] = await Promise.all([
-        $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 100 } }),
+        $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 0 } }),
         $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary'),
         $fetch<ClaimsApiResponse>('/api/v1/claims', { params: { limit: PAGE_SIZE, offset: 0 } }),
       ])
