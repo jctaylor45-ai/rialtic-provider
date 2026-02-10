@@ -324,10 +324,12 @@
               <textarea
                 v-model="jsonInput"
                 class="form-input w-full h-48 font-mono text-sm"
-                placeholder='{"policies": [{"id": "POL-001", "name": "Policy Name", "mode": "Edit", "effectiveDate": "2024-01-01", ...}]}'
+                placeholder='{"policies": [{"id": "POL-001", "name": "Policy Name", "effectiveDate": "2024-01-01", ...}]}'
               />
               <p class="mt-1 text-xs text-neutral-500">
-                Expected format: <code>{"policies": [...]}</code> or just an array of policies
+                Expected format: <code>{"policies": [...]}</code> or just an array of policies.
+                <br />
+                <span class="text-neutral-400">Note: hitRate, denialRate, appealRate, overturnRate, and impact are computed automatically from claim data.</span>
               </p>
             </div>
 
@@ -376,6 +378,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+
+const appStore = useAppStore()
+const patternsStore = usePatternsStore()
 
 // Stats
 interface DbStats {
@@ -441,22 +446,20 @@ const importResult = ref<{
   failed?: number
 } | null>(null)
 
+// Note: hitRate, denialRate, appealRate, overturnRate, and impact are computed
+// dynamically from claim data - they should NOT be included in policy imports.
+// Mode is optional and defaults to 'Edit' if not provided.
 const examplePolicyJson = `{
   "policies": [
     {
       "id": "POL-001",
       "name": "Prior Authorization Required for High-Cost Procedures",
-      "mode": "Edit",
       "effectiveDate": "2024-01-01",
       "description": "Requires prior authorization for procedures over $1000",
       "clinicalRationale": "Ensures appropriate utilization of high-cost services",
       "topic": "Prior Authorization",
       "logicType": "Authorization",
       "source": "Medical Policy Manual",
-      "hitRate": 15.5,
-      "denialRate": 8.2,
-      "appealRate": 12.0,
-      "overturnRate": 25.0,
       "commonMistake": "Submitting without obtaining prior authorization",
       "fixGuidance": "Obtain prior authorization before scheduling procedure",
       "procedureCodes": ["99213", "99214", "99215"],
@@ -508,6 +511,10 @@ async function clearDatabase() {
 
     // Refresh stats
     await loadStats()
+
+    // Reinitialize stores so in-memory data reflects the cleared database
+    await appStore.initialize()
+    await patternsStore.loadPatterns()
 
     // Reset confirmation
     confirmPhrase.value = ''
