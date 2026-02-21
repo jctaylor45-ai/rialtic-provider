@@ -13,7 +13,7 @@
  */
 
 import Database from 'better-sqlite3'
-import { join } from 'path'
+import { join, isAbsolute } from 'path'
 import { readFileSync, existsSync } from 'fs'
 
 import type { ScenarioDefinition } from './scenario-types'
@@ -121,7 +121,7 @@ interface BulkInput {
 }
 
 function loadInputFile(filePath: string): BulkInput {
-  const fullPath = join(process.cwd(), filePath)
+  const fullPath = isAbsolute(filePath) ? filePath : join(process.cwd(), filePath)
 
   if (!existsSync(fullPath)) {
     throw new Error(`Input file not found: ${fullPath}`)
