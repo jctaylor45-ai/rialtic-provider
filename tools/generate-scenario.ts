@@ -148,6 +148,11 @@ async function main(): Promise<void> {
       }
       throw new Error('Scenario validation failed')
     }
+    if (validation.warnings.length > 0) {
+      for (const warning of validation.warnings) {
+        console.log(`⚠ ${warning}`)
+      }
+    }
     console.log('✓ Scenario validation passed')
 
     // If validate-only mode, stop here

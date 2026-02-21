@@ -1101,6 +1101,41 @@
             </div>
           </div>
 
+          <!-- Per-scenario error details -->
+          <div
+            v-if="bulkJob?.results && bulkJob.results.length > 0"
+            class="border border-neutral-200 rounded-lg overflow-hidden mb-6"
+          >
+            <table class="w-full text-sm">
+              <thead class="bg-neutral-50">
+                <tr>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-10">#</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Scenario</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-24">Status</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(result, i) in bulkJob.results"
+                  :key="i"
+                  class="border-t border-neutral-100"
+                >
+                  <td class="px-4 py-2 text-neutral-500">{{ i + 1 }}</td>
+                  <td class="px-4 py-2 text-neutral-900">{{ result.scenarioName || result.scenarioId }}</td>
+                  <td class="px-4 py-2">
+                    <span v-if="result.status === 'skipped'" class="text-warning-600">Skipped</span>
+                    <span v-else-if="result.status === 'failed'" class="text-error-600">✗ Failed</span>
+                    <span v-else class="text-neutral-400">{{ result.status }}</span>
+                  </td>
+                  <td class="px-4 py-2 text-error-600 text-xs">
+                    {{ result.error || '—' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <div class="flex items-center gap-3">
             <button type="button" class="btn btn-primary" @click="startBulkGeneration">
               Try Again

@@ -75,12 +75,32 @@ function parseStdoutLine(line: string, job: BulkImportJob): void {
   }
 
   // Validation failure: "  ✗ scenario-id: Invalid — reason"
-  const invalidMatch = line.match(/^\s*✗\s+([^:]+):\s+Invalid/)
+  const invalidMatch = line.match(/^\s*✗\s+([^:]+):\s+Invalid\s*[—–-]\s*(.+)$/)
   if (invalidMatch) {
     const existing = job.results.find(r => r.scenarioId === invalidMatch[1])
     if (existing) {
       existing.status = 'skipped'
+      existing.error = invalidMatch[2]?.trim() || 'Failed validation'
+    }
+    return
+  }
+  // Validation failure without reason: "  ✗ scenario-id: Invalid"
+  const invalidMatchShort = line.match(/^\s*✗\s+([^:]+):\s+Invalid\s*$/)
+  if (invalidMatchShort) {
+    const existing = job.results.find(r => r.scenarioId === invalidMatchShort[1])
+    if (existing) {
+      existing.status = 'skipped'
       existing.error = 'Failed validation'
+    }
+    return
+  }
+
+  // Additional validation error lines: "    - second error message"
+  const additionalErrorMatch = line.match(/^\s{4,}-\s+(.+)$/)
+  if (additionalErrorMatch) {
+    const lastSkipped = [...job.results].reverse().find(r => r.status === 'skipped')
+    if (lastSkipped && lastSkipped.error) {
+      lastSkipped.error += '; ' + additionalErrorMatch[1]!.trim()
     }
     return
   }

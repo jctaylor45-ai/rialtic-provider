@@ -191,6 +191,11 @@ function main(): void {
 
     if (validation.valid) {
       console.log(`  ✓ ${scenario.id}: ${scenario.name}`)
+      if (validation.warnings.length > 0) {
+        for (const warning of validation.warnings) {
+          console.log(`    ⚠ ${warning}`)
+        }
+      }
       validCount++
     } else {
       console.log(`  ✗ ${scenario.id || '(no id)'}: Invalid — ${validation.errors[0]}`)

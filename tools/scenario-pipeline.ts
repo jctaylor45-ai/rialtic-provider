@@ -60,6 +60,7 @@ export interface PipelineResult {
 export interface ValidationResult {
   valid: boolean
   errors: string[]
+  warnings: string[]
 }
 
 // =============================================================================
@@ -162,9 +163,10 @@ let _verbose: LogFn = () => {}
 
 export function validateScenario(scenario: ScenarioDefinition): ValidationResult {
   const errors: string[] = []
+  const warnings: string[] = []
 
   if (!scenario) {
-    return { valid: false, errors: ['Scenario is null or undefined'] }
+    return { valid: false, errors: ['Scenario is null or undefined'], warnings: [] }
   }
 
   if (!scenario.id) errors.push('Missing required field: id')
@@ -209,11 +211,11 @@ export function validateScenario(scenario: ScenarioDefinition): ValidationResult
       if (!pattern.id) errors.push('Pattern missing required field: id')
       if (!pattern.title) errors.push(`Pattern "${pattern.id || '?'}": missing required field: title`)
 
-      // Check policy references against policy library
+      // Check policy references — warn if not in hardcoded library (full policy set may be in DB)
       const policyIds = pattern.policies?.map(p => p.id) || []
       const missing = validatePolicyReferences(policyIds)
       if (missing.length > 0) {
-        errors.push(`Pattern "${pattern.id}": references unknown policies: ${missing.join(', ')}`)
+        warnings.push(`Pattern "${pattern.id}": policy IDs not in built-in library (will use pattern denialReason instead): ${missing.join(', ')}`)
       }
     }
 
@@ -231,7 +233,7 @@ export function validateScenario(scenario: ScenarioDefinition): ValidationResult
     }
   }
 
-  return { valid: errors.length === 0, errors }
+  return { valid: errors.length === 0, errors, warnings }
 }
 
 // =============================================================================
