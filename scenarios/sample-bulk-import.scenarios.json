@@ -231,17 +231,16 @@
       ],
       "learningEvents": {
         "eventDistribution": {
-          "pattern_viewed": 0.35,
-          "claim_inspected": 0.25,
-          "claims_exported": 0.10,
-          "action_recorded": 0.15,
-          "remediation_started": 0.10,
-          "appeal_filed": 0.05
+          "pattern_viewed": 18,
+          "claim_inspected": 30,
+          "claims_exported": 8,
+          "action_recorded": 10,
+          "remediation_started": 6,
+          "appeal_filed": 4
         },
         "eventClustering": {
-          "morning_review": ["pattern_viewed", "claim_inspected"],
-          "billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
-          "improvement_initiative": ["action_recorded", "pattern_viewed"]
+          "pattern-fm-mod25": ["2025-07-10", "2025-07-28", "2025-08-15", "2025-09-05"],
+          "pattern-fm-mod59": ["2025-07-12", "2025-08-15"]
         }
       },
       "targetMetrics": {
@@ -623,18 +622,17 @@
       ],
       "learningEvents": {
         "eventDistribution": {
-          "pattern_viewed": 0.30,
-          "claim_inspected": 0.20,
-          "claims_exported": 0.12,
-          "action_recorded": 0.15,
-          "remediation_started": 0.13,
-          "appeal_filed": 0.10
+          "pattern_viewed": 35,
+          "claim_inspected": 45,
+          "claims_exported": 12,
+          "action_recorded": 18,
+          "remediation_started": 10,
+          "appeal_filed": 8
         },
         "eventClustering": {
-          "morning_clinical_review": ["pattern_viewed", "claim_inspected"],
-          "weekly_billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
-          "monthly_improvement": ["action_recorded", "pattern_viewed", "claim_inspected"],
-          "provider_meeting": ["pattern_viewed", "action_recorded"]
+          "pattern-card-auth": ["2025-04-15", "2025-05-01", "2025-05-20", "2025-07-15"],
+          "pattern-card-doc": ["2025-06-15", "2025-07-01", "2025-09-10"],
+          "pattern-card-bundle": ["2025-07-10", "2025-08-01"]
         }
       },
       "targetMetrics": {
@@ -1142,19 +1140,18 @@
       ],
       "learningEvents": {
         "eventDistribution": {
-          "pattern_viewed": 0.28,
-          "claim_inspected": 0.22,
-          "claims_exported": 0.10,
-          "action_recorded": 0.18,
-          "remediation_started": 0.12,
-          "appeal_filed": 0.10
+          "pattern_viewed": 50,
+          "claim_inspected": 65,
+          "claims_exported": 15,
+          "action_recorded": 25,
+          "remediation_started": 18,
+          "appeal_filed": 12
         },
         "eventClustering": {
-          "surgical_day_review": ["pattern_viewed", "claim_inspected"],
-          "weekly_billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
-          "department_meeting": ["pattern_viewed", "action_recorded", "claim_inspected"],
-          "pt_documentation_review": ["pattern_viewed", "claim_inspected", "action_recorded"],
-          "pain_management_review": ["pattern_viewed", "claim_inspected"]
+          "pattern-ortho-mod25": ["2025-04-10", "2025-04-25", "2025-05-05", "2025-07-15", "2025-08-20"],
+          "pattern-ortho-auth": ["2025-05-20", "2025-06-01", "2025-07-15"],
+          "pattern-ortho-doc": ["2025-06-10", "2025-07-01", "2025-08-20"],
+          "pattern-ortho-freq": ["2025-07-01", "2025-07-10"]
         }
       },
       "targetMetrics": {

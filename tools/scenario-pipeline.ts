@@ -240,7 +240,7 @@ export function validateScenario(scenario: ScenarioDefinition): ValidationResult
 
 function initializeContext(scenario: ScenarioDefinition): GenerationContext {
   _verbose('Initializing generation context...')
-  resetClaimSequence()
+  resetClaimSequence(scenario.id)
 
   const months = getMonthsBetween(scenario.timeline.startDate, scenario.timeline.endDate)
   _verbose(`Timeline spans ${months.length} months`)
@@ -639,6 +639,12 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
       scenario.timeline.endDate,
       JSON.stringify(scenario)
     )
+
+    // Clean up existing data for this scenario (cascades handle children)
+    db.prepare('DELETE FROM learning_events WHERE scenario_id = ?').run(scenario.id)
+    db.prepare('DELETE FROM claims WHERE scenario_id = ?').run(scenario.id)
+    db.prepare('DELETE FROM patterns WHERE scenario_id = ?').run(scenario.id)
+    db.prepare('DELETE FROM providers WHERE scenario_id = ?').run(scenario.id)
 
     // Deactivate other scenarios
     db.prepare('UPDATE scenarios SET is_active = 0 WHERE id != ?').run(scenario.id)

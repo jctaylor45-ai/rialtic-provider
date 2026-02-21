@@ -332,22 +332,29 @@ export function generateMemberId(): string {
 // =============================================================================
 
 let claimSequence = 0
+let claimScenarioTag = ''
 
 /**
- * Generate claim ID with month prefix
+ * Generate claim ID with month prefix and scenario tag.
+ * Format: CLM-{tag}-{YYYYMM}-{sequence}
  */
 export function generateClaimId(month: MonthRange): string {
   claimSequence++
   const monthPrefix = month.key.replace('-', '')
   const sequence = String(claimSequence).padStart(6, '0')
-  return `CLM-${monthPrefix}-${sequence}`
+  return `CLM-${claimScenarioTag}-${monthPrefix}-${sequence}`
 }
 
 /**
- * Reset claim sequence (for testing or new scenario generation)
+ * Reset claim sequence for a new scenario generation run.
+ * The scenarioId is used to create a short tag that ensures
+ * claim IDs are unique across scenarios with overlapping timelines.
  */
-export function resetClaimSequence(): void {
+export function resetClaimSequence(scenarioId?: string): void {
   claimSequence = 0
+  claimScenarioTag = scenarioId
+    ? scenarioId.replace(/^scenario-/, '').slice(0, 8).toUpperCase()
+    : 'DEFAULT'
 }
 
 // =============================================================================
