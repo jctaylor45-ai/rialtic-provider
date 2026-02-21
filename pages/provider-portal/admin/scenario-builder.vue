@@ -9,6 +9,29 @@
         </p>
       </div>
 
+      <!-- Mode Toggle -->
+      <div class="flex items-center gap-1 bg-neutral-100 rounded-lg p-1 w-fit mb-6">
+        <button
+          @click="mode = 'create'"
+          :class="mode === 'create' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-all"
+        >
+          Create Scenario
+        </button>
+        <button
+          @click="mode = 'import'"
+          :class="mode === 'import' ? 'bg-white shadow-sm text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-all"
+        >
+          Bulk Import
+        </button>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- CREATE SCENARIO MODE (existing wizard)                       -->
+      <!-- ============================================================ -->
+      <div v-show="mode === 'create'">
+
       <!-- Progress Steps -->
       <div class="mb-8">
         <div class="flex items-center justify-between">
@@ -824,6 +847,272 @@
           <button type="button" class="btn btn-secondary" @click="reset">Reset</button>
         </div>
       </div>
+
+      </div><!-- end create mode -->
+
+      <!-- ============================================================ -->
+      <!-- BULK IMPORT MODE                                             -->
+      <!-- ============================================================ -->
+      <div v-show="mode === 'import'">
+
+        <!-- State 1: Empty (no file loaded) -->
+        <div v-if="bulkState === 'empty'" class="card p-6">
+          <h2 class="text-lg font-semibold text-neutral-900 mb-1">Bulk Scenario Import</h2>
+          <p class="text-sm text-neutral-600 mb-6">
+            Upload a JSON file containing multiple scenario definitions to generate data for all of them at once.
+          </p>
+
+          <!-- Drop zone -->
+          <div
+            class="border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer"
+            :class="isDragOver ? 'border-primary-500 bg-primary-50' : 'border-neutral-300 hover:border-neutral-400'"
+            @dragover.prevent="isDragOver = true"
+            @dragleave.prevent="isDragOver = false"
+            @drop.prevent="handleFileDrop"
+            @click="triggerFileInput"
+          >
+            <div class="text-3xl mb-3">📁</div>
+            <div class="font-medium text-neutral-700 mb-1">
+              Drop .json file here or click to browse
+            </div>
+            <div class="text-sm text-neutral-500">
+              Accepts .json files up to 50MB
+            </div>
+          </div>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".json"
+            class="hidden"
+            @change="handleFileSelect"
+          />
+
+          <!-- Parse error -->
+          <div
+            v-if="bulkParseError"
+            class="mt-4 p-3 bg-error-50 border border-error-200 rounded-lg text-sm text-error-700"
+          >
+            {{ bulkParseError }}
+          </div>
+
+          <!-- Download template -->
+          <div class="mt-4">
+            <button type="button" class="btn btn-secondary text-sm" @click="downloadTemplate">
+              Download Template
+            </button>
+          </div>
+        </div>
+
+        <!-- State 2: Loaded (file parsed, showing validation) -->
+        <div v-else-if="bulkState === 'loaded'" class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-lg">📄</span>
+                <span class="font-medium text-neutral-900">{{ bulkFileName }}</span>
+              </div>
+              <div class="text-sm text-neutral-600 mt-1">
+                Scenarios found: {{ bulkScenarios.length }}
+              </div>
+            </div>
+            <button
+              type="button"
+              class="text-sm text-neutral-500 hover:text-error-600 transition-colors"
+              @click="clearBulkFile"
+            >
+              ✕ Remove
+            </button>
+          </div>
+
+          <!-- Scenario table -->
+          <div class="border border-neutral-200 rounded-lg overflow-hidden mb-4">
+            <table class="w-full text-sm">
+              <thead class="bg-neutral-50">
+                <tr>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-10">#</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Name</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-24">Patterns</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-28">Timeline</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(scenario, i) in bulkScenarios"
+                  :key="i"
+                  class="border-t border-neutral-100"
+                  :class="scenario.valid ? '' : 'bg-error-50/50'"
+                >
+                  <td class="px-4 py-2 text-neutral-500">{{ i + 1 }}</td>
+                  <td class="px-4 py-2">
+                    <span v-if="scenario.valid" class="text-neutral-900">{{ scenario.name }}</span>
+                    <span v-else class="text-error-600" :title="scenario.error">
+                      ✗ {{ scenario.name || 'Invalid scenario' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-2 text-neutral-600">
+                    {{ scenario.valid ? scenario.patternCount : '—' }}
+                  </td>
+                  <td class="px-4 py-2 text-neutral-600">
+                    {{ scenario.valid && scenario.timelineDays ? `${scenario.timelineDays} days` : '—' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="text-sm text-neutral-600 mb-4">
+            Valid: <strong>{{ bulkValidCount }}</strong> of {{ bulkScenarios.length }} scenarios
+          </div>
+
+          <div class="flex items-center justify-between">
+            <button type="button" class="btn btn-secondary" @click="clearBulkFile">
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="bulkValidCount === 0"
+              @click="startBulkGeneration"
+            >
+              Generate All ({{ bulkValidCount }} scenario{{ bulkValidCount !== 1 ? 's' : '' }})
+            </button>
+          </div>
+        </div>
+
+        <!-- State 3: Generating (in progress) -->
+        <div v-else-if="bulkState === 'generating'" class="card p-6">
+          <div class="mb-4">
+            <div class="font-medium text-neutral-900 mb-2">
+              {{ bulkJob?.progress.phase || 'Starting...' }}
+            </div>
+            <!-- Progress bar -->
+            <div class="w-full bg-neutral-200 rounded-full h-3">
+              <div
+                class="bg-primary-600 h-3 rounded-full transition-all duration-500"
+                :style="{ width: bulkProgressPercent + '%' }"
+              />
+            </div>
+            <div class="text-sm text-neutral-500 mt-1">
+              {{ bulkProgressPercent }}%
+            </div>
+          </div>
+
+          <!-- Results table -->
+          <div class="border border-neutral-200 rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-neutral-50">
+                <tr>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-10">#</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Name</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-24">Status</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(result, i) in bulkJob?.results || []"
+                  :key="i"
+                  class="border-t border-neutral-100"
+                >
+                  <td class="px-4 py-2 text-neutral-500">{{ i + 1 }}</td>
+                  <td class="px-4 py-2 text-neutral-900">{{ result.scenarioName }}</td>
+                  <td class="px-4 py-2">
+                    <span v-if="result.status === 'succeeded'" class="text-success-600">✓ Done</span>
+                    <span v-else-if="result.status === 'generating'" class="text-primary-600">⏳ ...</span>
+                    <span v-else-if="result.status === 'failed'" class="text-error-600">✗ Failed</span>
+                    <span v-else-if="result.status === 'skipped'" class="text-neutral-400">Skipped</span>
+                    <span v-else class="text-neutral-400">○</span>
+                  </td>
+                  <td class="px-4 py-2 text-neutral-600">
+                    <span v-if="result.status === 'succeeded' && result.stats">
+                      {{ result.stats.claims.toLocaleString() }} claims
+                    </span>
+                    <span v-else-if="result.status === 'generating'">Generating</span>
+                    <span v-else-if="result.status === 'failed'" class="text-error-600" :title="result.error">
+                      {{ result.error }}
+                    </span>
+                    <span v-else>Pending</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- State 4: Complete -->
+        <div v-else-if="bulkState === 'complete'" class="card p-6">
+          <div class="mb-6 p-4 bg-success-50 border border-success-200 rounded-lg">
+            <div class="font-medium text-success-800 mb-1">✓ Bulk import complete</div>
+            <div class="text-sm text-success-700">
+              {{ bulkCompletedCount }} scenario{{ bulkCompletedCount !== 1 ? 's' : '' }} generated
+              · {{ bulkTotalClaims.toLocaleString() }} claims
+              · {{ bulkTotalDuration }}
+            </div>
+          </div>
+
+          <!-- Final results table -->
+          <div class="border border-neutral-200 rounded-lg overflow-hidden mb-6">
+            <table class="w-full text-sm">
+              <thead class="bg-neutral-50">
+                <tr>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-10">#</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Name</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600 w-24">Status</th>
+                  <th class="text-left px-4 py-2 font-medium text-neutral-600">Claims</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(result, i) in bulkJob?.results || []"
+                  :key="i"
+                  class="border-t border-neutral-100"
+                >
+                  <td class="px-4 py-2 text-neutral-500">{{ i + 1 }}</td>
+                  <td class="px-4 py-2 text-neutral-900">{{ result.scenarioName }}</td>
+                  <td class="px-4 py-2">
+                    <span v-if="result.status === 'succeeded'" class="text-success-600">✓</span>
+                    <span v-else-if="result.status === 'failed'" class="text-error-600" :title="result.error">✗</span>
+                    <span v-else class="text-neutral-400">—</span>
+                  </td>
+                  <td class="px-4 py-2 text-neutral-600">
+                    {{ result.stats ? result.stats.claims.toLocaleString() : '—' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <button type="button" class="btn btn-secondary" @click="clearBulkFile">
+              Import Another File
+            </button>
+            <NuxtLink to="/provider-portal/" class="btn btn-primary">
+              View Dashboard →
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- State 5: Error -->
+        <div v-else-if="bulkState === 'error'" class="card p-6">
+          <div class="mb-6 p-4 bg-error-50 border border-error-200 rounded-lg">
+            <div class="font-medium text-error-800 mb-1">✗ Bulk import failed</div>
+            <div class="text-sm text-error-700">
+              {{ bulkJob?.error || 'An unexpected error occurred' }}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button type="button" class="btn btn-primary" @click="startBulkGeneration">
+              Try Again
+            </button>
+            <button type="button" class="btn btn-secondary" @click="clearBulkFile">
+              Import Different File
+            </button>
+          </div>
+        </div>
+
+      </div><!-- end import mode -->
+
     </div>
   </div>
 </template>
@@ -834,7 +1123,10 @@ import {
   specialtyConfigurations,
   type EngagementLevel,
 } from '~/composables/useScenarioBuilder'
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, useTemplateRef } from 'vue'
+
+// Top-level mode toggle
+const mode = ref<'create' | 'import'>('create')
 
 const {
   input,
@@ -1116,4 +1408,400 @@ function nextStep() {
     currentStep.value++
   }
 }
+
+// =============================================================================
+// BULK IMPORT
+// =============================================================================
+
+interface BulkScenarioRow {
+  id: string
+  name: string
+  valid: boolean
+  error?: string
+  patternCount: number
+  timelineDays: number | null
+  raw: Record<string, unknown>
+}
+
+interface BulkJobResult {
+  scenarioId: string
+  scenarioName: string
+  status: 'pending' | 'generating' | 'succeeded' | 'failed' | 'skipped'
+  error?: string
+  stats?: {
+    claims: number
+    deniedClaims: number
+    appeals: number
+    snapshots: number
+    learningEvents: number
+    durationMs: number
+  }
+}
+
+interface BulkJob {
+  jobId: string
+  status: 'started' | 'validating' | 'generating' | 'completed' | 'failed'
+  scenarioCount: number
+  progress: { current: number; total: number; phase: string }
+  results: BulkJobResult[]
+  error?: string
+  startedAt: string
+  completedAt?: string
+}
+
+const bulkState = ref<'empty' | 'loaded' | 'generating' | 'complete' | 'error'>('empty')
+const bulkFileName = ref('')
+const bulkScenarios = ref<BulkScenarioRow[]>([])
+const bulkRawPayload = ref<Record<string, unknown>[]>([])
+const bulkParseError = ref('')
+const bulkJob = ref<BulkJob | null>(null)
+const isDragOver = ref(false)
+const fileInputRef = useTemplateRef<HTMLInputElement>('fileInputRef')
+
+let bulkPollInterval: ReturnType<typeof setInterval> | null = null
+
+const bulkValidCount = computed(() => bulkScenarios.value.filter(s => s.valid).length)
+
+const bulkProgressPercent = computed(() => {
+  if (!bulkJob.value) return 0
+  const { current, total } = bulkJob.value.progress
+  if (total === 0) return 0
+  return Math.round((current / total) * 100)
+})
+
+const bulkCompletedCount = computed(() =>
+  (bulkJob.value?.results || []).filter(r => r.status === 'succeeded').length
+)
+
+const bulkTotalClaims = computed(() =>
+  (bulkJob.value?.results || []).reduce((sum, r) => sum + (r.stats?.claims || 0), 0)
+)
+
+const bulkTotalDuration = computed(() => {
+  const ms = (bulkJob.value?.results || []).reduce((sum, r) => sum + (r.stats?.durationMs || 0), 0)
+  return (ms / 1000).toFixed(1) + 's'
+})
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function handleFileDrop(e: DragEvent) {
+  isDragOver.value = false
+  const file = e.dataTransfer?.files[0]
+  if (file) processFile(file)
+}
+
+function handleFileSelect(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) processFile(file)
+}
+
+function processFile(file: File) {
+  bulkParseError.value = ''
+
+  if (!file.name.endsWith('.json')) {
+    bulkParseError.value = 'Only .json files are accepted'
+    return
+  }
+  if (file.size > 50 * 1024 * 1024) {
+    bulkParseError.value = 'File exceeds 50MB limit'
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result as string)
+
+      if (!data || typeof data !== 'object') {
+        bulkParseError.value = 'File must contain a JSON object'
+        return
+      }
+
+      const scenarios = data.scenarios
+      if (!Array.isArray(scenarios) || scenarios.length === 0) {
+        bulkParseError.value = 'File must have a non-empty "scenarios" array'
+        return
+      }
+
+      // Parse and validate each scenario lightly
+      bulkScenarios.value = scenarios.map((s: Record<string, unknown>) => {
+        const errors: string[] = []
+        if (!s.id || typeof s.id !== 'string') errors.push('Missing "id"')
+        if (!s.name || typeof s.name !== 'string') errors.push('Missing "name"')
+        if (!s.timeline || typeof s.timeline !== 'object') errors.push('Missing "timeline"')
+        if (!s.patterns || !Array.isArray(s.patterns)) errors.push('Missing "patterns"')
+
+        let timelineDays: number | null = null
+        if (s.timeline && typeof s.timeline === 'object') {
+          const tl = s.timeline as Record<string, unknown>
+          if (tl.startDate && tl.endDate) {
+            const start = new Date(tl.startDate as string)
+            const end = new Date(tl.endDate as string)
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+              timelineDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+            }
+          }
+        }
+
+        return {
+          id: (s.id as string) || '(unknown)',
+          name: (s.name as string) || '(unnamed)',
+          valid: errors.length === 0,
+          error: errors.length > 0 ? errors.join(', ') : undefined,
+          patternCount: Array.isArray(s.patterns) ? s.patterns.length : 0,
+          timelineDays,
+          raw: s,
+        }
+      })
+
+      bulkRawPayload.value = scenarios
+      bulkFileName.value = file.name
+      bulkState.value = 'loaded'
+    } catch {
+      bulkParseError.value = 'Invalid JSON — could not parse the file'
+    }
+  }
+  reader.readAsText(file)
+}
+
+function clearBulkFile() {
+  bulkState.value = 'empty'
+  bulkFileName.value = ''
+  bulkScenarios.value = []
+  bulkRawPayload.value = []
+  bulkParseError.value = ''
+  bulkJob.value = null
+  if (fileInputRef.value) fileInputRef.value.value = ''
+  stopBulkPolling()
+}
+
+async function startBulkGeneration() {
+  try {
+    const response = await $fetch<{ jobId: string; scenarioCount: number; status: string }>(
+      '/api/admin/scenarios/bulk-import',
+      {
+        method: 'POST',
+        body: { scenarios: bulkRawPayload.value },
+      }
+    )
+
+    bulkJob.value = {
+      jobId: response.jobId,
+      status: 'started',
+      scenarioCount: response.scenarioCount,
+      progress: { current: 0, total: response.scenarioCount, phase: 'Starting' },
+      results: bulkRawPayload.value.map((s) => ({
+        scenarioId: (s.id as string) || '',
+        scenarioName: (s.name as string) || '',
+        status: 'pending' as const,
+      })),
+      startedAt: new Date().toISOString(),
+    }
+    bulkState.value = 'generating'
+
+    // Start polling
+    bulkPollInterval = setInterval(pollBulkStatus, 2000)
+  } catch (err) {
+    bulkState.value = 'error'
+    bulkJob.value = {
+      jobId: '',
+      status: 'failed',
+      scenarioCount: 0,
+      progress: { current: 0, total: 0, phase: 'Failed' },
+      results: [],
+      error: err instanceof Error ? err.message : 'Failed to start bulk import',
+      startedAt: new Date().toISOString(),
+    }
+  }
+}
+
+async function pollBulkStatus() {
+  if (!bulkJob.value?.jobId) return
+
+  try {
+    const data = await $fetch<BulkJob>(
+      `/api/admin/scenarios/bulk-import-status?jobId=${bulkJob.value.jobId}`
+    )
+    bulkJob.value = data
+
+    if (data.status === 'completed') {
+      bulkState.value = 'complete'
+      stopBulkPolling()
+    } else if (data.status === 'failed') {
+      // Check if any scenarios succeeded
+      const anySucceeded = data.results.some(r => r.status === 'succeeded')
+      bulkState.value = anySucceeded ? 'complete' : 'error'
+      stopBulkPolling()
+    }
+  } catch {
+    // Ignore transient polling errors
+  }
+}
+
+function stopBulkPolling() {
+  if (bulkPollInterval) {
+    clearInterval(bulkPollInterval)
+    bulkPollInterval = null
+  }
+}
+
+function downloadTemplate() {
+  const template = {
+    scenarios: [
+      {
+        id: 'my-scenario-id',
+        name: 'My Scenario Name',
+        description: 'Description of this scenario',
+        timeline: {
+          startDate: '2025-01-01',
+          endDate: '2025-06-30',
+          periodDays: 180,
+          keyEvents: [
+            {
+              date: '2025-02-15',
+              type: 'training',
+              description: 'Staff training session on denial prevention',
+              impactedPatterns: ['pattern-example-001'],
+            },
+          ],
+        },
+        practice: {
+          id: 'practice-example-001',
+          name: 'Example Medical Practice',
+          taxId: '12-3456789',
+          address: {
+            street: '100 Main Street',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78701',
+          },
+          providers: [
+            {
+              id: 'prov-example-001',
+              name: 'Dr. Jane Smith',
+              npi: '1234567890',
+              specialty: 'Family Medicine',
+              taxonomy: '207Q00000X',
+              claimWeight: 1.0,
+            },
+          ],
+        },
+        volume: {
+          totalClaims: 500,
+          monthlyVariation: {
+            '2025-01': 0.95,
+            '2025-02': 1.0,
+            '2025-03': 1.05,
+            '2025-04': 1.0,
+            '2025-05': 0.95,
+            '2025-06': 1.05,
+          },
+          claimLinesPerClaim: { min: 1, max: 4 },
+          claimValueRanges: {
+            low: { min: 75, max: 300 },
+            medium: { min: 300, max: 2000 },
+            high: { min: 2000, max: 10000 },
+          },
+        },
+        patterns: [
+          {
+            id: 'pattern-example-001',
+            title: 'Modifier-25 Missing on E/M Services',
+            description: 'E/M services billed same day as procedures denied due to missing modifier-25',
+            category: 'modifier-missing',
+            status: 'improving',
+            tier: 'high',
+            procedureCodes: ['99213', '99214', '99215'],
+            policies: [{ id: 'POL-MOD-25', triggerRate: 0.85 }],
+            denialReason: 'Modifier-25 required for significant, separately identifiable E/M service',
+            claimDistribution: {
+              total: 250,
+              deniedBaseline: 63,
+              deniedCurrent: 30,
+              appealsFiled: 15,
+              appealsOverturned: 5,
+            },
+            trajectory: {
+              curve: 'gradual_improvement',
+              baseline: {
+                periodStart: '2025-01-01',
+                periodEnd: '2025-01-31',
+                claimCount: 40,
+                deniedCount: 10,
+                denialRate: 0.25,
+                dollarsDenied: 3000,
+              },
+              current: {
+                periodStart: '2025-06-01',
+                periodEnd: '2025-06-30',
+                claimCount: 42,
+                deniedCount: 5,
+                denialRate: 0.12,
+                dollarsDenied: 1500,
+              },
+              snapshots: [
+                { month: '2025-01', denialRate: 0.25, dollarsDenied: 3000 },
+                { month: '2025-03', denialRate: 0.18, dollarsDenied: 2160 },
+                { month: '2025-06', denialRate: 0.12, dollarsDenied: 1500 },
+              ],
+            },
+            engagement: {
+              firstViewedDate: '2025-01-10',
+              totalViews: 12,
+              claimLabTests: 5,
+              claimsExported: 3,
+              actionsRecorded: [],
+            },
+            remediation: {
+              shortTerm: {
+                description: 'Resubmit denied claims with modifier-25 documentation',
+                canResubmit: true,
+                claimCount: 10,
+                amount: 3000,
+              },
+              longTerm: {
+                description: 'Establish documentation standards for modifier-25',
+                steps: ['Create documentation template', 'Train staff', 'Schedule quarterly audits'],
+              },
+            },
+          },
+        ],
+        learningEvents: {
+          eventDistribution: {
+            pattern_viewed: 20,
+            claim_inspected: 30,
+            claims_exported: 8,
+            action_recorded: 10,
+          },
+          eventClustering: {
+            'pattern-example-001': ['2025-02-15', '2025-03-01', '2025-04-15'],
+          },
+        },
+        targetMetrics: {
+          totalClaims: 500,
+          totalDenied: 60,
+          overallDenialRate: 0.12,
+          totalDollarsDenied: 12000,
+          totalAppeals: 15,
+          appealSuccessRate: 0.33,
+        },
+      },
+    ],
+  }
+
+  const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'scenario-template.json'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// Clean up bulk polling on unmount
+onUnmounted(() => {
+  stopBulkPolling()
+})
 </script>
