@@ -751,6 +751,26 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
             insertPolicyModifier.run(policy.id, modifier)
           }
         }
+      } else {
+        // Policy not in built-in library — insert a stub so FK constraints are satisfied.
+        // The pattern's denialReason is used as the description.
+        const patternUsingPolicy = scenario.patterns.find(
+          p => p.policies?.some(ref => ref.id === policyId)
+        )
+        _verbose(`Policy "${policyId}" not in built-in library, inserting stub row`)
+        insertPolicy.run(
+          policyId,
+          policyId,               // name = id as placeholder
+          'Informational',        // mode
+          scenario.timeline.startDate,
+          patternUsingPolicy?.denialReason || 'Policy referenced by scenario',
+          null,                   // clinicalRationale
+          'Unknown',              // topic
+          'Unknown',              // primaryLogicType
+          'Scenario Import',      // source
+          null,                   // commonMistake
+          null                    // fixGuidance
+        )
       }
     }
 
