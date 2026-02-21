@@ -1,0 +1,1170 @@
+{
+  "scenarios": [
+    {
+      "id": "scenario-family-practice-modifiers",
+      "name": "Small Family Practice - Modifier Issues",
+      "description": "A small family medicine practice with a single provider struggling with modifier usage on E/M and injection claims. The practice has been working on improving modifier-25 documentation after receiving denial pattern alerts, showing gradual improvement over a 90-day period.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2025-09-28",
+        "periodDays": 90,
+        "keyEvents": [
+          {
+            "date": "2025-07-10",
+            "type": "staff_meeting",
+            "description": "Initial review of modifier denial patterns with billing staff",
+            "impactedPatterns": ["pattern-fm-mod25", "pattern-fm-mod59"]
+          },
+          {
+            "date": "2025-07-28",
+            "type": "training",
+            "description": "Modifier-25 documentation training for provider and coding staff",
+            "impactedPatterns": ["pattern-fm-mod25"]
+          },
+          {
+            "date": "2025-08-15",
+            "type": "system_update",
+            "description": "Added modifier validation alerts to EHR claim scrubber",
+            "impactedPatterns": ["pattern-fm-mod25", "pattern-fm-mod59"]
+          },
+          {
+            "date": "2025-09-05",
+            "type": "audit",
+            "description": "Internal audit of modifier-25 claims from August to verify improvement",
+            "impactedPatterns": ["pattern-fm-mod25"]
+          }
+        ]
+      },
+      "practice": {
+        "id": "practice-family-001",
+        "name": "Maple Creek Family Medicine",
+        "taxId": "47-2839156",
+        "address": {
+          "street": "1420 Elm Street, Suite 200",
+          "city": "Lawrence",
+          "state": "KS",
+          "zip": "66044"
+        },
+        "providers": [
+          {
+            "id": "prov-fm-001",
+            "name": "Dr. Rebecca Thornton",
+            "npi": "1234567890",
+            "specialty": "Family Medicine",
+            "taxonomy": "207Q00000X",
+            "claimWeight": 1.0
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 500,
+        "monthlyVariation": {
+          "2025-07": 0.95,
+          "2025-08": 1.05,
+          "2025-09": 1.00
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 4
+        },
+        "claimValueRanges": {
+          "low": { "min": 75, "max": 300 },
+          "medium": { "min": 300, "max": 2000 },
+          "high": { "min": 2000, "max": 10000 }
+        }
+      },
+      "patterns": [
+        {
+          "id": "pattern-fm-mod25",
+          "title": "Modifier-25 Missing on E/M Services",
+          "description": "Significant separate E/M services billed on the same day as procedures are being denied due to missing or unsupported modifier-25. Documentation does not clearly distinguish the separate E/M service from the procedure's pre/post work.",
+          "category": "modifier-missing",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": ["99213", "99214", "99215"],
+          "policies": [
+            { "id": "POL-MOD-25", "triggerRate": 0.85 }
+          ],
+          "denialReason": "Modifier-25 required to indicate significant, separately identifiable E/M service on same date as procedure",
+          "claimDistribution": {
+            "total": 250,
+            "deniedBaseline": 63,
+            "deniedCurrent": 30,
+            "appealsFiled": 19,
+            "appealsOverturned": 6
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-07-31",
+              "claimCount": 80,
+              "deniedCount": 20,
+              "denialRate": 0.25,
+              "dollarsDenied": 4200
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-28",
+              "claimCount": 85,
+              "deniedCount": 10,
+              "denialRate": 0.12,
+              "dollarsDenied": 2100
+            },
+            "snapshots": [
+              { "month": "2025-07", "denialRate": 0.25, "dollarsDenied": 4200 },
+              { "month": "2025-08", "denialRate": 0.18, "dollarsDenied": 3150 },
+              { "month": "2025-09", "denialRate": 0.12, "dollarsDenied": 2100 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-07-08",
+            "totalViews": 14,
+            "claimLabTests": 6,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "id": "action-fm-001",
+                "date": "2025-07-28",
+                "type": "staff-training",
+                "notes": "Completed modifier-25 documentation training with provider"
+              },
+              {
+                "id": "action-fm-002",
+                "date": "2025-08-15",
+                "type": "system-config",
+                "notes": "Enabled modifier validation alerts in claim scrubber"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied claims with proper modifier-25 and supporting documentation showing separately identifiable E/M service",
+              "canResubmit": true,
+              "claimCount": 18,
+              "amount": 3780
+            },
+            "longTerm": {
+              "description": "Establish documentation standards for modifier-25 usage to prevent future denials",
+              "steps": [
+                "Create documentation template distinguishing E/M from procedure pre/post work",
+                "Configure EHR to prompt for modifier-25 justification when E/M billed same day as procedure",
+                "Schedule quarterly audits of modifier-25 claim accuracy"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-fm-mod59",
+          "title": "Modifier-59 Incorrect Usage on Injection Claims",
+          "description": "Injection procedures billed with modifier-59 are being denied when the distinct procedural service is not clearly documented. Claims lack sufficient documentation to support bypass of NCCI bundling edits.",
+          "category": "modifier-missing",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": ["20610", "20600", "96372"],
+          "policies": [
+            { "id": "POL-MOD-59", "triggerRate": 0.72 }
+          ],
+          "denialReason": "Modifier-59 does not meet distinct procedural service requirements for unbundling",
+          "claimDistribution": {
+            "total": 150,
+            "deniedBaseline": 23,
+            "deniedCurrent": 15,
+            "appealsFiled": 8,
+            "appealsOverturned": 2
+          },
+          "trajectory": {
+            "curve": "slight_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-07-31",
+              "claimCount": 48,
+              "deniedCount": 7,
+              "denialRate": 0.15,
+              "dollarsDenied": 2100
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-28",
+              "claimCount": 52,
+              "deniedCount": 5,
+              "denialRate": 0.10,
+              "dollarsDenied": 1500
+            },
+            "snapshots": [
+              { "month": "2025-07", "denialRate": 0.15, "dollarsDenied": 2100 },
+              { "month": "2025-08", "denialRate": 0.12, "dollarsDenied": 1750 },
+              { "month": "2025-09", "denialRate": 0.10, "dollarsDenied": 1500 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-07-12",
+            "totalViews": 8,
+            "claimLabTests": 3,
+            "claimsExported": 2,
+            "actionsRecorded": [
+              {
+                "id": "action-fm-003",
+                "date": "2025-08-15",
+                "type": "system-config",
+                "notes": "Added modifier-59 validation to claim scrubber alongside modifier-25 checks"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Review and resubmit denied injection claims with corrected modifier-59 documentation and operative notes",
+              "canResubmit": true,
+              "claimCount": 8,
+              "amount": 2400
+            },
+            "longTerm": {
+              "description": "Improve documentation practices for distinct procedural services to support modifier-59 usage",
+              "steps": [
+                "Train staff on NCCI bundling edits and proper modifier-59 documentation requirements",
+                "Create injection procedure documentation checklist for distinct service justification",
+                "Implement pre-submission review for claims with modifier-59"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 0.35,
+          "claim_inspected": 0.25,
+          "claims_exported": 0.10,
+          "action_recorded": 0.15,
+          "remediation_started": 0.10,
+          "appeal_filed": 0.05
+        },
+        "eventClustering": {
+          "morning_review": ["pattern_viewed", "claim_inspected"],
+          "billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
+          "improvement_initiative": ["action_recorded", "pattern_viewed"]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 500,
+        "totalDenied": 60,
+        "overallDenialRate": 0.12,
+        "totalDollarsDenied": 12600,
+        "totalAppeals": 27,
+        "appealSuccessRate": 0.30
+      }
+    },
+    {
+      "id": "scenario-cardiology-clinic",
+      "name": "Mid-Size Cardiology Clinic",
+      "description": "A mid-size cardiology practice with three providers experiencing denial patterns across prior authorization, documentation, and procedure bundling. The practice has made significant progress on authorization denials through workflow changes, while documentation improvements are ongoing and bundling issues remain stable.",
+      "timeline": {
+        "startDate": "2025-04-01",
+        "endDate": "2025-09-27",
+        "periodDays": 180,
+        "keyEvents": [
+          {
+            "date": "2025-04-15",
+            "type": "audit",
+            "description": "Payer audit flagged high rate of authorization-related denials across cardiac procedures",
+            "impactedPatterns": ["pattern-card-auth"]
+          },
+          {
+            "date": "2025-05-01",
+            "type": "system_update",
+            "description": "Implemented automated prior authorization verification system integrated with scheduling",
+            "impactedPatterns": ["pattern-card-auth"]
+          },
+          {
+            "date": "2025-05-20",
+            "type": "staff_meeting",
+            "description": "All-staff meeting to review denial trends and introduce new authorization workflow",
+            "impactedPatterns": ["pattern-card-auth", "pattern-card-doc"]
+          },
+          {
+            "date": "2025-06-15",
+            "type": "training",
+            "description": "Medical necessity documentation training for cardiologists",
+            "impactedPatterns": ["pattern-card-doc"]
+          },
+          {
+            "date": "2025-07-10",
+            "type": "policy_change",
+            "description": "Payer updated bundling rules for cardiac injection procedures effective August 1",
+            "impactedPatterns": ["pattern-card-bundle"]
+          },
+          {
+            "date": "2025-08-01",
+            "type": "system_update",
+            "description": "Updated charge master to reflect new bundling rules for injection procedures",
+            "impactedPatterns": ["pattern-card-bundle"]
+          },
+          {
+            "date": "2025-09-10",
+            "type": "audit",
+            "description": "Quarterly internal audit of documentation completeness for medical necessity",
+            "impactedPatterns": ["pattern-card-doc"]
+          }
+        ]
+      },
+      "practice": {
+        "id": "practice-cardio-001",
+        "name": "Heartland Cardiology Associates",
+        "taxId": "62-4817293",
+        "address": {
+          "street": "8500 Ward Parkway, Suite 340",
+          "city": "Kansas City",
+          "state": "MO",
+          "zip": "64114"
+        },
+        "providers": [
+          {
+            "id": "prov-card-001",
+            "name": "Dr. Michael Chen",
+            "npi": "1987654321",
+            "specialty": "Cardiology",
+            "taxonomy": "207RC0000X",
+            "claimWeight": 0.45
+          },
+          {
+            "id": "prov-card-002",
+            "name": "Dr. Sarah Okonkwo",
+            "npi": "1876543210",
+            "specialty": "Cardiology",
+            "taxonomy": "207RC0000X",
+            "claimWeight": 0.35
+          },
+          {
+            "id": "prov-card-003",
+            "name": "Dr. James Patterson",
+            "npi": "1765432109",
+            "specialty": "Internal Medicine",
+            "taxonomy": "207R00000X",
+            "claimWeight": 0.20
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 1500,
+        "monthlyVariation": {
+          "2025-04": 0.90,
+          "2025-05": 0.95,
+          "2025-06": 1.05,
+          "2025-07": 1.10,
+          "2025-08": 1.00,
+          "2025-09": 1.00
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 4
+        },
+        "claimValueRanges": {
+          "low": { "min": 75, "max": 300 },
+          "medium": { "min": 300, "max": 2000 },
+          "high": { "min": 2000, "max": 10000 }
+        }
+      },
+      "patterns": [
+        {
+          "id": "pattern-card-auth",
+          "title": "Prior Authorization Missing for Cardiac Procedures",
+          "description": "High-value cardiac procedures including catheterizations, stress tests, and echocardiograms are being denied due to missing or expired prior authorizations. The practice has implemented an automated verification system that has dramatically reduced these denials.",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "critical",
+          "procedureCodes": ["93458", "93306", "93015", "93000"],
+          "policies": [
+            { "id": "POL-AUTH-PROC", "triggerRate": 0.90 }
+          ],
+          "denialReason": "Prior authorization required but not obtained or expired at time of service for cardiac procedure",
+          "claimDistribution": {
+            "total": 500,
+            "deniedBaseline": 150,
+            "deniedCurrent": 40,
+            "appealsFiled": 38,
+            "appealsOverturned": 11
+          },
+          "trajectory": {
+            "curve": "steep_improvement",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 75,
+              "deniedCount": 23,
+              "denialRate": 0.30,
+              "dollarsDenied": 34500
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 85,
+              "deniedCount": 7,
+              "denialRate": 0.08,
+              "dollarsDenied": 10500
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.30, "dollarsDenied": 34500 },
+              { "month": "2025-05", "denialRate": 0.20, "dollarsDenied": 23000 },
+              { "month": "2025-06", "denialRate": 0.14, "dollarsDenied": 16100 },
+              { "month": "2025-07", "denialRate": 0.11, "dollarsDenied": 12650 },
+              { "month": "2025-08", "denialRate": 0.09, "dollarsDenied": 10350 },
+              { "month": "2025-09", "denialRate": 0.08, "dollarsDenied": 10500 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-04-10",
+            "totalViews": 42,
+            "claimLabTests": 18,
+            "claimsExported": 12,
+            "actionsRecorded": [
+              {
+                "id": "action-card-001",
+                "date": "2025-04-20",
+                "type": "workflow-update",
+                "notes": "Created new pre-procedure authorization checklist for front desk staff"
+              },
+              {
+                "id": "action-card-002",
+                "date": "2025-05-01",
+                "type": "system-config",
+                "notes": "Deployed automated prior auth verification integrated with scheduling system"
+              },
+              {
+                "id": "action-card-003",
+                "date": "2025-05-20",
+                "type": "staff-training",
+                "notes": "Trained all scheduling and front desk staff on new authorization workflow"
+              },
+              {
+                "id": "action-card-004",
+                "date": "2025-07-15",
+                "type": "resubmission",
+                "notes": "Batch resubmission of 15 claims with retroactive authorization approvals"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied claims where retroactive authorization can be obtained from payer",
+              "canResubmit": true,
+              "claimCount": 22,
+              "amount": 33000
+            },
+            "longTerm": {
+              "description": "Maintain automated authorization verification and establish monitoring for authorization expiration",
+              "steps": [
+                "Continue automated prior auth verification for all scheduled cardiac procedures",
+                "Add authorization expiration alerts 7 days before scheduled procedures",
+                "Implement monthly reporting dashboard for authorization compliance rates",
+                "Establish backup manual verification process for system downtime"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-card-doc",
+          "title": "Insufficient Medical Necessity Documentation",
+          "description": "Cardiac diagnostic and treatment claims denied for insufficient documentation of medical necessity. Clinical notes lack required elements such as symptom severity, prior treatment history, and clinical decision-making rationale needed by payers.",
+          "category": "medical-necessity",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": ["93306", "93015", "93000", "93452"],
+          "policies": [
+            { "id": "POL-DOC-MEDICAL-NECESSITY", "triggerRate": 0.78 }
+          ],
+          "denialReason": "Documentation does not support medical necessity for the cardiac procedure or diagnostic performed",
+          "claimDistribution": {
+            "total": 400,
+            "deniedBaseline": 80,
+            "deniedCurrent": 40,
+            "appealsFiled": 24,
+            "appealsOverturned": 7
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 60,
+              "deniedCount": 12,
+              "denialRate": 0.20,
+              "dollarsDenied": 9600
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 70,
+              "deniedCount": 7,
+              "denialRate": 0.10,
+              "dollarsDenied": 5600
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.20, "dollarsDenied": 9600 },
+              { "month": "2025-05", "denialRate": 0.18, "dollarsDenied": 8640 },
+              { "month": "2025-06", "denialRate": 0.15, "dollarsDenied": 7200 },
+              { "month": "2025-07", "denialRate": 0.13, "dollarsDenied": 6240 },
+              { "month": "2025-08", "denialRate": 0.11, "dollarsDenied": 5280 },
+              { "month": "2025-09", "denialRate": 0.10, "dollarsDenied": 5600 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-04-18",
+            "totalViews": 28,
+            "claimLabTests": 10,
+            "claimsExported": 6,
+            "actionsRecorded": [
+              {
+                "id": "action-card-005",
+                "date": "2025-06-15",
+                "type": "staff-training",
+                "notes": "Medical necessity documentation training session for all cardiologists"
+              },
+              {
+                "id": "action-card-006",
+                "date": "2025-07-01",
+                "type": "practice-change",
+                "notes": "Implemented structured documentation template for cardiac procedures in EHR"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied claims with addendum notes providing medical necessity documentation",
+              "canResubmit": true,
+              "claimCount": 15,
+              "amount": 12000
+            },
+            "longTerm": {
+              "description": "Embed medical necessity documentation requirements into clinical workflow",
+              "steps": [
+                "Deploy structured EHR templates with required medical necessity fields for cardiac procedures",
+                "Create peer review process for documentation completeness before claim submission",
+                "Establish quarterly documentation audits with provider-specific feedback reports"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-card-bundle",
+          "title": "Cardiac Injection Procedure Bundling Errors",
+          "description": "Injection procedures performed during cardiac catheterization or imaging studies are being denied due to improper unbundling. Claims bill separately for components that should be included in the primary procedure code.",
+          "category": "billing-error",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": ["96374", "96375", "93458"],
+          "policies": [
+            { "id": "POL-BUNDLE-INJECT", "triggerRate": 0.65 }
+          ],
+          "denialReason": "Injection procedure is bundled with primary cardiac procedure and cannot be billed separately",
+          "claimDistribution": {
+            "total": 300,
+            "deniedBaseline": 36,
+            "deniedCurrent": 36,
+            "appealsFiled": 14,
+            "appealsOverturned": 4
+          },
+          "trajectory": {
+            "curve": "stable",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 45,
+              "deniedCount": 5,
+              "denialRate": 0.12,
+              "dollarsDenied": 2250
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 52,
+              "deniedCount": 6,
+              "denialRate": 0.12,
+              "dollarsDenied": 2700
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.12, "dollarsDenied": 2250 },
+              { "month": "2025-05", "denialRate": 0.12, "dollarsDenied": 2340 },
+              { "month": "2025-06", "denialRate": 0.13, "dollarsDenied": 2535 },
+              { "month": "2025-07", "denialRate": 0.11, "dollarsDenied": 2145 },
+              { "month": "2025-08", "denialRate": 0.12, "dollarsDenied": 2400 },
+              { "month": "2025-09", "denialRate": 0.12, "dollarsDenied": 2700 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-05-02",
+            "totalViews": 12,
+            "claimLabTests": 5,
+            "claimsExported": 2,
+            "actionsRecorded": [
+              {
+                "id": "action-card-007",
+                "date": "2025-08-01",
+                "type": "system-config",
+                "notes": "Updated charge master to reflect new bundling rules effective August 1"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Review bundled denials for potential resubmission where distinct service documentation supports separate billing",
+              "canResubmit": true,
+              "claimCount": 6,
+              "amount": 2700
+            },
+            "longTerm": {
+              "description": "Update billing practices to correctly identify bundled procedures and avoid improper unbundling",
+              "steps": [
+                "Update charge master with current NCCI bundling edits for cardiac procedures",
+                "Configure claim scrubber with cardiac-specific bundling rules",
+                "Train billing staff on cardiac procedure bundling guidelines and exceptions"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 0.30,
+          "claim_inspected": 0.20,
+          "claims_exported": 0.12,
+          "action_recorded": 0.15,
+          "remediation_started": 0.13,
+          "appeal_filed": 0.10
+        },
+        "eventClustering": {
+          "morning_clinical_review": ["pattern_viewed", "claim_inspected"],
+          "weekly_billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
+          "monthly_improvement": ["action_recorded", "pattern_viewed", "claim_inspected"],
+          "provider_meeting": ["pattern_viewed", "action_recorded"]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 1500,
+        "totalDenied": 161,
+        "overallDenialRate": 0.107,
+        "totalDollarsDenied": 95700,
+        "totalAppeals": 76,
+        "appealSuccessRate": 0.29
+      }
+    },
+    {
+      "id": "scenario-orthopedic-group",
+      "name": "Large Orthopedic Group",
+      "description": "A large multi-specialty orthopedic group with five providers across orthopedic surgery, sports medicine, physical therapy, and pain management. The practice experiences denial patterns across modifiers, authorizations, documentation, and procedure frequency. Aggressive improvement initiatives have dramatically reduced modifier-25 and authorization denials, while documentation and frequency issues are proving more resistant to change.",
+      "timeline": {
+        "startDate": "2025-04-01",
+        "endDate": "2025-09-27",
+        "periodDays": 180,
+        "keyEvents": [
+          {
+            "date": "2025-04-10",
+            "type": "audit",
+            "description": "Comprehensive payer audit identified modifier-25 as the primary denial driver across the group",
+            "impactedPatterns": ["pattern-ortho-mod25"]
+          },
+          {
+            "date": "2025-04-25",
+            "type": "staff_meeting",
+            "description": "Practice-wide meeting to review denial patterns and assign improvement owners",
+            "impactedPatterns": ["pattern-ortho-mod25", "pattern-ortho-auth", "pattern-ortho-doc", "pattern-ortho-freq"]
+          },
+          {
+            "date": "2025-05-05",
+            "type": "training",
+            "description": "Modifier-25 documentation intensive training for all surgeons and E/M coding staff",
+            "impactedPatterns": ["pattern-ortho-mod25"]
+          },
+          {
+            "date": "2025-05-20",
+            "type": "system_update",
+            "description": "Deployed automated prior authorization tracking system with scheduling integration",
+            "impactedPatterns": ["pattern-ortho-auth"]
+          },
+          {
+            "date": "2025-06-10",
+            "type": "training",
+            "description": "Physical therapy documentation compliance training on visit caps and medical necessity",
+            "impactedPatterns": ["pattern-ortho-doc"]
+          },
+          {
+            "date": "2025-07-01",
+            "type": "policy_change",
+            "description": "Payer updated injection frequency limits for pain management procedures",
+            "impactedPatterns": ["pattern-ortho-freq"]
+          },
+          {
+            "date": "2025-07-15",
+            "type": "system_update",
+            "description": "Added real-time modifier validation and authorization status checks to EHR workflow",
+            "impactedPatterns": ["pattern-ortho-mod25", "pattern-ortho-auth"]
+          },
+          {
+            "date": "2025-08-20",
+            "type": "audit",
+            "description": "Mid-year internal audit measuring improvement across all four denial patterns",
+            "impactedPatterns": ["pattern-ortho-mod25", "pattern-ortho-auth", "pattern-ortho-doc", "pattern-ortho-freq"]
+          },
+          {
+            "date": "2025-09-15",
+            "type": "staff_meeting",
+            "description": "Quarterly review of denial metrics with department leads to assess progress",
+            "impactedPatterns": ["pattern-ortho-mod25", "pattern-ortho-auth", "pattern-ortho-doc", "pattern-ortho-freq"]
+          }
+        ]
+      },
+      "practice": {
+        "id": "practice-ortho-001",
+        "name": "Summit Orthopedic & Sports Medicine",
+        "taxId": "73-9154826",
+        "address": {
+          "street": "2200 Research Boulevard, Building C",
+          "city": "Austin",
+          "state": "TX",
+          "zip": "78759"
+        },
+        "providers": [
+          {
+            "id": "prov-ortho-001",
+            "name": "Dr. David Nakamura",
+            "npi": "1654321098",
+            "specialty": "Orthopedic Surgery",
+            "taxonomy": "207X00000X",
+            "claimWeight": 0.28
+          },
+          {
+            "id": "prov-ortho-002",
+            "name": "Dr. Elena Rodriguez",
+            "npi": "1543210987",
+            "specialty": "Orthopedic Surgery",
+            "taxonomy": "207X00000X",
+            "claimWeight": 0.24
+          },
+          {
+            "id": "prov-ortho-003",
+            "name": "Dr. Kevin Walsh",
+            "npi": "1432109876",
+            "specialty": "Sports Medicine",
+            "taxonomy": "207QS0010X",
+            "claimWeight": 0.20
+          },
+          {
+            "id": "prov-ortho-004",
+            "name": "Dr. Lisa Huang",
+            "npi": "1321098765",
+            "specialty": "Physical Therapy",
+            "taxonomy": "225100000X",
+            "claimWeight": 0.16
+          },
+          {
+            "id": "prov-ortho-005",
+            "name": "Dr. Robert Patel",
+            "npi": "1210987654",
+            "specialty": "Pain Management",
+            "taxonomy": "208VP0014X",
+            "claimWeight": 0.12
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 4000,
+        "monthlyVariation": {
+          "2025-04": 0.90,
+          "2025-05": 0.95,
+          "2025-06": 1.05,
+          "2025-07": 1.10,
+          "2025-08": 1.05,
+          "2025-09": 0.95
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 4
+        },
+        "claimValueRanges": {
+          "low": { "min": 75, "max": 300 },
+          "medium": { "min": 300, "max": 2000 },
+          "high": { "min": 2000, "max": 10000 }
+        }
+      },
+      "patterns": [
+        {
+          "id": "pattern-ortho-mod25",
+          "title": "Modifier-25 Missing on Surgical E/M Services",
+          "description": "E/M services performed on the same day as orthopedic surgical procedures are being denied at a high rate due to missing or insufficiently documented modifier-25. The practice's surgical volume makes this the highest-impact denial pattern, but aggressive training and system changes have yielded steep improvement.",
+          "category": "modifier-missing",
+          "status": "improving",
+          "tier": "critical",
+          "procedureCodes": ["99213", "99214", "99215", "99243", "99244"],
+          "policies": [
+            { "id": "POL-MOD-25", "triggerRate": 0.92 }
+          ],
+          "denialReason": "Modifier-25 required for significant, separately identifiable E/M service billed same day as orthopedic procedure",
+          "claimDistribution": {
+            "total": 1200,
+            "deniedBaseline": 420,
+            "deniedCurrent": 120,
+            "appealsFiled": 108,
+            "appealsOverturned": 32
+          },
+          "trajectory": {
+            "curve": "steep_improvement",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 180,
+              "deniedCount": 63,
+              "denialRate": 0.35,
+              "dollarsDenied": 18900
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 195,
+              "deniedCount": 20,
+              "denialRate": 0.10,
+              "dollarsDenied": 6000
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.35, "dollarsDenied": 18900 },
+              { "month": "2025-05", "denialRate": 0.25, "dollarsDenied": 13750 },
+              { "month": "2025-06", "denialRate": 0.18, "dollarsDenied": 9900 },
+              { "month": "2025-07", "denialRate": 0.14, "dollarsDenied": 7700 },
+              { "month": "2025-08", "denialRate": 0.11, "dollarsDenied": 6050 },
+              { "month": "2025-09", "denialRate": 0.10, "dollarsDenied": 6000 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-04-08",
+            "totalViews": 56,
+            "claimLabTests": 24,
+            "claimsExported": 15,
+            "actionsRecorded": [
+              {
+                "id": "action-ortho-001",
+                "date": "2025-04-25",
+                "type": "workflow-update",
+                "notes": "Assigned modifier-25 improvement to surgical department lead"
+              },
+              {
+                "id": "action-ortho-002",
+                "date": "2025-05-05",
+                "type": "staff-training",
+                "notes": "Intensive modifier-25 documentation training for all surgeons"
+              },
+              {
+                "id": "action-ortho-003",
+                "date": "2025-05-15",
+                "type": "practice-change",
+                "notes": "Implemented same-day E/M documentation template requiring modifier-25 justification"
+              },
+              {
+                "id": "action-ortho-004",
+                "date": "2025-07-15",
+                "type": "system-config",
+                "notes": "Deployed real-time modifier validation in EHR for same-day E/M and procedure claims"
+              },
+              {
+                "id": "action-ortho-005",
+                "date": "2025-08-01",
+                "type": "resubmission",
+                "notes": "Batch resubmission of 35 denied claims with corrected modifier-25 documentation"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied E/M claims with addended documentation supporting significant, separately identifiable service",
+              "canResubmit": true,
+              "claimCount": 65,
+              "amount": 19500
+            },
+            "longTerm": {
+              "description": "Sustain low denial rates through continued EHR integration and documentation standards",
+              "steps": [
+                "Maintain EHR modifier-25 validation rules and documentation templates",
+                "Conduct monthly spot audits of same-day E/M and procedure claims",
+                "Include modifier-25 compliance metrics in provider scorecards",
+                "Schedule refresher training for new staff onboarding"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-ortho-auth",
+          "title": "Prior Authorization Missing for Orthopedic Procedures",
+          "description": "Orthopedic surgical procedures and advanced imaging (MRI, CT) denied for missing prior authorization. The practice has implemented scheduling-integrated authorization tracking, yielding gradual and consistent improvement.",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": ["27447", "29881", "29826", "73721"],
+          "policies": [
+            { "id": "POL-AUTH-PROC", "triggerRate": 0.88 }
+          ],
+          "denialReason": "Prior authorization not obtained or not on file for orthopedic surgical procedure or advanced imaging",
+          "claimDistribution": {
+            "total": 800,
+            "deniedBaseline": 200,
+            "deniedCurrent": 96,
+            "appealsFiled": 59,
+            "appealsOverturned": 18
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 120,
+              "deniedCount": 30,
+              "denialRate": 0.25,
+              "dollarsDenied": 45000
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 135,
+              "deniedCount": 16,
+              "denialRate": 0.12,
+              "dollarsDenied": 24000
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.25, "dollarsDenied": 45000 },
+              { "month": "2025-05", "denialRate": 0.22, "dollarsDenied": 39600 },
+              { "month": "2025-06", "denialRate": 0.18, "dollarsDenied": 32400 },
+              { "month": "2025-07", "denialRate": 0.15, "dollarsDenied": 27000 },
+              { "month": "2025-08", "denialRate": 0.13, "dollarsDenied": 23400 },
+              { "month": "2025-09", "denialRate": 0.12, "dollarsDenied": 24000 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-04-12",
+            "totalViews": 35,
+            "claimLabTests": 14,
+            "claimsExported": 8,
+            "actionsRecorded": [
+              {
+                "id": "action-ortho-006",
+                "date": "2025-05-20",
+                "type": "system-config",
+                "notes": "Deployed automated prior auth tracking system integrated with surgical scheduling"
+              },
+              {
+                "id": "action-ortho-007",
+                "date": "2025-06-01",
+                "type": "workflow-update",
+                "notes": "Implemented pre-surgical authorization checklist requiring verification 48 hours before procedure"
+              },
+              {
+                "id": "action-ortho-008",
+                "date": "2025-07-15",
+                "type": "system-config",
+                "notes": "Added real-time authorization status checks to EHR surgical workflow"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Obtain retroactive authorizations where possible and resubmit denied surgical and imaging claims",
+              "canResubmit": true,
+              "claimCount": 40,
+              "amount": 60000
+            },
+            "longTerm": {
+              "description": "Maintain authorization compliance through integrated tracking and proactive verification",
+              "steps": [
+                "Continue automated authorization tracking for all surgical and imaging procedures",
+                "Implement authorization expiration monitoring with 72-hour advance alerts",
+                "Conduct weekly authorization compliance checks for upcoming surgical schedule",
+                "Establish escalation protocol for urgent cases requiring expedited authorization"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-ortho-doc",
+          "title": "Physical Therapy Documentation Incomplete",
+          "description": "Physical therapy claims denied for insufficient documentation, particularly around visit cap justification and continued treatment medical necessity. Progress notes lack required functional outcome measures and treatment plan updates.",
+          "category": "documentation",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": ["97110", "97140", "97530", "97112"],
+          "policies": [
+            { "id": "POL-DOC-PT-CAP", "triggerRate": 0.75 }
+          ],
+          "denialReason": "Physical therapy documentation does not meet requirements for continued treatment beyond visit cap threshold",
+          "claimDistribution": {
+            "total": 600,
+            "deniedBaseline": 108,
+            "deniedCurrent": 84,
+            "appealsFiled": 38,
+            "appealsOverturned": 11
+          },
+          "trajectory": {
+            "curve": "slight_improvement",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 90,
+              "deniedCount": 16,
+              "denialRate": 0.18,
+              "dollarsDenied": 4800
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 100,
+              "deniedCount": 14,
+              "denialRate": 0.14,
+              "dollarsDenied": 4200
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.18, "dollarsDenied": 4800 },
+              { "month": "2025-05", "denialRate": 0.17, "dollarsDenied": 4590 },
+              { "month": "2025-06", "denialRate": 0.16, "dollarsDenied": 4320 },
+              { "month": "2025-07", "denialRate": 0.15, "dollarsDenied": 4050 },
+              { "month": "2025-08", "denialRate": 0.15, "dollarsDenied": 4050 },
+              { "month": "2025-09", "denialRate": 0.14, "dollarsDenied": 4200 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-04-20",
+            "totalViews": 22,
+            "claimLabTests": 8,
+            "claimsExported": 5,
+            "actionsRecorded": [
+              {
+                "id": "action-ortho-009",
+                "date": "2025-06-10",
+                "type": "staff-training",
+                "notes": "PT documentation compliance training on visit cap justification and outcome measures"
+              },
+              {
+                "id": "action-ortho-010",
+                "date": "2025-07-01",
+                "type": "practice-change",
+                "notes": "Implemented structured PT progress note template with required fields for continued treatment justification"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied PT claims with addended progress notes including functional outcome measures and visit cap justification",
+              "canResubmit": true,
+              "claimCount": 25,
+              "amount": 7500
+            },
+            "longTerm": {
+              "description": "Standardize PT documentation to meet all payer requirements for continued treatment authorization",
+              "steps": [
+                "Deploy structured PT progress note template with mandatory functional outcome measures",
+                "Implement automated visit count tracking with documentation prompts near cap thresholds",
+                "Establish peer review process for PT documentation completeness",
+                "Schedule quarterly compliance audits for PT documentation standards"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pattern-ortho-freq",
+          "title": "Injection Procedure Frequency Limit Exceeded",
+          "description": "Pain management injection procedures denied for exceeding payer frequency limits. Claims for epidural steroid injections and joint injections exceed the allowed number within the specified time period. This pattern has remained flat as the practice continues to treat patients according to clinical need, which sometimes exceeds payer frequency policies.",
+          "category": "timing",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": ["62322", "62323", "20610", "64483"],
+          "policies": [
+            { "id": "POL-FREQ-INJECT", "triggerRate": 0.70 }
+          ],
+          "denialReason": "Injection procedure exceeds payer frequency limit for the specified time period",
+          "claimDistribution": {
+            "total": 400,
+            "deniedBaseline": 32,
+            "deniedCurrent": 32,
+            "appealsFiled": 13,
+            "appealsOverturned": 4
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-04-01",
+              "periodEnd": "2025-04-30",
+              "claimCount": 60,
+              "deniedCount": 5,
+              "denialRate": 0.08,
+              "dollarsDenied": 3500
+            },
+            "current": {
+              "periodStart": "2025-09-01",
+              "periodEnd": "2025-09-27",
+              "claimCount": 68,
+              "deniedCount": 5,
+              "denialRate": 0.08,
+              "dollarsDenied": 3500
+            },
+            "snapshots": [
+              { "month": "2025-04", "denialRate": 0.08, "dollarsDenied": 3500 },
+              { "month": "2025-05", "denialRate": 0.08, "dollarsDenied": 3600 },
+              { "month": "2025-06", "denialRate": 0.09, "dollarsDenied": 3780 },
+              { "month": "2025-07", "denialRate": 0.08, "dollarsDenied": 3500 },
+              { "month": "2025-08", "denialRate": 0.07, "dollarsDenied": 3150 },
+              { "month": "2025-09", "denialRate": 0.08, "dollarsDenied": 3500 }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-05-05",
+            "totalViews": 10,
+            "claimLabTests": 4,
+            "claimsExported": 2,
+            "actionsRecorded": [
+              {
+                "id": "action-ortho-011",
+                "date": "2025-07-10",
+                "type": "other",
+                "notes": "Reviewed updated payer frequency limits for injection procedures; limits unchanged from prior policy"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Appeal denied injection claims with medical necessity documentation supporting clinical need beyond frequency limits",
+              "canResubmit": false,
+              "claimCount": 10,
+              "amount": 7000
+            },
+            "longTerm": {
+              "description": "Implement proactive frequency tracking to reduce preventable denials and streamline appeals for clinically necessary exceptions",
+              "steps": [
+                "Implement injection frequency tracking dashboard visible to pain management providers",
+                "Configure EHR alerts when scheduling injections that would exceed payer frequency limits",
+                "Develop standardized appeal letter template for medically necessary frequency exceptions",
+                "Establish pre-authorization process for injections that will exceed standard frequency limits"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 0.28,
+          "claim_inspected": 0.22,
+          "claims_exported": 0.10,
+          "action_recorded": 0.18,
+          "remediation_started": 0.12,
+          "appeal_filed": 0.10
+        },
+        "eventClustering": {
+          "surgical_day_review": ["pattern_viewed", "claim_inspected"],
+          "weekly_billing_cycle": ["claims_exported", "remediation_started", "appeal_filed"],
+          "department_meeting": ["pattern_viewed", "action_recorded", "claim_inspected"],
+          "pt_documentation_review": ["pattern_viewed", "claim_inspected", "action_recorded"],
+          "pain_management_review": ["pattern_viewed", "claim_inspected"]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 4000,
+        "totalDenied": 452,
+        "overallDenialRate": 0.113,
+        "totalDollarsDenied": 215200,
+        "totalAppeals": 218,
+        "appealSuccessRate": 0.30
+      }
+    }
+  ]
+}
