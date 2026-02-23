@@ -448,7 +448,17 @@
                           <div class="text-lg font-semibold text-neutral-900 mb-2">
                             {{ formatCurrency(pattern.current.deniedDollars) }}
                           </div>
-                          <div class="text-xs text-neutral-500 mt-2">total at risk from linked claim lines</div>
+                          <div class="h-16">
+                            <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
+                              <path
+                                :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])"
+                                fill="none"
+                                :stroke="pattern.current.deniedDollars < (pattern.trendData?.deniedDollars?.[0] ?? 0) ? '#10B981' : '#EF4444'"
+                                stroke-width="2"
+                              />
+                            </svg>
+                          </div>
+                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
                         </div>
                       </div>
 
@@ -1225,6 +1235,10 @@ const patternPerformance = computed(() => {
 
     // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines (absolute current value)
     const currentDeniedDollars = pattern.totalAtRisk
+    // Estimate baseline dollars using the ratio of denial rates
+    const baselineDeniedDollars = (currentDenialRate > 0 && baselineDenialRate > 0)
+      ? currentDeniedDollars * (baselineDenialRate / currentDenialRate)
+      : currentDeniedDollars
 
     // Claims count from affected claims (live from patterns API)
     const claimsCount = pattern.affectedClaims?.length || 0
@@ -1265,7 +1279,7 @@ const patternPerformance = computed(() => {
       firstImprovementDate,
       trendData: {
         denialRate: generatePatternSparklineData(baselineDenialRate, currentDenialRate),
-        deniedDollars: generatePatternSparklineData(0, currentDeniedDollars),
+        deniedDollars: generatePatternSparklineData(baselineDeniedDollars, currentDeniedDollars),
       },
     }
   }).sort((a, b) => b.current.deniedDollars - a.current.deniedDollars)
