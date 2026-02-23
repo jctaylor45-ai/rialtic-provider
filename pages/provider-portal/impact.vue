@@ -956,7 +956,6 @@ import {
   getClaimAppealStatus,
   getClaimProviderId,
   getClaimProviderName,
-  getClaimDenialReason,
 } from '~/utils/formatting'
 
 // Provider type for this page
@@ -1012,14 +1011,98 @@ const periodLabel = computed(() => {
   return `${periodDays.value} days`
 })
 
-// Watch period changes
+// Watch period changes — refetch server-side metrics
 watch(selectedPeriod, (newPeriod) => {
   trackEvent('impact-period-change', { period: newPeriod })
+  fetchImpactSummary(periodDays.value)
 })
 
-// Get claims within a date range
-function getClaimsInRange(claims: ProcessedClaim[], startDate: Date, endDate: Date): ProcessedClaim[] {
-  return claims.filter(c => {
+// =============================================================================
+// Server-Side Impact Metrics
+// =============================================================================
+
+interface SummaryPeriod {
+  totalClaims: number
+  statusBreakdown: { approved: number; denied: number; pending: number; appealed: number }
+  denialRate: number
+  financial: { billedAmount: number; paidAmount: number; deniedAmount: number; collectionRate: number }
+  appeals: { total: number; overturned: number; successRate: number }
+  period: { days: number; startDate: string; endDate: string }
+}
+
+const impactSummary = ref<SummaryPeriod | null>(null)
+const impactPreviousSummary = ref<SummaryPeriod | null>(null)
+const impactLoading = ref(false)
+
+async function fetchImpactSummary(days: number) {
+  impactLoading.value = true
+  try {
+    const response = await $fetch<SummaryPeriod & { previousPeriod?: SummaryPeriod }>(
+      '/api/v1/claims/summary',
+      { params: { days, includePrevious: 'true' } }
+    )
+    impactSummary.value = response
+    impactPreviousSummary.value = response.previousPeriod || null
+  } catch (err) {
+    console.error('Failed to fetch impact summary:', err)
+  } finally {
+    impactLoading.value = false
+  }
+}
+
+// Fetch on mount
+onMounted(() => {
+  fetchImpactSummary(periodDays.value)
+})
+
+// Derived metrics from server response (current period)
+const currentMetrics = computed(() => {
+  const s = impactSummary.value
+  if (!s) return { totalLines: 0, deniedCount: 0, denialRate: 0, deniedDollars: 0, appealsFiled: 0, appealRate: 0, hasAppealData: false }
+  return {
+    totalLines: s.totalClaims,
+    deniedCount: s.statusBreakdown.denied,
+    denialRate: s.denialRate,
+    deniedDollars: s.financial.deniedAmount,
+    appealsFiled: s.appeals.total,
+    appealRate: s.statusBreakdown.denied > 0 ? (s.appeals.total / s.statusBreakdown.denied) * 100 : 0,
+    hasAppealData: s.appeals.total > 0,
+  }
+})
+
+// Derived metrics from server response (previous/baseline period)
+const baselineMetrics = computed(() => {
+  const s = impactPreviousSummary.value
+  if (!s) return { totalLines: 0, deniedCount: 0, denialRate: 0, deniedDollars: 0, appealsFiled: 0, appealRate: 0, hasAppealData: false }
+  return {
+    totalLines: s.totalClaims,
+    deniedCount: s.statusBreakdown.denied,
+    denialRate: s.denialRate,
+    deniedDollars: s.financial.deniedAmount,
+    appealsFiled: s.appeals.total,
+    appealRate: s.statusBreakdown.denied > 0 ? (s.appeals.total / s.statusBreakdown.denied) * 100 : 0,
+    hasAppealData: s.appeals.total > 0,
+  }
+})
+
+// Check if we have claims data (server-side — no longer limited to 100 in-memory claims)
+const hasClaimsData = computed(() => {
+  return impactSummary.value !== null && impactSummary.value.totalClaims > 0
+})
+
+// Check if we have appeal data
+const hasAppealData = computed(() => {
+  return baselineMetrics.value.hasAppealData || currentMetrics.value.hasAppealData
+})
+
+// =============================================================================
+// Helper functions for pattern/provider detail calculations (in-memory)
+// These are used for per-pattern and per-provider breakdowns in the network view,
+// where we need to operate on specific subsets of claims.
+// =============================================================================
+
+function getClaimsInRange(claimsList: ProcessedClaim[], startDate: Date, endDate: Date): ProcessedClaim[] {
+  return claimsList.filter(c => {
     const submissionDate = getClaimSubmissionDate(c)
     const claimDate = submissionDate ? new Date(submissionDate) : null
     if (!claimDate) return false
@@ -1027,59 +1110,16 @@ function getClaimsInRange(claims: ProcessedClaim[], startDate: Date, endDate: Da
   })
 }
 
-// Get line items from claims
-function getLineItems(claims: ProcessedClaim[]) {
-  const lineItems: Array<{
-    claimId: string
-    lineNumber: number
-    billedAmount: number
-    status: string
-    providerId?: string
-    denialReason?: string
-  }> = []
-
-  for (const claim of claims) {
-    if (claim.claimLines && claim.claimLines.length > 0) {
-      for (const line of claim.claimLines) {
-        lineItems.push({
-          claimId: claim.id,
-          lineNumber: line.lineNumber,
-          billedAmount: line.net?.value || 0,
-          status: getClaimStatus(claim),
-          providerId: getClaimProviderId(claim),
-          denialReason: getClaimDenialReason(claim),
-        })
-      }
-    } else {
-      // Treat the whole claim as a single line item
-      lineItems.push({
-        claimId: claim.id,
-        lineNumber: 1,
-        billedAmount: getClaimBilledAmount(claim),
-        status: getClaimStatus(claim),
-        providerId: getClaimProviderId(claim),
-        denialReason: getClaimDenialReason(claim),
-      })
-    }
-  }
-
-  return lineItems
-}
-
-// Calculate metrics from claims
-function calculateMetrics(claims: ProcessedClaim[]) {
-  const lineItems = getLineItems(claims)
-  const totalLines = lineItems.length
-  const deniedLines = lineItems.filter(l => l.status === 'denied')
+function calculateMetrics(claimsList: ProcessedClaim[]) {
+  const totalLines = claimsList.length
+  const deniedLines = claimsList.filter(c => getClaimStatus(c) === 'denied')
   const deniedCount = deniedLines.length
-  const deniedDollars = deniedLines.reduce((sum, l) => sum + l.billedAmount, 0)
+  const deniedDollars = deniedLines.reduce((sum, c) => sum + getClaimBilledAmount(c), 0)
 
-  // Appeal tracking (check if claims have appeal data)
-  const appealsFiledCount = claims.filter(c => {
+  const appealsFiledCount = claimsList.filter(c => {
     const appealStatus = getClaimAppealStatus(c)
     return appealStatus && appealStatus !== null
   }).length
-  const hasAppeal = appealsFiledCount > 0
 
   return {
     totalLines,
@@ -1088,38 +1128,9 @@ function calculateMetrics(claims: ProcessedClaim[]) {
     deniedDollars,
     appealsFiled: appealsFiledCount,
     appealRate: deniedCount > 0 ? (appealsFiledCount / deniedCount) * 100 : 0,
-    hasAppealData: hasAppeal,
+    hasAppealData: appealsFiledCount > 0,
   }
 }
-
-// Baseline period: first 30 days of selected window
-const baselineMetrics = computed(() => {
-  const now = new Date()
-  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
-  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
-
-  const baselineClaims = getClaimsInRange(appStore.claims, windowStart, baselineEnd)
-  return calculateMetrics(baselineClaims)
-})
-
-// Current period: last 30 days
-const currentMetrics = computed(() => {
-  const now = new Date()
-  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-  const currentClaims = getClaimsInRange(appStore.claims, currentStart, now)
-  return calculateMetrics(currentClaims)
-})
-
-// Check if we have claims data
-const hasClaimsData = computed(() => {
-  return appStore.claims.length > 0 && currentMetrics.value.totalLines > 0
-})
-
-// Check if we have appeal data
-const hasAppealData = computed(() => {
-  return baselineMetrics.value.hasAppealData || currentMetrics.value.hasAppealData
-})
 
 // Trend calculations
 const denialRateTrend = computed(() => {
@@ -1367,7 +1378,7 @@ function togglePatternExpand(patternId: string) {
 
 function navigateToPattern(patternId: string) {
   trackEvent('impact-pattern-navigate', { patternId, destination: 'insights' })
-  navigateTo(`/insights?pattern=${patternId}`)
+  navigateTo(`/provider-portal/insights?pattern=${patternId}`)
 }
 
 // Generate trend path for pattern detail

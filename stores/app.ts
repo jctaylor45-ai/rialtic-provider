@@ -99,6 +99,9 @@ export const useAppStore = defineStore('app', {
     claimsTotalRecords: 0,
     claimsLoadedAll: false,
     claimsFirstDataLoaded: false,
+
+    // Active server-side filter params (used by loadMoreClaims for consistent pagination)
+    claimsFilterParams: {} as Record<string, string | undefined>,
   }),
 
   getters: {
@@ -230,8 +233,14 @@ export const useAppStore = defineStore('app', {
         this.claimsPage++
         const offset = (this.claimsPage - 1) * PAGE_SIZE
 
+        // Build params including any active filters
+        const fetchParams: Record<string, string | number> = { limit: PAGE_SIZE, offset }
+        for (const [key, value] of Object.entries(this.claimsFilterParams)) {
+          if (value) fetchParams[key] = value
+        }
+
         const response = await $fetch<ClaimsApiResponse>('/api/v1/claims', {
-          params: { limit: PAGE_SIZE, offset },
+          params: fetchParams,
         })
 
         // Append new claims to existing list
@@ -257,6 +266,40 @@ export const useAppStore = defineStore('app', {
       this.claimsLoadedAll = false
       this.claimsFirstDataLoaded = false
       this.claims = []
+      this.claimsFilterParams = {}
+    },
+
+    // Reload claims with server-side filter params (resets pagination)
+    async reloadClaims(params: Record<string, string | undefined> = {}) {
+      this.claimsPage = 1
+      this.claimsLoadedAll = false
+      this.claimsFirstDataLoaded = false
+      this.claims = []
+      this.claimsFilterParams = params
+      this.claimsLoading = true
+
+      try {
+        // Build clean params (remove undefined values)
+        const fetchParams: Record<string, string | number> = { limit: PAGE_SIZE, offset: 0 }
+        for (const [key, value] of Object.entries(params)) {
+          if (value) fetchParams[key] = value
+        }
+
+        const response = await $fetch<ClaimsApiResponse>('/api/v1/claims', { params: fetchParams })
+
+        this.claims = response.data
+        this.claimsTotalRecords = response.pagination.total
+        this.pagination.claims = response.pagination
+        this.claimsFirstDataLoaded = true
+
+        if (!response.pagination.hasMore || response.data.length < PAGE_SIZE) {
+          this.claimsLoadedAll = true
+        }
+      } catch (err) {
+        console.error('Failed to reload claims:', err)
+      } finally {
+        this.claimsLoading = false
+      }
     },
 
     async initializeFromJson() {

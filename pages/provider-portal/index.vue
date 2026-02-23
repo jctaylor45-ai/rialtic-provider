@@ -39,7 +39,7 @@
         <div class="flex items-start justify-between">
           <div>
             <div class="text-sm text-neutral-600 mb-1">Claims Submitted</div>
-            <div class="text-2xl font-semibold text-neutral-900">{{ formatNumber(filteredClaims.length) }}</div>
+            <div class="text-2xl font-semibold text-neutral-900">{{ formatNumber(dashboardSummary?.totalClaims ?? 0) }}</div>
             <div class="text-xs text-neutral-500 mt-1">Last {{ selectedTimeRange }} days</div>
           </div>
           <Icon name="heroicons:chart-bar" class="w-8 h-8 text-secondary-500" />
@@ -226,7 +226,7 @@
             </div>
           </div>
           <NuxtLink
-            to="/insights"
+            to="/provider-portal/insights"
             class="inline-flex items-center gap-2 text-sm font-medium text-error-700 hover:text-error-800 no-underline"
           >
             View all critical patterns
@@ -243,7 +243,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-neutral-900">Recent Denials</h2>
           <NuxtLink
-            to="/claims?status=denied"
+            to="/provider-portal/claims?status=denied"
             class="text-sm text-primary-600 hover:text-primary-700 font-medium no-underline"
           >
             View all
@@ -277,7 +277,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-neutral-900">Recent Issues</h2>
           <NuxtLink
-            to="/insights"
+            to="/provider-portal/insights"
             class="text-sm text-primary-600 hover:text-primary-700 font-medium no-underline"
           >
             View all insights
@@ -317,7 +317,6 @@
 </template>
 
 <script setup lang="ts">
-import { subDays } from 'date-fns'
 import type { MetricTrend, Pattern } from '~/types/enhancements'
 import type { ProcessedClaim } from '~/types'
 import {
@@ -345,6 +344,7 @@ const greeting = computed(() => getGreeting())
 // Track page exposure on mount
 onMounted(() => {
   eventsStore.trackEvent('dashboard-viewed', 'dashboard', {})
+  fetchDashboardSummary(selectedTimeRange.value)
 })
 
 // Click handlers with tracking
@@ -360,21 +360,21 @@ const handlePatternClick = (pattern: Pattern) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     patternId: pattern.id,
   })
-  navigateTo(`/insights?pattern=${pattern.id}`)
+  navigateTo(`/provider-portal/insights?pattern=${pattern.id}`)
 }
 
 const handleClaimClick = (claim: ProcessedClaim) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     claimId: claim.id,
   })
-  navigateTo(`/claims?claim=${claim.id}&dateRange=${selectedTimeRange.value}`)
+  navigateTo(`/provider-portal/claims?claim=${claim.id}&dateRange=${selectedTimeRange.value}`)
 }
 
 const handleIssueClick = (pattern: Pattern) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     patternId: pattern.id,
   })
-  navigateTo(`/insights?pattern=${pattern.id}`)
+  navigateTo(`/provider-portal/insights?pattern=${pattern.id}`)
 }
 
 // =============================================================================
@@ -389,11 +389,11 @@ const drillDown = (page: string, status?: string) => {
     if (status && status !== 'all') {
       query.status = status
     }
-    navigateTo({ path: '/claims', query })
+    navigateTo({ path: '/provider-portal/claims', query })
   } else if (page === 'insights') {
-    navigateTo('/insights')
+    navigateTo('/provider-portal/insights')
   } else if (page === 'impact') {
-    navigateTo('/impact')
+    navigateTo('/provider-portal/impact')
   }
 }
 
@@ -409,84 +409,74 @@ const timeRanges = [
 const selectedTimeRange = ref(30)
 
 // =============================================================================
-// Filtered Claims Data
+// Server-Side Dashboard Summary
 // =============================================================================
 
-const filteredClaims = computed(() => {
-  const now = new Date()
-  const cutoffDate = subDays(now, selectedTimeRange.value)
+interface SummaryPeriod {
+  totalClaims: number
+  statusBreakdown: { approved: number; denied: number; pending: number; appealed: number }
+  denialRate: number
+  financial: { billedAmount: number; paidAmount: number; deniedAmount: number; collectionRate: number }
+  appeals: { total: number; overturned: number; successRate: number }
+  period: { days: number; startDate: string; endDate: string }
+}
 
-  return appStore.claims.filter(claim => {
-    const submissionDate = getClaimSubmissionDate(claim)
-    if (!submissionDate) return false
-    const claimDate = new Date(submissionDate)
-    return claimDate >= cutoffDate
-  })
-})
+const dashboardSummary = ref<SummaryPeriod | null>(null)
+const previousSummary = ref<SummaryPeriod | null>(null)
+const summaryLoading = ref(false)
 
-const previousPeriodClaims = computed(() => {
-  const now = new Date()
-  const currentCutoff = subDays(now, selectedTimeRange.value)
-  const previousCutoff = subDays(now, selectedTimeRange.value * 2)
+async function fetchDashboardSummary(days: number) {
+  summaryLoading.value = true
+  try {
+    const response = await $fetch<SummaryPeriod & { previousPeriod?: SummaryPeriod }>(
+      '/api/v1/claims/summary',
+      { params: { days, includePrevious: 'true' } }
+    )
+    dashboardSummary.value = response
+    previousSummary.value = response.previousPeriod || null
+  } catch (err) {
+    console.error('Failed to fetch dashboard summary:', err)
+  } finally {
+    summaryLoading.value = false
+  }
+}
 
-  return appStore.claims.filter(claim => {
-    const submissionDate = getClaimSubmissionDate(claim)
-    if (!submissionDate) return false
-    const claimDate = new Date(submissionDate)
-    return claimDate >= previousCutoff && claimDate < currentCutoff
-  })
-})
-
-const filteredDeniedClaims = computed(() => {
-  return filteredClaims.value.filter(c => getClaimStatus(c) === 'denied')
-})
-
-const filteredDeniedAmount = computed(() => {
-  return filteredDeniedClaims.value.reduce((sum, claim) => sum + getClaimBilledAmount(claim), 0)
-})
-
-// Previous period denied claims and amount (for Revenue Recovered calculation)
-const previousPeriodDeniedClaims = computed(() => {
-  return previousPeriodClaims.value.filter(c => getClaimStatus(c) === 'denied')
-})
-
-const previousPeriodDeniedAmount = computed(() => {
-  return previousPeriodDeniedClaims.value.reduce((sum, claim) => sum + getClaimBilledAmount(claim), 0)
-})
-
-const filteredDenialRate = computed(() => {
-  if (filteredClaims.value.length === 0) return 0
-  return (filteredDeniedClaims.value.length / filteredClaims.value.length) * 100
-})
-
-const filteredApprovalRate = computed(() => {
-  return 100 - filteredDenialRate.value
+// Re-fetch when time range changes
+watch(selectedTimeRange, (days) => {
+  fetchDashboardSummary(days)
 })
 
 // =============================================================================
-// Trend Calculations
+// Server-Side Metrics (replacing client-side filtering)
+// =============================================================================
+
+const filteredDenialRate = computed(() => dashboardSummary.value?.denialRate ?? 0)
+const filteredApprovalRate = computed(() => 100 - filteredDenialRate.value)
+const filteredDeniedAmount = computed(() => dashboardSummary.value?.financial.deniedAmount ?? 0)
+
+// =============================================================================
+// Trend Calculations (from server-side previous period)
 // =============================================================================
 
 const filteredTrends = computed(() => {
-  const prevDenied = previousPeriodClaims.value.filter(c => getClaimStatus(c) === 'denied')
-  const prevDenialRate = previousPeriodClaims.value.length > 0
-    ? (prevDenied.length / previousPeriodClaims.value.length) * 100
-    : 0
+  const currentDenialRate = filteredDenialRate.value
+  const prevDenialRate = previousSummary.value?.denialRate ?? 0
+  const currentApprovalRate = filteredApprovalRate.value
   const prevApprovalRate = 100 - prevDenialRate
 
-  const denialChange = filteredDenialRate.value - prevDenialRate
-  const approvalChange = filteredApprovalRate.value - prevApprovalRate
+  const denialChange = currentDenialRate - prevDenialRate
+  const approvalChange = currentApprovalRate - prevApprovalRate
 
   return {
     denialRate: {
-      current: filteredDenialRate.value,
+      current: currentDenialRate,
       previous: prevDenialRate,
       change: denialChange,
       percentChange: prevDenialRate > 0 ? (denialChange / prevDenialRate) * 100 : 0,
       trend: denialChange < -0.5 ? 'down' : denialChange > 0.5 ? 'up' : 'stable',
     } as MetricTrend,
     approvalRate: {
-      current: filteredApprovalRate.value,
+      current: currentApprovalRate,
       previous: prevApprovalRate,
       change: approvalChange,
       percentChange: prevApprovalRate > 0 ? (approvalChange / prevApprovalRate) * 100 : 0,
@@ -517,12 +507,18 @@ const patternsRegressing = computed(() => {
 // Revenue Recovered = Previous Period Denied $ - Current Period Denied $
 // A positive value means we're denying less money now compared to the previous period
 const revenueRecovered = computed(() => {
-  return previousPeriodDeniedAmount.value - filteredDeniedAmount.value
+  const prevDenied = previousSummary.value?.financial.deniedAmount ?? 0
+  const currentDenied = filteredDeniedAmount.value
+  return prevDenied - currentDenied
 })
 
 // =============================================================================
-// Recent Denials & Recent Issues
+// Recent Denials & Recent Issues (use in-memory claims for display lists)
 // =============================================================================
+
+const filteredDeniedClaims = computed(() => {
+  return appStore.claims.filter(c => getClaimStatus(c) === 'denied')
+})
 
 const recentDeniedClaims = computed(() => {
   return filteredDeniedClaims.value

@@ -820,25 +820,53 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
           }
         }
       } else {
-        // Policy not in built-in library — insert a stub so FK constraints are satisfied.
-        // The pattern's denialReason is used as the description.
-        const patternUsingPolicy = scenario.patterns.find(
-          p => p.policies?.some(ref => ref.id === policyId)
-        )
-        _verbose(`Policy "${policyId}" not in built-in library, inserting stub row`)
-        insertPolicy.run(
-          policyId,
-          policyId,               // name = id as placeholder
-          'Informational',        // mode
-          scenario.timeline.startDate,
-          patternUsingPolicy?.denialReason || 'Policy referenced by scenario',
-          null,                   // clinicalRationale
-          'Unknown',              // topic
-          'Unknown',              // primaryLogicType
-          'Scenario Import',      // source
-          null,                   // commonMistake
-          null                    // fixGuidance
-        )
+        // Policy not in built-in library. Check if it already exists in the database
+        // (e.g., from a prior bulk policy import) before inserting a stub.
+        const existingRow = db.prepare('SELECT id FROM policies WHERE id = ?').get(policyId) as { id: string } | undefined
+        if (existingRow) {
+          _verbose(`Policy "${policyId}" found in database, skipping stub insertion`)
+        } else {
+          // Generate a meaningful name from the pattern context instead of using raw ID
+          const patternUsingPolicy = scenario.patterns.find(
+            p => p.policies?.some(ref => ref.id === policyId)
+          )
+          const categoryMap: Record<string, { topic: string; logicType: string }> = {
+            'modifier-missing': { topic: 'Coding & Modifiers', logicType: 'Modifier Validation' },
+            'code-mismatch': { topic: 'Coding & Billing', logicType: 'Code Matching' },
+            'coding-error': { topic: 'Coding & Billing', logicType: 'Code Validation' },
+            'documentation': { topic: 'Documentation', logicType: 'Documentation Review' },
+            'authorization': { topic: 'Prior Authorization', logicType: 'Authorization Check' },
+            'billing-error': { topic: 'Billing', logicType: 'Billing Validation' },
+            'timing': { topic: 'Timing & Frequency', logicType: 'Frequency Limit' },
+            'frequency-limit': { topic: 'Timing & Frequency', logicType: 'Frequency Limit' },
+            'coding-specificity': { topic: 'Coding', logicType: 'Specificity Check' },
+            'medical-necessity': { topic: 'Medical Necessity', logicType: 'Medical Necessity Review' },
+            'bundling': { topic: 'Bundling & NCCI', logicType: 'Bundling Edit' },
+            'global-period': { topic: 'Global Surgery', logicType: 'Global Period Check' },
+            'administrative': { topic: 'Administrative', logicType: 'Administrative Review' },
+            'coverage-exclusion': { topic: 'Coverage', logicType: 'Coverage Determination' },
+          }
+          const category = patternUsingPolicy?.category || ''
+          const mapped = categoryMap[category] || { topic: 'General', logicType: 'Claim Review' }
+          const policyName = patternUsingPolicy?.denialReason
+            ? patternUsingPolicy.denialReason.slice(0, 120)
+            : `Policy ${policyId}`
+
+          _verbose(`Policy "${policyId}" not in built-in library, inserting contextual stub`)
+          insertPolicy.run(
+            policyId,
+            policyName,
+            'Informational',
+            scenario.timeline.startDate,
+            patternUsingPolicy?.denialReason || 'Policy referenced by scenario',
+            null,                   // clinicalRationale
+            mapped.topic,
+            mapped.logicType,
+            'Scenario Import',
+            patternUsingPolicy ? `Common in ${category.replace(/-/g, ' ')} patterns` : null,
+            patternUsingPolicy?.remediation?.shortTerm?.description || null
+          )
+        }
       }
     }
 

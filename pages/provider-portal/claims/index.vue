@@ -401,11 +401,34 @@ watch(() => route.query.ids, async (newIds) => {
   }
 }, { immediate: true })
 
+// Build server-side filter params from current local state
+function buildServerFilterParams(): Record<string, string | undefined> {
+  const params: Record<string, string | undefined> = {}
+  if (filterStatus.value && filterStatus.value !== 'all') {
+    params.status = filterStatus.value
+  }
+  if (filterDateRange.value && filterDateRange.value !== 'all') {
+    const days = parseInt(filterDateRange.value)
+    if (!isNaN(days)) {
+      const cutoff = new Date()
+      cutoff.setDate(cutoff.getDate() - days)
+      params.startDate = cutoff.toISOString().split('T')[0]
+    }
+  }
+  if (searchPatient.value) {
+    params.search = searchPatient.value
+  }
+  return params
+}
+
+// Reload claims from server when status or date filters change (skip if viewing pattern-linked claims)
+watch([filterStatus, filterDateRange], () => {
+  if (patternClaimIds.value && patternClaimIds.value.length > 0) return
+  appStore.reloadClaims(buildServerFilterParams())
+})
+
 // Ensure data is loaded and apply query params
 onMounted(async () => {
-  if (appStore.claims.length === 0 && !appStore.isLoading) {
-    await appStore.initialize()
-  }
   if (patternsStore.patterns.length === 0 && !patternsStore.isLoading) {
     await patternsStore.loadPatterns()
   }
@@ -413,6 +436,15 @@ onMounted(async () => {
   // Fetch pattern-linked claims if IDs in URL
   if (route.query.ids && typeof route.query.ids === 'string') {
     await fetchPatternLinkedClaims(route.query.ids.split(','))
+  } else {
+    // Load claims with any URL-specified filters applied server-side
+    const initialParams = buildServerFilterParams()
+    const hasFilters = Object.keys(initialParams).length > 0
+    if (hasFilters || appStore.claims.length === 0) {
+      await appStore.reloadClaims(initialParams)
+    } else if (!appStore.claimsFirstDataLoaded && !appStore.isLoading) {
+      await appStore.initialize()
+    }
   }
 
   // Open drawer if claim ID in URL
@@ -438,14 +470,15 @@ const sorting = computed<SortingState>({
   },
 })
 
-// Filter claims based on search params and filters (now using URL-synced refs)
+// Filter claims — status and date range are now applied server-side via reloadClaims().
+// Only claim ID and procedure code searches remain client-side (not supported by server API).
 const filteredClaims = computed(() => {
   // When viewing pattern-linked claims, use the API-fetched claims instead of store
   let result = patternClaimIds.value && patternClaimIds.value.length > 0
     ? [...patternLinkedClaims.value]
     : [...appStore.claims]
 
-  // Search filters
+  // Client-side search filters (these fields aren't in the server API)
   if (searchClaimId.value) {
     result = result.filter(c => c.id.toLowerCase().includes(searchClaimId.value.toLowerCase()))
   }
@@ -462,22 +495,6 @@ const filteredClaims = computed(() => {
     result = result.filter(c => {
       const codes = getClaimProcedureCodes(c)
       return codes.some(code => code?.toLowerCase().includes(searchProcedureCode.value.toLowerCase()))
-    })
-  }
-
-  // Status filter
-  if (filterStatus.value !== 'all') {
-    result = result.filter(c => getClaimStatus(c) === filterStatus.value)
-  }
-
-  // Date range filter
-  if (filterDateRange.value !== 'all') {
-    const days = parseInt(filterDateRange.value)
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - days)
-    result = result.filter(c => {
-      const dos = getClaimDateOfService(c)
-      return dos && new Date(dos) >= cutoffDate
     })
   }
 
@@ -530,7 +547,7 @@ const viewPattern = (pattern: Pattern) => {
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPatternId', pattern.id)
   }
-  router.push('/insights')
+  router.push('/provider-portal/insights')
 }
 
 // Column definitions for TanStack Table
