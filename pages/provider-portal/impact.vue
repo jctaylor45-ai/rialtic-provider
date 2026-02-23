@@ -1065,7 +1065,7 @@ const currentMetrics = computed(() => {
     denialRate: s.denialRate,
     deniedDollars: s.financial.deniedAmount,
     appealsFiled: s.appeals.total,
-    appealRate: s.statusBreakdown.denied > 0 ? (s.appeals.total / s.statusBreakdown.denied) * 100 : 0,
+    appealRate: (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0)) > 0 ? (s.appeals.total / (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0))) * 100 : 0,
     hasAppealData: s.appeals.total > 0,
   }
 })
@@ -1080,7 +1080,7 @@ const baselineMetrics = computed(() => {
     denialRate: s.denialRate,
     deniedDollars: s.financial.deniedAmount,
     appealsFiled: s.appeals.total,
-    appealRate: s.statusBreakdown.denied > 0 ? (s.appeals.total / s.statusBreakdown.denied) * 100 : 0,
+    appealRate: (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0)) > 0 ? (s.appeals.total / (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0))) * 100 : 0,
     hasAppealData: s.appeals.total > 0,
   }
 })
@@ -1121,13 +1121,17 @@ function calculateMetrics(claimsList: ProcessedClaim[]) {
     return appealStatus && appealStatus !== null
   }).length
 
+  // Denominator for appeal rate: denied + appealed (claims that were ever denied)
+  const appealedCount = claimsList.filter(c => getClaimStatus(c) === 'appealed').length
+  const everDeniedCount = deniedCount + appealedCount
+
   return {
     totalLines,
     deniedCount,
     denialRate: totalLines > 0 ? (deniedCount / totalLines) * 100 : 0,
     deniedDollars,
     appealsFiled: appealsFiledCount,
-    appealRate: deniedCount > 0 ? (appealsFiledCount / deniedCount) * 100 : 0,
+    appealRate: everDeniedCount > 0 ? (appealsFiledCount / everDeniedCount) * 100 : 0,
     hasAppealData: appealsFiledCount > 0,
   }
 }

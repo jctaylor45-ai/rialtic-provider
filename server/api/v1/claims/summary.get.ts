@@ -76,8 +76,8 @@ async function computePeriodSummary(startDateStr: string, endDateStr: string, da
     db.select({ total: sum(claims.billedAmount) }).from(claims).where(dateFilter),
     db.select({ total: sum(claims.paidAmount) }).from(claims).where(dateFilter),
     db.select({ total: sum(claims.billedAmount) }).from(claims).where(and(dateFilter, eq(claims.status, 'denied'))),
-    db.select({ count: count() }).from(claimAppeals).where(eq(claimAppeals.appealFiled, true)),
-    db.select({ count: count() }).from(claimAppeals).where(eq(claimAppeals.appealOutcome, 'overturned')),
+    db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealFiled, true), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
+    db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealOutcome, 'overturned'), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
   ])
 
   const totalClaims = totalResult[0]?.count || 0
