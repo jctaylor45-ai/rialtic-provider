@@ -15,7 +15,9 @@ import { eq, desc, and, sql, count } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   try {
     const query = getQuery(event)
-    const limit = Math.min(parseInt(query.limit as string) || 50, 100)
+    const rawLimit = parseInt(query.limit as string)
+    // limit=0 means "return all"; otherwise default to 50
+    const limit = rawLimit === 0 ? 0 : (rawLimit || 50)
     const offset = parseInt(query.offset as string) || 0
     const category = query.category as string | undefined
     const status = query.status as string | undefined
@@ -38,8 +40,8 @@ export default defineEventHandler(async (event) => {
 
     const where = whereConditions.length > 0 ? and(...whereConditions) : undefined
 
-    // Query patterns with available columns
-    const patternsList = await db
+    // Query patterns with available columns (limit=0 means return all)
+    const patternsQuery = db
       .select({
         id: patterns.id,
         title: patterns.title,
@@ -68,8 +70,13 @@ export default defineEventHandler(async (event) => {
       .from(patterns)
       .where(where)
       .orderBy(desc(patterns.scoreImpact), desc(patterns.totalAtRisk))
-      .limit(limit)
-      .offset(offset)
+      .$dynamic()
+
+    if (limit > 0) {
+      patternsQuery.limit(limit).offset(offset)
+    }
+
+    const patternsList = await patternsQuery
 
     // Get total count
     const [totalResult] = await db
@@ -158,7 +165,7 @@ export default defineEventHandler(async (event) => {
         total,
         limit,
         offset,
-        hasMore: (offset + limit) < total,
+        hasMore: limit > 0 && (offset + limit) < total,
       },
     }
   } catch (error) {

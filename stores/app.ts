@@ -125,19 +125,6 @@ export const useAppStore = defineStore('app', {
       return state.insights.filter(i => i.severity === 'high' && !i.dismissed)
     },
 
-    totalClaimsAmount(state): number {
-      return state.claims.reduce((sum, c) => sum + getClaimBilledAmount(c), 0)
-    },
-
-    totalPaidAmount(state): number {
-      return state.claims.reduce((sum, c) => sum + getClaimPaidAmount(c), 0)
-    },
-
-    denialRate(state): number {
-      if (state.claims.length === 0) return 0
-      const deniedCount = state.claims.filter(c => getClaimStatus(c) === 'denied').length
-      return (deniedCount / state.claims.length) * 100
-    },
   },
 
   actions: {

@@ -8,7 +8,8 @@ import { format, parseISO } from 'date-fns'
 import type { Policy } from '~/types'
 import type { Pattern } from '~/types/enhancements'
 import { normalizePolicyForDisplay, type DisplayPolicy } from '~/composables/usePolicyDisplay'
-import { normalizeClaimForDisplay, type DisplayClaim } from '~/composables/useClaimDisplay'
+import { type DisplayClaim } from '~/composables/useClaimDisplay'
+import { renderMarkdown } from '~/utils/markdown'
 
 const props = defineProps<{
   policy: Policy
@@ -63,34 +64,48 @@ const linkedPolicies = computed<Policy[]>(() => {
   return []
 })
 
-// Get claims that hit this policy
-const policyClaimsData = computed(() => {
-  // For PaAPI format, we filter claims that have this policy in their insights
-  const rawClaims = appStore.claims
-  const matchingClaims: DisplayClaim[] = []
+// Server-side policy metrics (replaces client-side filtering of 100 claims)
+interface PolicyMetricsResponse {
+  policyId: string
+  totalClaims: number
+  totalLines: number
+  deniedClaims: number
+  appealedClaims: number
+  deniedLines: number
+  totalBilled: number
+  deniedAmount: number
+  paidAmount: number
+  denialRate: number
+  appealCount: number
+  overturnedCount: number
+}
 
-  for (const rawClaim of rawClaims) {
-    // Check if this claim has insights related to this policy
-    const hasPolicy = (rawClaim as any).claimLines?.some((line: any) =>
-      line.insights?.some((insight: any) => insight.policyId === props.policy.id)
-    ) || (rawClaim as any).policies?.some((p: any) => p.id === props.policy.id)
+const policyMetrics = ref<PolicyMetricsResponse | null>(null)
 
-    if (hasPolicy) {
-      matchingClaims.push(normalizeClaimForDisplay(rawClaim as any))
-    }
+async function fetchPolicyMetrics(policyId: string) {
+  try {
+    policyMetrics.value = await $fetch<PolicyMetricsResponse>(
+      `/api/v1/policies/${policyId}/metrics`
+    )
+  } catch (err) {
+    console.error('Failed to fetch policy metrics:', err)
   }
+}
 
-  // Calculate summary stats
-  const totalBilled = matchingClaims.reduce((sum, c) => sum + c.billedAmount, 0)
-  const deniedClaims = matchingClaims.filter(c => c.status === 'denied')
-  const deniedAmount = deniedClaims.reduce((sum, c) => sum + c.billedAmount, 0)
+// Fetch when policy changes
+watch(() => props.policy.id, (newId) => {
+  fetchPolicyMetrics(newId)
+}, { immediate: true })
 
+// Backward-compatible computed that uses server metrics
+const policyClaimsData = computed(() => {
+  const m = policyMetrics.value
   return {
-    claims: matchingClaims,
-    totalCount: matchingClaims.length,
-    totalBilled,
-    deniedCount: deniedClaims.length,
-    deniedAmount,
+    claims: [] as DisplayClaim[],
+    totalCount: m?.totalClaims || 0,
+    totalBilled: m?.totalBilled || 0,
+    deniedCount: m?.deniedClaims || 0,
+    deniedAmount: m?.deniedAmount || 0,
   }
 })
 
@@ -147,7 +162,7 @@ const viewPattern = (pattern: Pattern) => {
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPatternId', pattern.id)
   }
-  router.push('/insights')
+  router.push('/provider-portal/insights')
 }
 
 // Navigate to related policy
@@ -155,12 +170,12 @@ const viewRelatedPolicy = (policyId: string) => {
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPolicyId', policyId)
   }
-  router.push('/policies')
+  router.push('/provider-portal/policies')
 }
 
 // Navigate to claim details
 const viewClaim = (claimId: string) => {
-  router.push({ path: '/claims', query: { claim: claimId } })
+  router.push({ path: '/provider-portal/claims', query: { claim: claimId } })
 }
 
 // Get status badge class
@@ -286,7 +301,7 @@ const showCodeIntelligence = (code: string) => {
             <button
               v-if="relatedPatterns.length > 3"
               class="text-xs text-orange-700 hover:text-orange-800 font-medium"
-              @click="router.push('/insights')"
+              @click="router.push('/provider-portal/insights')"
             >
               View all {{ relatedPatterns.length }} patterns →
             </button>
@@ -327,13 +342,13 @@ const showCodeIntelligence = (code: string) => {
       <!-- Description -->
       <div class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-2">Description</h3>
-        <p class="text-sm text-neutral-700">{{ policy.description }}</p>
+        <div class="text-sm text-neutral-700 prose prose-sm max-w-none" v-html="renderMarkdown(policy.description)" />
       </div>
 
       <!-- Clinical Rationale -->
       <div v-if="displayPolicy.clinicalRationale" class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-2">Clinical Rationale</h3>
-        <p class="text-sm text-neutral-700">{{ displayPolicy.clinicalRationale }}</p>
+        <div class="text-sm text-neutral-700 prose prose-sm max-w-none" v-html="renderMarkdown(displayPolicy.clinicalRationale)" />
       </div>
 
       <!-- Guidance -->
@@ -341,11 +356,11 @@ const showCodeIntelligence = (code: string) => {
         <div class="grid grid-cols-1 gap-4">
           <div v-if="displayPolicy.commonMistake">
             <h3 class="text-sm font-semibold text-neutral-900 mb-2">Common Mistake</h3>
-            <p class="text-sm text-neutral-700">{{ displayPolicy.commonMistake }}</p>
+            <div class="text-sm text-neutral-700 prose prose-sm max-w-none" v-html="renderMarkdown(displayPolicy.commonMistake)" />
           </div>
           <div v-if="displayPolicy.fixGuidance">
             <h3 class="text-sm font-semibold text-neutral-900 mb-2">Fix Guidance</h3>
-            <p class="text-sm text-neutral-700">{{ displayPolicy.fixGuidance }}</p>
+            <div class="text-sm text-neutral-700 prose prose-sm max-w-none" v-html="renderMarkdown(displayPolicy.fixGuidance)" />
           </div>
         </div>
       </div>
@@ -575,12 +590,12 @@ const showCodeIntelligence = (code: string) => {
       <div class="flex items-center gap-3">
         <button
           class="flex-1 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors text-sm"
-          @click="router.push('/claims?status=denied')"
+          @click="router.push('/provider-portal/claims?status=denied')"
         >
           View Related Claims
         </button>
         <NuxtLink
-          to="/claim-lab"
+          to="/provider-portal/claim-lab"
           class="flex-1 py-2 border border-primary-600 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors text-sm text-center no-underline"
         >
           Test in Claim Lab

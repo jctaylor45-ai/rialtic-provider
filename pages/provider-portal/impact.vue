@@ -948,15 +948,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { format } from 'date-fns'
-import type { ProcessedClaim } from '~/types'
-import {
-  getClaimStatus,
-  getClaimBilledAmount,
-  getClaimSubmissionDate,
-  getClaimAppealStatus,
-  getClaimProviderId,
-  getClaimProviderName,
-} from '~/utils/formatting'
 
 // Provider type for this page
 interface Provider {
@@ -967,7 +958,6 @@ interface Provider {
 }
 
 // Stores
-const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
 
@@ -1094,47 +1084,6 @@ const hasClaimsData = computed(() => {
 const hasAppealData = computed(() => {
   return baselineMetrics.value.hasAppealData || currentMetrics.value.hasAppealData
 })
-
-// =============================================================================
-// Helper functions for pattern/provider detail calculations (in-memory)
-// These are used for per-pattern and per-provider breakdowns in the network view,
-// where we need to operate on specific subsets of claims.
-// =============================================================================
-
-function getClaimsInRange(claimsList: ProcessedClaim[], startDate: Date, endDate: Date): ProcessedClaim[] {
-  return claimsList.filter(c => {
-    const submissionDate = getClaimSubmissionDate(c)
-    const claimDate = submissionDate ? new Date(submissionDate) : null
-    if (!claimDate) return false
-    return claimDate >= startDate && claimDate <= endDate
-  })
-}
-
-function calculateMetrics(claimsList: ProcessedClaim[]) {
-  const totalLines = claimsList.length
-  const deniedLines = claimsList.filter(c => getClaimStatus(c) === 'denied')
-  const deniedCount = deniedLines.length
-  const deniedDollars = deniedLines.reduce((sum, c) => sum + getClaimBilledAmount(c), 0)
-
-  const appealsFiledCount = claimsList.filter(c => {
-    const appealStatus = getClaimAppealStatus(c)
-    return appealStatus && appealStatus !== null
-  }).length
-
-  // Denominator for appeal rate: denied + appealed (claims that were ever denied)
-  const appealedCount = claimsList.filter(c => getClaimStatus(c) === 'appealed').length
-  const everDeniedCount = deniedCount + appealedCount
-
-  return {
-    totalLines,
-    deniedCount,
-    denialRate: totalLines > 0 ? (deniedCount / totalLines) * 100 : 0,
-    deniedDollars,
-    appealsFiled: appealsFiledCount,
-    appealRate: everDeniedCount > 0 ? (appealsFiledCount / everDeniedCount) * 100 : 0,
-    hasAppealData: appealsFiledCount > 0,
-  }
-}
 
 // Trend calculations
 const denialRateTrend = computed(() => {
@@ -1386,36 +1335,55 @@ function generatePatternTrendPath(data: number[]): string {
   return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
 }
 
-// Providers data
+// =============================================================================
+// Server-Side Provider Metrics (Network View)
+// =============================================================================
+
+interface ServerProviderMetrics {
+  id: string
+  name: string
+  specialty: string | null
+  npi: string | null
+  totalClaims: number
+  deniedClaims: number
+  appealedClaims: number
+  denialRate: number
+  deniedDollars: number
+  totalBilled: number
+  appealsFiled: number
+  appealsOverturned: number
+  appealRate: number
+}
+
+const serverProviderMetrics = ref<ServerProviderMetrics[]>([])
+const serverPreviousProviderMetrics = ref<ServerProviderMetrics[]>([])
+
+async function fetchProviderMetrics(days: number) {
+  try {
+    const response = await $fetch<{ data: ServerProviderMetrics[]; previousPeriod?: ServerProviderMetrics[] }>(
+      '/api/v1/providers/metrics',
+      { params: { days, includePrevious: 'true' } }
+    )
+    serverProviderMetrics.value = response.data
+    serverPreviousProviderMetrics.value = response.previousPeriod || []
+  } catch (err) {
+    console.error('Failed to fetch provider metrics:', err)
+  }
+}
+
+// Fetch on mount and when period changes
+watch(selectedPeriod, () => { fetchProviderMetrics(periodDays.value) })
+onMounted(() => { fetchProviderMetrics(periodDays.value) })
+
+// Providers list from server data
 const providers = computed<Provider[]>(() => {
-  // Extract unique providers from claims
-  const providerMap = new Map<string, Provider>()
-
-  for (const claim of appStore.claims) {
-    const providerId = getClaimProviderId(claim)
-    if (providerId && !providerMap.has(providerId)) {
-      const npi = claim.billingProviderIdentifiers?.npi || '0000000000'
-      providerMap.set(providerId, {
-        id: providerId,
-        name: getClaimProviderName(claim) || `Provider ${providerId}`,
-        specialty: 'General Practice',
-        npi,
-      })
-    }
-  }
-
-  // If no providers from claims, try to load from providers store/data
-  if (providerMap.size === 0) {
-    // Fallback demo providers
-    return [
-      { id: 'PRV-001', name: 'Dr. Sarah Smith', specialty: 'Family Medicine', npi: '1234567890' },
-      { id: 'PRV-002', name: 'Dr. Michael Chen', specialty: 'Internal Medicine', npi: '2345678901' },
-      { id: 'PRV-003', name: 'Dr. Jennifer Martinez', specialty: 'Cardiology', npi: '3456789012' },
-      { id: 'PRV-004', name: 'Dr. Robert Johnson', specialty: 'Orthopedic Surgery', npi: '4567890123' },
-    ]
-  }
-
-  return Array.from(providerMap.values())
+  if (serverProviderMetrics.value.length === 0) return []
+  return serverProviderMetrics.value.map(p => ({
+    id: p.id,
+    name: p.name,
+    specialty: p.specialty || 'General Practice',
+    npi: p.npi || '',
+  }))
 })
 
 // Initialize selected provider
@@ -1425,197 +1393,115 @@ watch(providers, (newProviders) => {
   }
 }, { immediate: true })
 
-// Provider metrics calculation
-function calculateProviderMetrics(providerId: string) {
-  const now = new Date()
-  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
-  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
-  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
-  const providerClaims = appStore.claims.filter(c => getClaimProviderId(c) === providerId)
-
-  const baselineClaims = getClaimsInRange(providerClaims, windowStart, baselineEnd)
-  const currentClaims = getClaimsInRange(providerClaims, currentStart, now)
-
-  const baseline = calculateMetrics(baselineClaims)
-  const current = calculateMetrics(currentClaims)
-
-  const recovered = baseline.deniedDollars - current.deniedDollars
-
-  // Determine trends
-  const denialTrend = current.denialRate < baseline.denialRate - 0.5 ? 'improving' :
-    current.denialRate > baseline.denialRate + 0.5 ? 'worsening' : 'stable'
-  const appealTrend = current.appealRate < baseline.appealRate - 0.5 ? 'improving' :
-    current.appealRate > baseline.appealRate + 0.5 ? 'worsening' : 'stable'
-  const overallTrend = recovered > 0 ? 'improving' : recovered < 0 ? 'worsening' : 'stable'
-
-  return {
-    baseline,
-    current,
-    recoveredRevenue: recovered,
-    trends: {
-      denialRate: denialTrend as 'improving' | 'worsening' | 'stable',
-      appealRate: appealTrend as 'improving' | 'worsening' | 'stable',
-    },
-    overallTrend: overallTrend as 'improving' | 'worsening' | 'stable',
-  }
+// Helper to get current/previous metrics for a provider from server data
+function getServerMetrics(providerId: string) {
+  const current = serverProviderMetrics.value.find(p => p.id === providerId)
+  const previous = serverPreviousProviderMetrics.value.find(p => p.id === providerId)
+  return { current, previous }
 }
 
 // Selected provider metrics
 const selectedProviderMetrics = computed(() => {
-  if (!selectedProviderId.value) {
-    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  if (!selectedProviderId.value) return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  const { current } = getServerMetrics(selectedProviderId.value)
+  if (!current) return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
+  return {
+    denialRate: current.denialRate,
+    appealRate: current.appealRate,
+    deniedDollars: current.deniedDollars,
   }
-  const metrics = calculateProviderMetrics(selectedProviderId.value)
-  return metrics.current
 })
 
 const selectedProviderRecoveredRevenue = computed(() => {
   if (!selectedProviderId.value) return 0
-  const metrics = calculateProviderMetrics(selectedProviderId.value)
-  return metrics.recoveredRevenue
+  const { current, previous } = getServerMetrics(selectedProviderId.value)
+  return (previous?.deniedDollars || 0) - (current?.deniedDollars || 0)
 })
 
 // Practice average metrics
 const practiceAverageMetrics = computed(() => {
-  if (providers.value.length === 0) {
-    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
-  }
-
-  let totalDenialRate = 0
-  let totalAppealRate = 0
-  let totalDeniedDollars = 0
-
-  for (const provider of providers.value) {
-    const metrics = calculateProviderMetrics(provider.id)
-    totalDenialRate += metrics.current.denialRate
-    totalAppealRate += metrics.current.appealRate
-    totalDeniedDollars += metrics.current.deniedDollars
-  }
-
+  const data = serverProviderMetrics.value
+  if (data.length === 0) return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
   return {
-    denialRate: totalDenialRate / providers.value.length,
-    appealRate: totalAppealRate / providers.value.length,
-    deniedDollars: totalDeniedDollars / providers.value.length,
+    denialRate: data.reduce((s, p) => s + p.denialRate, 0) / data.length,
+    appealRate: data.reduce((s, p) => s + p.appealRate, 0) / data.length,
+    deniedDollars: data.reduce((s, p) => s + p.deniedDollars, 0) / data.length,
   }
 })
 
 // Best provider metrics (lowest denial rate, etc.)
 const bestProviderMetrics = computed(() => {
-  if (providers.value.length === 0) {
-    return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
-  }
-
-  let bestDenialRate = Infinity
-  let bestAppealRate = Infinity
-  let bestDeniedDollars = Infinity
-
-  for (const provider of providers.value) {
-    const metrics = calculateProviderMetrics(provider.id)
-    if (metrics.current.denialRate < bestDenialRate) {
-      bestDenialRate = metrics.current.denialRate
-    }
-    if (metrics.current.appealRate < bestAppealRate) {
-      bestAppealRate = metrics.current.appealRate
-    }
-    if (metrics.current.deniedDollars < bestDeniedDollars) {
-      bestDeniedDollars = metrics.current.deniedDollars
-    }
-  }
-
+  const data = serverProviderMetrics.value
+  if (data.length === 0) return { denialRate: 0, appealRate: 0, deniedDollars: 0 }
   return {
-    denialRate: bestDenialRate === Infinity ? 0 : bestDenialRate,
-    appealRate: bestAppealRate === Infinity ? 0 : bestAppealRate,
-    deniedDollars: bestDeniedDollars === Infinity ? 0 : bestDeniedDollars,
+    denialRate: Math.min(...data.map(p => p.denialRate)),
+    appealRate: Math.min(...data.map(p => p.appealRate)),
+    deniedDollars: Math.min(...data.map(p => p.deniedDollars)),
   }
 })
 
 // Provider rank calculation
 const selectedProviderRank = computed(() => {
-  if (!selectedProviderId.value) {
-    return { denialRate: 1, appealRate: 1, deniedDollars: 1 }
-  }
-
-  const allMetrics = providers.value.map(p => ({
-    id: p.id,
-    ...calculateProviderMetrics(p.id).current,
-  }))
-
-  const selectedMetrics = allMetrics.find(m => m.id === selectedProviderId.value)
-  if (!selectedMetrics) {
-    return { denialRate: 1, appealRate: 1, deniedDollars: 1 }
-  }
-
-  // Lower is better, so rank ascending
-  const denialRateRank = allMetrics.sort((a, b) => a.denialRate - b.denialRate)
-    .findIndex(m => m.id === selectedProviderId.value) + 1
-
-  const appealRateRank = allMetrics.sort((a, b) => a.appealRate - b.appealRate)
-    .findIndex(m => m.id === selectedProviderId.value) + 1
-
-  const deniedDollarsRank = allMetrics.sort((a, b) => a.deniedDollars - b.deniedDollars)
-    .findIndex(m => m.id === selectedProviderId.value) + 1
-
+  if (!selectedProviderId.value) return { denialRate: 1, appealRate: 1, deniedDollars: 1 }
+  const data = serverProviderMetrics.value
+  const sorted = (key: keyof ServerProviderMetrics) =>
+    [...data].sort((a, b) => (a[key] as number) - (b[key] as number))
+      .findIndex(p => p.id === selectedProviderId.value) + 1
   return {
-    denialRate: denialRateRank,
-    appealRate: appealRateRank,
-    deniedDollars: deniedDollarsRank,
+    denialRate: sorted('denialRate') || 1,
+    appealRate: sorted('appealRate') || 1,
+    deniedDollars: sorted('deniedDollars') || 1,
   }
 })
 
 // Total recovered revenue for practice
 const totalRecoveredRevenue = computed(() => {
-  let total = 0
-  for (const provider of providers.value) {
-    const metrics = calculateProviderMetrics(provider.id)
-    total += metrics.recoveredRevenue
-  }
-  return total
+  return serverProviderMetrics.value.reduce((total, current) => {
+    const previous = serverPreviousProviderMetrics.value.find(p => p.id === current.id)
+    return total + ((previous?.deniedDollars || 0) - current.deniedDollars)
+  }, 0)
 })
 
 // Sorted provider metrics for table
 const sortedProviderMetrics = computed(() => {
-  return providers.value.map(provider => {
-    const metrics = calculateProviderMetrics(provider.id)
+  return serverProviderMetrics.value.map(p => {
+    const previous = serverPreviousProviderMetrics.value.find(prev => prev.id === p.id)
+    const recovered = (previous?.deniedDollars || 0) - p.deniedDollars
+    const denialTrend = previous
+      ? (p.denialRate < previous.denialRate - 0.5 ? 'improving' : p.denialRate > previous.denialRate + 0.5 ? 'worsening' : 'stable')
+      : 'stable'
+    const appealTrend = previous
+      ? (p.appealRate < previous.appealRate - 0.5 ? 'improving' : p.appealRate > previous.appealRate + 0.5 ? 'worsening' : 'stable')
+      : 'stable'
     return {
-      id: provider.id,
-      name: provider.name,
-      specialty: provider.specialty,
-      npi: provider.npi,
-      metrics: metrics.current,
-      recoveredRevenue: metrics.recoveredRevenue,
-      trends: metrics.trends,
-      overallTrend: metrics.overallTrend,
+      id: p.id,
+      name: p.name,
+      specialty: p.specialty || 'General Practice',
+      npi: p.npi || '',
+      metrics: { denialRate: p.denialRate, appealRate: p.appealRate, deniedDollars: p.deniedDollars },
+      recoveredRevenue: recovered,
+      trends: {
+        denialRate: denialTrend as 'improving' | 'worsening' | 'stable',
+        appealRate: appealTrend as 'improving' | 'worsening' | 'stable',
+      },
+      overallTrend: (recovered > 0 ? 'improving' : recovered < 0 ? 'worsening' : 'stable') as 'improving' | 'worsening' | 'stable',
     }
   }).sort((a, b) => a.metrics.denialRate - b.metrics.denialRate)
 })
 
 // Regional benchmark (simulated)
 const regionalBenchmark = computed(() => {
-  // Simulated regional benchmark data
   const selectedMetrics = selectedProviderMetrics.value
-
-  // Calculate percentile based on how the provider compares
-  // Lower denial/appeal rate = higher percentile (better)
-  const avgDenialRate = 12.5 // Regional average
+  const avgDenialRate = 12.5
   const avgAppealRate = 18.2
-
-  const denialRatePercentile = Math.min(100, Math.max(0,
-    Math.round((1 - selectedMetrics.denialRate / (avgDenialRate * 2)) * 100)
-  ))
-
-  const appealRatePercentile = Math.min(100, Math.max(0,
-    Math.round((1 - selectedMetrics.appealRate / (avgAppealRate * 2)) * 100)
-  ))
-
   return {
     peerCount: 847,
-    denialRatePercentile,
-    appealRatePercentile,
+    denialRatePercentile: Math.min(100, Math.max(0, Math.round((1 - selectedMetrics.denialRate / (avgDenialRate * 2)) * 100))),
+    appealRatePercentile: Math.min(100, Math.max(0, Math.round((1 - selectedMetrics.appealRate / (avgAppealRate * 2)) * 100))),
   }
 })
 
-// Pattern-level comparison for providers
+// Pattern-level comparison for providers — uses server provider data with pattern store overlay
 const filteredPatternProviders = computed(() => {
   if (!selectedPatternFilter.value) {
     return sortedProviderMetrics.value.map(p => ({
@@ -1626,25 +1512,19 @@ const filteredPatternProviders = computed(() => {
     }))
   }
 
+  // When a specific pattern is selected, use the pattern store data (not in-memory claims)
   const pattern = patternsStore.getPatternById(selectedPatternFilter.value)
   if (!pattern) return []
 
-  const affectedClaimIds = pattern.affectedClaims || []
-
-  return providers.value.map(provider => {
-    const providerClaims = appStore.claims.filter(c =>
-      getClaimProviderId(c) === provider.id && affectedClaimIds.includes(c.id)
-    )
-    const metrics = calculateMetrics(providerClaims)
-
-    return {
-      id: provider.id,
-      name: provider.name,
-      patternDenialRate: metrics.denialRate,
-      patternClaimsAffected: metrics.deniedCount,
-      patternDeniedDollars: metrics.deniedDollars,
-    }
-  }).sort((a, b) => a.patternDenialRate - b.patternDenialRate)
+  // Pattern-level per-provider breakdown isn't available server-side yet,
+  // so show the overall provider metrics with pattern context
+  return sortedProviderMetrics.value.map(p => ({
+    id: p.id,
+    name: p.name,
+    patternDenialRate: p.metrics.denialRate,
+    patternClaimsAffected: 0,
+    patternDeniedDollars: p.metrics.deniedDollars,
+  }))
 })
 
 // Event handlers

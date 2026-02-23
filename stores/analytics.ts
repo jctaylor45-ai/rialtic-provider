@@ -2,16 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { usePatternsStore } from './patterns'
 import { useEventsStore } from './events'
-import { useAppStore } from './app'
-import type { PracticeROI, DashboardMetrics, ProcedureCodeIntelligence } from '~/types/enhancements'
-import type { ProcessedClaim } from '~/types'
-import { calculatePracticeROI, calculateMetricTrend } from '~/utils/analytics'
-import {
-  getClaimStatus,
-  getClaimBilledAmount,
-  getClaimPaidAmount,
-  getClaimSubmissionDate,
-} from '~/utils/formatting'
+import type { PracticeROI, ProcedureCodeIntelligence } from '~/types/enhancements'
+import { calculatePracticeROI } from '~/utils/analytics'
 
 export const useAnalyticsStore = defineStore('analytics', () => {
   // State
@@ -25,104 +17,6 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const eventsStore = useEventsStore()
 
     return calculatePracticeROI(patternsStore.patterns, eventsStore.events)
-  })
-
-  const dashboardMetrics = computed((): DashboardMetrics => {
-    const appStore = useAppStore()
-    const patternsStore = usePatternsStore()
-    const eventsStore = useEventsStore()
-
-    const totalClaims = appStore.claims.length
-    const approvedClaims = appStore.claims.filter(c => {
-      const status = getClaimStatus(c)
-      return status === 'approved' || status === 'paid'
-    }).length
-    const deniedClaims = appStore.claims.filter(c => getClaimStatus(c) === 'denied').length
-    const pendingClaims = appStore.claims.filter(c => getClaimStatus(c) === 'pending').length
-
-    const approvalRate = totalClaims > 0 ? (approvedClaims / totalClaims) * 100 : 0
-    const denialRate = totalClaims > 0 ? (deniedClaims / totalClaims) * 100 : 0
-
-    const totalBilled = appStore.claims.reduce((sum, c) => sum + getClaimBilledAmount(c), 0)
-    const totalPaid = appStore.claims.reduce((sum, c) => sum + getClaimPaidAmount(c), 0)
-    const totalDenied = appStore.claims
-      .filter(c => getClaimStatus(c) === 'denied')
-      .reduce((sum, c) => sum + getClaimBilledAmount(c), 0)
-
-    const now = new Date()
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
-
-    const recentClaims = appStore.claims.filter(c => {
-      const submissionDate = getClaimSubmissionDate(c)
-      return submissionDate && new Date(submissionDate) >= thirtyDaysAgo
-    })
-    const previousClaims = appStore.claims.filter(c => {
-      const submissionDate = getClaimSubmissionDate(c)
-      if (!submissionDate) return false
-      const date = new Date(submissionDate)
-      return date >= sixtyDaysAgo && date < thirtyDaysAgo
-    })
-
-    const recentApprovalRate = recentClaims.length > 0
-      ? (recentClaims.filter(c => {
-          const status = getClaimStatus(c)
-          return status === 'approved' || status === 'paid'
-        }).length / recentClaims.length) * 100
-      : 0
-
-    const previousApprovalRate = previousClaims.length > 0
-      ? (previousClaims.filter(c => {
-          const status = getClaimStatus(c)
-          return status === 'approved' || status === 'paid'
-        }).length / previousClaims.length) * 100
-      : 0
-
-    const recentDenialRate = recentClaims.length > 0
-      ? (recentClaims.filter(c => getClaimStatus(c) === 'denied').length / recentClaims.length) * 100
-      : 0
-
-    const previousDenialRate = previousClaims.length > 0
-      ? (previousClaims.filter(c => getClaimStatus(c) === 'denied').length / previousClaims.length) * 100
-      : 0
-
-    const recentAvgReimbursement = recentClaims.length > 0
-      ? recentClaims.reduce((sum, c) => sum + getClaimPaidAmount(c), 0) / recentClaims.length
-      : 0
-
-    const previousAvgReimbursement = previousClaims.length > 0
-      ? previousClaims.reduce((sum, c) => sum + getClaimPaidAmount(c), 0) / previousClaims.length
-      : 0
-
-    const recentPracticeSessions = eventsStore.events.filter(e =>
-      e.type === 'practice-completed' && new Date(e.timestamp) >= thirtyDaysAgo
-    ).length
-
-    const previousPracticeSessions = eventsStore.events.filter(e => {
-      const date = new Date(e.timestamp)
-      return e.type === 'practice-completed' && date >= sixtyDaysAgo && date < thirtyDaysAgo
-    }).length
-
-    return {
-      totalClaims,
-      approvalRate,
-      denialRate,
-      pendingClaims,
-      totalBilled,
-      totalPaid,
-      totalDenied,
-      estimatedRecoverable: patternsStore.totalAtRisk,
-      patternsDetected: patternsStore.totalPatternsDetected,
-      patternsResolved: patternsStore.resolvedPatterns.length,
-      learningEvents: eventsStore.totalEvents,
-      practiceSessions: eventsStore.totalPracticeSessions,
-      trends: {
-        approvalRate: calculateMetricTrend(recentApprovalRate, previousApprovalRate),
-        denialRate: calculateMetricTrend(recentDenialRate, previousDenialRate),
-        avgReimbursement: calculateMetricTrend(recentAvgReimbursement, previousAvgReimbursement),
-        practiceSessions: calculateMetricTrend(recentPracticeSessions, previousPracticeSessions),
-      },
-    }
   })
 
   const totalSavings = computed(() => practiceROI.value.estimatedSavings)
@@ -184,58 +78,6 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     return latestImprovement ? Math.abs(latestImprovement.percentChange) : 0
   }
 
-  function getPerformanceMetrics(startDate: string, endDate: string) {
-    const appStore = useAppStore()
-    const eventsStore = useEventsStore()
-
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-
-    const periodClaims = appStore.claims.filter(c => {
-      const submissionDate = getClaimSubmissionDate(c)
-      if (!submissionDate) return false
-      const date = new Date(submissionDate)
-      return date >= start && date <= end
-    })
-
-    const periodEvents = eventsStore.events.filter(e => {
-      const date = new Date(e.timestamp)
-      return date >= start && date <= end
-    })
-
-    const approvalRate = periodClaims.length > 0
-      ? (periodClaims.filter(c => {
-          const status = getClaimStatus(c)
-          return status === 'approved' || status === 'paid'
-        }).length / periodClaims.length) * 100
-      : 0
-
-    const denialRate = periodClaims.length > 0
-      ? (periodClaims.filter(c => getClaimStatus(c) === 'denied').length / periodClaims.length) * 100
-      : 0
-
-    const practiceSessions = periodEvents.filter(e => e.type === 'practice-completed').length
-
-    return {
-      totalClaims: periodClaims.length,
-      approvalRate: Math.round(approvalRate * 10) / 10,
-      denialRate: Math.round(denialRate * 10) / 10,
-      practiceSessions,
-      totalBilled: periodClaims.reduce((sum, c) => sum + getClaimBilledAmount(c), 0),
-      totalPaid: periodClaims.reduce((sum, c) => sum + getClaimPaidAmount(c), 0),
-    }
-  }
-
-  function getMonthlyReport(year: number, month: number) {
-    const startDate = new Date(year, month - 1, 1)
-    const endDate = new Date(year, month, 0)
-
-    return getPerformanceMetrics(
-      startDate.toISOString(),
-      endDate.toISOString()
-    )
-  }
-
   return {
     // State
     codeIntelligence,
@@ -243,7 +85,6 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     error,
     // Getters
     practiceROI,
-    dashboardMetrics,
     totalSavings,
     totalPracticeSessions,
     totalTimeInvested,
@@ -255,7 +96,5 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     initialize,
     calculatePatternROI,
     getPatternImprovement,
-    getPerformanceMetrics,
-    getMonthlyReport,
   }
 })

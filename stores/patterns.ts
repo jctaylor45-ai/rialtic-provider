@@ -260,7 +260,7 @@ export const usePatternsStore = defineStore('patterns', () => {
   }
 
   async function loadFromDatabase() {
-    const response = await $fetch<PatternApiResponse>('/api/v1/patterns')
+    const response = await $fetch<PatternApiResponse>('/api/v1/patterns', { params: { limit: 0 } })
     // Transform database patterns to match the frontend Pattern type
     patterns.value = response.data.map(transformDbPattern)
     pagination.value = response.pagination
