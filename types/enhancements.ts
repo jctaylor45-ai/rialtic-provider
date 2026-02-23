@@ -107,6 +107,9 @@ export interface Pattern {
   score: PatternScore
   avgDenialAmount: number
   totalAtRisk: number
+  baselineDenialRate?: number
+  currentDenialRate?: number
+  currentDollarsDenied?: number
 
   // Evidence
   affectedClaims: string[]  // Claim IDs

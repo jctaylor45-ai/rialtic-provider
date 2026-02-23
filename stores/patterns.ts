@@ -25,6 +25,7 @@ interface DbPattern {
   correctionsApplied?: number
   suggestedAction?: string
   baselineStart?: string
+  baselineDenialRate?: number
   currentClaimCount?: number
   currentDenialRate?: number
   currentDollarsDenied?: number
@@ -337,6 +338,9 @@ export const usePatternsStore = defineStore('patterns', () => {
       },
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
       totalAtRisk: liveTotalAtRisk,
+      baselineDenialRate: dbPattern.baselineDenialRate,
+      currentDenialRate: dbPattern.currentDenialRate,
+      currentDollarsDenied: dbPattern.currentDollarsDenied,
       learningProgress: dbPattern.learningProgress || 0,
       practiceSessionsCompleted: dbPattern.practiceSessionsCompleted || 0,
       correctionsApplied: dbPattern.correctionsApplied || 0,

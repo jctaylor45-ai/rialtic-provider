@@ -1292,35 +1292,26 @@ const deniedDollarsSparklineData = computed(() => generateSparklineData(
 const deniedDollarsSparklinePath = computed(() => dataToSparklinePath(deniedDollarsSparklineData.value))
 const deniedDollarsSparklineFill = computed(() => dataToSparklineFill(deniedDollarsSparklineData.value))
 
-// Pattern performance data
+// Pattern performance data — uses store values from patterns API (not in-memory claims)
 const patternPerformance = computed(() => {
   const patterns = patternsStore.patterns
   if (patterns.length === 0) return []
 
-  const now = new Date()
-  const windowStart = new Date(now.getTime() - periodDays.value * 24 * 60 * 60 * 1000)
-  const baselineEnd = new Date(windowStart.getTime() + 30 * 24 * 60 * 60 * 1000)
-  const currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-
   return patterns.map(pattern => {
-    // Get claims affected by this pattern
-    const affectedClaimIds = pattern.affectedClaims || []
-    const allAffectedClaims = appStore.claims.filter(c => affectedClaimIds.includes(c.id))
+    // Use DB values directly: baseline and current denial rates from pipeline import
+    const baselineDenialRate = (pattern.baselineDenialRate ?? 0) * 100
+    const currentDenialRate = (pattern.currentDenialRate ?? 0) * 100
 
-    const baselineClaims = getClaimsInRange(allAffectedClaims, windowStart, baselineEnd)
-    const currentClaims = getClaimsInRange(allAffectedClaims, currentStart, now)
+    // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines
+    const currentDeniedDollars = pattern.totalAtRisk
+    // No historical baseline for dollars — use current as baseline
+    const baselineDeniedDollars = currentDeniedDollars
 
-    const baselineMetrics = calculateMetrics(baselineClaims)
-    const currentMetrics = calculateMetrics(currentClaims)
+    // Claims count from affected claims (live from patterns API)
+    const claimsCount = pattern.affectedClaims?.length || 0
 
-    const denialRateChange = currentMetrics.denialRate - baselineMetrics.denialRate
-    const appealRateChange = currentMetrics.appealRate - baselineMetrics.appealRate
-    const deniedDollarsChange = currentMetrics.deniedDollars - baselineMetrics.deniedDollars
-
-    const claimsReduction = baselineMetrics.deniedCount - currentMetrics.deniedCount
-    const claimsReductionPercent = baselineMetrics.deniedCount > 0
-      ? Math.round((claimsReduction / baselineMetrics.deniedCount) * 100)
-      : 0
+    const denialRateChange = currentDenialRate - baselineDenialRate
+    const deniedDollarsChange = currentDeniedDollars - baselineDeniedDollars
 
     // Find first improvement date from pattern improvements
     const firstImprovement = pattern.improvements?.[0]
@@ -1330,41 +1321,30 @@ const patternPerformance = computed(() => {
       id: pattern.id,
       title: pattern.title,
       category: pattern.category,
-      claimsCount: affectedClaimIds.length,
+      claimsCount,
       baseline: {
-        denialRate: baselineMetrics.denialRate || pattern.score.frequency * 2, // fallback
-        appealRate: baselineMetrics.appealRate || 15,
-        deniedDollars: baselineMetrics.deniedDollars || pattern.totalAtRisk,
-        claimsCount: baselineMetrics.deniedCount || Math.ceil(pattern.score.frequency * 1.5),
+        denialRate: baselineDenialRate,
+        appealRate: 0,
+        deniedDollars: baselineDeniedDollars,
+        claimsCount,
       },
       current: {
-        denialRate: currentMetrics.denialRate || pattern.score.frequency,
-        appealRate: currentMetrics.appealRate || 10,
-        deniedDollars: currentMetrics.deniedDollars || pattern.totalAtRisk * 0.7,
-        claimsCount: currentMetrics.deniedCount || pattern.score.frequency,
+        denialRate: currentDenialRate,
+        appealRate: 0,
+        deniedDollars: currentDeniedDollars,
+        claimsCount,
       },
       denialRateImproving: denialRateChange < -0.5,
       denialRateWorsening: denialRateChange > 0.5,
-      appealRateImproving: appealRateChange < -0.5,
-      appealRateWorsening: appealRateChange > 0.5,
+      appealRateImproving: false,
+      appealRateWorsening: false,
       deniedDollarsChange,
-      claimsReductionPercent: claimsReductionPercent > 0 ? claimsReductionPercent : null,
+      claimsReductionPercent: null as number | null,
       firstImprovementDate,
-      // Use pattern-specific sparkline data with actual baseline/current values
-      // Data starts at baseline value and ends at current value
       trendData: {
-        denialRate: generatePatternSparklineData(
-          baselineMetrics.denialRate || pattern.score.frequency * 2,
-          currentMetrics.denialRate || pattern.score.frequency
-        ),
-        appealRate: generatePatternSparklineData(
-          baselineMetrics.appealRate || 15,
-          currentMetrics.appealRate || 10
-        ),
-        deniedDollars: generatePatternSparklineData(
-          baselineMetrics.deniedDollars || pattern.totalAtRisk,
-          currentMetrics.deniedDollars || pattern.totalAtRisk * 0.7
-        ),
+        denialRate: generatePatternSparklineData(baselineDenialRate, currentDenialRate),
+        appealRate: [] as number[],
+        deniedDollars: generatePatternSparklineData(baselineDeniedDollars, currentDeniedDollars),
       },
     }
   }).sort((a, b) => Math.abs(b.deniedDollarsChange) - Math.abs(a.deniedDollarsChange))
