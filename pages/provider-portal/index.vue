@@ -175,16 +175,25 @@
         </div>
 
         <!-- Revenue Recovered -->
-        <div class="bg-white rounded-lg border border-secondary-200 p-4 ring-2 ring-secondary-500">
+        <div class="bg-white rounded-lg border border-neutral-200 p-4"
+          :class="revenueRecovered > 0 ? 'ring-2 ring-success-500' : revenueRecovered < 0 ? 'ring-2 ring-error-500' : ''"
+        >
           <div class="text-xs text-neutral-600 mb-2">Revenue Recovered</div>
-          <div class="text-2xl font-semibold text-secondary-600 mb-1">
-            <!-- TODO: This value will be an aggregate from the Impact tab calculation.
-                 When Impact tab is reworked to calculate baseline vs current period recovery,
-                 this field should pull from that computed value. -->
+          <div class="text-2xl font-semibold mb-1"
+            :class="revenueRecovered > 0 ? 'text-success-600' : revenueRecovered < 0 ? 'text-error-600' : 'text-neutral-600'"
+          >
             {{ formatCurrency(revenueRecovered, true) }}
           </div>
           <div class="flex items-center gap-1 text-sm">
-            <span class="text-neutral-500">vs baseline period</span>
+            <Icon
+              v-if="revenueRecovered !== 0"
+              :name="revenueRecovered > 0 ? 'heroicons:arrow-trending-down' : 'heroicons:arrow-trending-up'"
+              class="w-4 h-4"
+              :class="revenueRecovered > 0 ? 'text-success-500' : 'text-error-500'"
+            />
+            <span class="text-neutral-500">
+              {{ revenueRecovered > 0 ? 'denials decreased' : revenueRecovered < 0 ? 'denials increased' : 'no change' }} vs prior period
+            </span>
           </div>
         </div>
       </div>

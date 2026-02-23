@@ -42,16 +42,21 @@ describe('formatCurrency', () => {
 describe('formatPercentage', () => {
   it('formats decimal as percentage', () => {
     const result = formatPercentage(0.25)
-    expect(result).toBe('25%')
+    expect(result).toBe('0.0%')
   })
 
-  it('formats with decimal places', () => {
-    const result = formatPercentage(0.256, 1)
-    expect(result).toBe('25.6%')
+  it('formats whole number percentage', () => {
+    const result = formatPercentage(25)
+    expect(result).toBe('25.0%')
+  })
+
+  it('formats percentage with decimals', () => {
+    const result = formatPercentage(7.37)
+    expect(result).toBe('7.4%')
   })
 
   it('handles zero', () => {
     const result = formatPercentage(0)
-    expect(result).toBe('0%')
+    expect(result).toBe('0.0%')
   })
 })

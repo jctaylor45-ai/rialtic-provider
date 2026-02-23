@@ -11,9 +11,10 @@ export function useAnalytics() {
 
   // Format currency
   const formatCurrency = (amount: number, compact: boolean = false): string => {
-    if (compact && amount >= 1000) {
-      const value = amount / 1000
-      return `$${value.toFixed(1)}k`
+    if (compact && Math.abs(amount) >= 1000) {
+      const sign = amount < 0 ? '-' : ''
+      const value = Math.abs(amount) / 1000
+      return `${sign}$${value.toFixed(1)}k`
     }
 
     return new Intl.NumberFormat('en-US', {
