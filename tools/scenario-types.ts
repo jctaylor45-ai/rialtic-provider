@@ -166,12 +166,14 @@ export interface PatternTrajectory {
 }
 
 export type TrajectoryCurve =
-  | 'steep_improvement'  // 80% improvement in first 40% of time
-  | 'gradual_improvement' // Linear improvement
-  | 'slight_improvement'  // Small improvement
-  | 'stable'              // No change
-  | 'flat'                // Alias for stable
-  | 'regression'          // Getting worse
+  | 'steep_improvement'    // 80% improvement in first 40% of time
+  | 'strong_improvement'   // Alias for steep_improvement
+  | 'gradual_improvement'  // Linear improvement
+  | 'slight_improvement'   // Small improvement
+  | 'slight_decline'       // Gradual worsening (linear increase)
+  | 'stable'               // No change
+  | 'flat'                 // Alias for stable
+  | 'regression'           // Getting worse
 
 export interface PeriodMetrics {
   periodStart: string

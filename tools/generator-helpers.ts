@@ -129,6 +129,7 @@ export function calculateDenialCurve(
 
     switch (curve) {
       case 'steep_improvement':
+      case 'strong_improvement':
         // 80% of improvement happens in first 40% of time
         // Use exponential decay
         rate = startRate + (endRate - startRate) * (1 - Math.exp(-3 * progress))
@@ -142,6 +143,11 @@ export function calculateDenialCurve(
       case 'slight_improvement':
         // Slow improvement - logarithmic curve
         rate = startRate + (endRate - startRate) * Math.log(1 + progress) / Math.log(2)
+        break
+
+      case 'slight_decline':
+        // Gradual worsening — linear increase from startRate toward endRate
+        rate = startRate + (endRate - startRate) * progress
         break
 
       case 'stable':
@@ -159,23 +165,27 @@ export function calculateDenialCurve(
         rate = startRate
     }
 
-    // Clamp to valid range — preserves input scale (decimal 0-1 or percentage 0-100)
-    rates.push(Math.max(0, Math.min(100, rate)))
+    // Clamp to valid 0-1 decimal range (rates are pre-normalized to decimals)
+    rates.push(Math.max(0, Math.min(1, rate)))
   }
 
   return rates
 }
 
 /**
- * Add realistic variation to a denial rate curve
- * Adds +/- noise while maintaining the overall trend
+ * Add realistic variation to a denial rate curve (values in 0-1 decimal range).
+ * Noise is proportional to the value: ±10% relative variation with a floor of ±0.005
+ * (0.5 percentage points) so very small rates still get some jitter.
  */
-export function addCurveVariation(rates: number[], variationPercent: number = 5): number[] {
+export function addCurveVariation(rates: number[], _variationPercent: number = 5): number[] {
   return rates.map((rate, i) => {
-    // Less variation at the extremes
+    // Less variation at the edges of the time series
     const edgeFactor = Math.min(i, rates.length - 1 - i) / (rates.length / 2)
-    const variation = (Math.random() - 0.5) * 2 * variationPercent * Math.min(1, edgeFactor + 0.3)
-    return Math.max(0, Math.min(100, rate + variation))
+    const dampening = Math.min(1, edgeFactor + 0.3)
+    // Noise proportional to value (±10% relative) with a floor of ±0.005
+    const noiseAmplitude = Math.max(rate * 0.10, 0.005)
+    const variation = (Math.random() - 0.5) * 2 * noiseAmplitude * dampening
+    return Math.max(0, Math.min(1, rate + variation))
   })
 }
 
@@ -238,7 +248,7 @@ export function distributeClaimsAcrossMonths(
  * Distribute denied claims based on denial curve
  *
  * @param claimCounts Claims per month
- * @param denialRates Denial rate per month — supports both decimal (0-1) and percentage (0-100)
+ * @param denialRates Denial rate per month (0-1 decimal range, pre-normalized)
  * @returns Denied claim counts per month
  */
 export function distributeDeniedClaims(
@@ -246,9 +256,7 @@ export function distributeDeniedClaims(
   denialRates: number[]
 ): number[] {
   return claimCounts.map((count, i) => {
-    const raw = denialRates[i] || 0
-    // Normalize: if > 1, treat as percentage; otherwise treat as decimal
-    const rate = raw > 1.0 ? raw / 100 : raw
+    const rate = denialRates[i] || 0
     // Use binomial-like distribution (round with randomized tie-breaking)
     const expected = count * rate
     const floor = Math.floor(expected)

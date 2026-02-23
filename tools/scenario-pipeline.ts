@@ -240,6 +240,21 @@ export function validateScenario(scenario: ScenarioDefinition): ValidationResult
 // GENERATION PHASES
 // =============================================================================
 
+/**
+ * Normalize a denial rate value to 0-1 decimal range.
+ * Values > 1.0 are treated as percentages (e.g., 25 = 25%) and divided by 100.
+ * Values <= 1.0 are treated as decimals (e.g., 0.25 = 25%) and kept as-is.
+ *
+ * Ambiguity note: exactly 1.0 could theoretically mean 100% (decimal) or 1%
+ * (percentage). We treat it as 100% because real-world scenario data (e.g., UPMC)
+ * uses 1.0 for very-high-denial patterns with denied counts of 83-91%.
+ * A true 1% rate should be written as 0.01.
+ */
+function normalizeDenialRate(rate: number): number {
+  if (rate > 1.0) return rate / 100
+  return rate
+}
+
 function initializeContext(scenario: ScenarioDefinition): GenerationContext {
   _verbose('Initializing generation context...')
   resetClaimSequence(scenario.id)
@@ -304,9 +319,18 @@ function generatePatternClaims(ctx: GenerationContext): void {
   for (const pattern of scenario.patterns) {
     _verbose(`Processing pattern: ${pattern.id}`)
 
+    // Normalize denial rates to 0-1 decimal range ONCE at the input boundary.
+    // Scenario files typically use decimals (0.25 = 25%), but legacy files may use
+    // percentages (25 = 25%). Normalize before any curve calculation or noise.
+    // NOTE: A value of exactly 1.0 is ambiguous (100% or 1%). The UPMC scenarios
+    // define 1.0 with denied counts of 83-91%, clearly meaning 100%. We treat
+    // >= 1.0 as percentage notation. A true 1% rate would need to be written as 0.01.
+    const baselineRate = normalizeDenialRate(pattern.trajectory.baseline.denialRate)
+    const currentRate = normalizeDenialRate(pattern.trajectory.current.denialRate)
+
     const denialCurve = calculateDenialCurve(
-      pattern.trajectory.baseline.denialRate,
-      pattern.trajectory.current.denialRate,
+      baselineRate,
+      currentRate,
       months.length,
       pattern.trajectory.curve
     )
@@ -324,11 +348,7 @@ function generatePatternClaims(ctx: GenerationContext): void {
       if (!month) continue
 
       const count = claimsPerMonth[monthIdx] ?? 0
-      // denialRates come from calculateDenialCurve() which preserves the input format.
-      // Scenario files use decimals (0.25 = 25%), so values are already 0-1.
-      // If a legacy scenario uses percentage notation (25 = 25%), normalize to decimal.
-      const rawRate = denialRates[monthIdx] ?? 0
-      const denialRate = rawRate > 1.0 ? rawRate / 100 : rawRate
+      const denialRate = denialRates[monthIdx] ?? 0
 
       for (let i = 0; i < count; i++) {
         const claim = generateSingleClaim(ctx, month, pattern, denialRate)
@@ -747,9 +767,12 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
       )
     }
 
-    // Insert policies from policy library
+    // Insert policies from policy library.
+    // Use INSERT OR IGNORE (not INSERT OR REPLACE) to prevent CASCADE deletes:
+    // REPLACE internally DELETEs then INSERTs, which triggers ON DELETE CASCADE
+    // on claim_line_policies, destroying policy links from earlier scenarios.
     const insertPolicy = db.prepare(`
-      INSERT OR REPLACE INTO policies (
+      INSERT OR IGNORE INTO policies (
         id, name, mode, effective_date, description, clinical_rationale,
         topic, logic_type, source, common_mistake, fix_guidance
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
