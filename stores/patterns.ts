@@ -328,7 +328,7 @@ export const usePatternsStore = defineStore('patterns', () => {
       status: dbPattern.status as 'active' | 'improving' | 'resolved' | 'archived',
       tier: dbPattern.tier as 'critical' | 'high' | 'medium' | 'low',
       score: {
-        frequency: dbPattern.scoreFrequency || dbPattern.liveLineCount || 0,
+        frequency: dbPattern.liveLineCount || 0,
         impact: dbPattern.scoreImpact || liveTotalAtRisk,
         trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
         velocity: dbPattern.scoreVelocity || 0,

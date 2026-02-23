@@ -11,7 +11,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import { claims, claimAppeals } from '~/server/database/schema'
-import { eq, sql, count, sum, and, gte, lte, inArray } from 'drizzle-orm'
+import { eq, count, sum, and, gte, lte, inArray } from 'drizzle-orm'
 import {
   getDataSourceConfig,
   fetchClaimsSummaryFromPaAPI,
@@ -156,16 +156,7 @@ export default defineEventHandler(async (event) => {
     startDate.setDate(startDate.getDate() - days)
     const startDateStr = startDate.toISOString().split('T')[0] as string
 
-    // Find the actual max date of service in the database to include future-dated claims
-    const [maxDateResult] = await db
-      .select({ maxDate: sql<string>`MAX(date_of_service)` })
-      .from(claims)
-
-    // Use the later of today or max claim date as the effective end date
-    const maxClaimDate = maxDateResult?.maxDate || endDateStr
-    const effectiveEndDate = maxClaimDate > endDateStr ? maxClaimDate : endDateStr
-
-    const currentSummary = await computePeriodSummary(startDateStr, effectiveEndDate, days)
+    const currentSummary = await computePeriodSummary(startDateStr, endDateStr, days)
 
     if (!includePrevious) {
       return currentSummary
