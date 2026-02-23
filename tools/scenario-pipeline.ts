@@ -324,7 +324,11 @@ function generatePatternClaims(ctx: GenerationContext): void {
       if (!month) continue
 
       const count = claimsPerMonth[monthIdx] ?? 0
-      const denialRate = (denialRates[monthIdx] ?? 0) / 100
+      // denialRates come from calculateDenialCurve() which preserves the input format.
+      // Scenario files use decimals (0.25 = 25%), so values are already 0-1.
+      // If a legacy scenario uses percentage notation (25 = 25%), normalize to decimal.
+      const rawRate = denialRates[monthIdx] ?? 0
+      const denialRate = rawRate > 1.0 ? rawRate / 100 : rawRate
 
       for (let i = 0; i < count; i++) {
         const claim = generateSingleClaim(ctx, month, pattern, denialRate)
@@ -672,13 +676,46 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
     const insertPattern = db.prepare(`
       INSERT OR REPLACE INTO patterns (
         id, title, description, category, status, tier, scenario_id,
+        score_frequency, score_impact, score_trend, score_velocity, score_confidence, score_recency,
+        avg_denial_amount, total_at_risk,
         baseline_start, baseline_end, baseline_claim_count, baseline_denied_count,
         baseline_denial_rate, baseline_dollars_denied,
         current_start, current_end, current_claim_count, current_denied_count,
         current_denial_rate, current_dollars_denied
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const pattern of scenario.patterns) {
+      // Derive score columns from trajectory data
+      const baseRate = pattern.trajectory.baseline.denialRate
+      const currRate = pattern.trajectory.current.denialRate
+      const relativeChange = baseRate > 0 ? (currRate - baseRate) / baseRate : 0
+      // score_trend: >10% relative increase = 'up' (regressing), >10% decrease = 'down' (improving)
+      const scoreTrend = relativeChange < -0.10 ? 'down' : relativeChange > 0.10 ? 'up' : 'stable'
+      // score_frequency: pattern claims as fraction of total volume
+      const scoreFrequency = scenario.volume.totalClaims > 0
+        ? Math.round((pattern.claimDistribution.total / scenario.volume.totalClaims) * 100)
+        : 0
+      // score_impact: total dollars denied in current period
+      const scoreImpact = pattern.trajectory.current.dollarsDenied || 0
+      // score_velocity: rate of change per month (percentage points)
+      const months = pattern.trajectory.snapshots?.length || 1
+      const scoreVelocity = months > 1
+        ? Math.round(((currRate - baseRate) / months) * 10000) / 100
+        : 0
+      // score_confidence: higher with more claims and longer observation
+      const scoreConfidence = Math.min(1.0,
+        (pattern.claimDistribution.total / 100) * 0.5 + (months / 12) * 0.5
+      )
+      // score_recency: days since current period end
+      const scoreRecency = Math.max(0, Math.round(
+        (Date.now() - new Date(pattern.trajectory.current.periodEnd).getTime()) / (1000 * 60 * 60 * 24)
+      ))
+      // avg_denial_amount and total_at_risk
+      const avgDenialAmount = pattern.trajectory.current.deniedCount > 0
+        ? pattern.trajectory.current.dollarsDenied / pattern.trajectory.current.deniedCount
+        : 0
+      const totalAtRisk = pattern.trajectory.current.dollarsDenied || 0
+
       insertPattern.run(
         pattern.id,
         pattern.title,
@@ -687,6 +724,14 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         pattern.status,
         pattern.tier,
         scenario.id,
+        scoreFrequency,
+        scoreImpact,
+        scoreTrend,
+        scoreVelocity,
+        scoreConfidence,
+        scoreRecency,
+        avgDenialAmount,
+        totalAtRisk,
         pattern.trajectory.baseline.periodStart,
         pattern.trajectory.baseline.periodEnd,
         pattern.trajectory.baseline.claimCount,

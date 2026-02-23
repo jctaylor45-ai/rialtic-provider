@@ -159,7 +159,7 @@ export function calculateDenialCurve(
         rate = startRate
     }
 
-    // Clamp to valid range (0-100%)
+    // Clamp to valid range — preserves input scale (decimal 0-1 or percentage 0-100)
     rates.push(Math.max(0, Math.min(100, rate)))
   }
 
@@ -238,7 +238,7 @@ export function distributeClaimsAcrossMonths(
  * Distribute denied claims based on denial curve
  *
  * @param claimCounts Claims per month
- * @param denialRates Denial rate per month (0-100)
+ * @param denialRates Denial rate per month — supports both decimal (0-1) and percentage (0-100)
  * @returns Denied claim counts per month
  */
 export function distributeDeniedClaims(
@@ -246,9 +246,11 @@ export function distributeDeniedClaims(
   denialRates: number[]
 ): number[] {
   return claimCounts.map((count, i) => {
-    const rate = denialRates[i] || 0
+    const raw = denialRates[i] || 0
+    // Normalize: if > 1, treat as percentage; otherwise treat as decimal
+    const rate = raw > 1.0 ? raw / 100 : raw
     // Use binomial-like distribution (round with randomized tie-breaking)
-    const expected = count * (rate / 100)
+    const expected = count * rate
     const floor = Math.floor(expected)
     const remainder = expected - floor
     return floor + (Math.random() < remainder ? 1 : 0)
