@@ -110,6 +110,9 @@ export interface Pattern {
   baselineDenialRate?: number
   currentDenialRate?: number
   currentDollarsDenied?: number
+  appealCount?: number
+  overturnedCount?: number
+  appealRate?: number
 
   // Evidence
   affectedClaims: string[]  // Claim IDs

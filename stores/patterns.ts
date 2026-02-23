@@ -34,6 +34,9 @@ interface DbPattern {
   liveImpactAmount?: number
   liveTotalAtRisk?: number
   liveTotalBilled?: number
+  appealCount?: number
+  overturnedCount?: number
+  appealRate?: number
   // Related data from API
   relatedPolicies?: Array<{
     policyId: string
@@ -341,6 +344,9 @@ export const usePatternsStore = defineStore('patterns', () => {
       baselineDenialRate: dbPattern.baselineDenialRate,
       currentDenialRate: dbPattern.currentDenialRate,
       currentDollarsDenied: dbPattern.currentDollarsDenied,
+      appealCount: dbPattern.appealCount || 0,
+      overturnedCount: dbPattern.overturnedCount || 0,
+      appealRate: dbPattern.appealRate || 0,
       learningProgress: dbPattern.learningProgress || 0,
       practiceSessionsCompleted: dbPattern.practiceSessionsCompleted || 0,
       correctionsApplied: dbPattern.correctionsApplied || 0,

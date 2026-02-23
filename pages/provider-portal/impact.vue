@@ -335,6 +335,7 @@
                 <template v-for="pattern in patternPerformance" :key="pattern.id">
                   <tr
                     class="hover:bg-neutral-50 cursor-pointer transition-colors"
+                    :class="{ 'opacity-60': !pattern.hasClaimLinkage }"
                     @click="togglePatternExpand(pattern.id)"
                   >
                     <td class="px-6 py-4">
@@ -345,7 +346,11 @@
                         />
                         <div>
                           <div class="text-sm font-medium text-neutral-900">{{ pattern.title }}</div>
-                          <div class="text-xs text-neutral-500">{{ pattern.claimsCount }} claims affected</div>
+                          <div v-if="pattern.hasClaimLinkage" class="text-xs text-neutral-500">{{ pattern.claimsCount }} claims affected</div>
+                          <div v-else class="text-xs text-warning-600 flex items-center gap-1">
+                            <Icon name="heroicons:exclamation-triangle" class="w-3 h-3" />
+                            No claim data — rates are configured estimates
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -370,32 +375,20 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 text-right">
-                      <div v-if="hasAppealData" class="flex items-center justify-end gap-2">
-                        <span class="text-sm text-neutral-600">
-                          {{ formatPercentage(pattern.baseline.appealRate) }}
-                        </span>
-                        <Icon name="heroicons:arrow-right" class="w-3 h-3 text-neutral-400" />
+                      <div v-if="pattern.appealCount > 0" class="flex items-center justify-end gap-2">
                         <span class="text-sm font-medium text-neutral-900">
                           {{ formatPercentage(pattern.current.appealRate) }}
                         </span>
-                        <Icon
-                          :name="pattern.appealRateImproving ? 'heroicons:arrow-down' : pattern.appealRateWorsening ? 'heroicons:arrow-up' : 'heroicons:minus'"
-                          class="w-4 h-4"
-                          :class="{
-                            'text-success-600': pattern.appealRateImproving,
-                            'text-error-600': pattern.appealRateWorsening,
-                            'text-neutral-400': !pattern.appealRateImproving && !pattern.appealRateWorsening
-                          }"
-                        />
+                        <span class="text-xs text-neutral-500">({{ pattern.appealCount }})</span>
                       </div>
                       <span v-else class="text-sm text-neutral-400">—</span>
                     </td>
                     <td class="px-6 py-4 text-right">
                       <span
                         class="text-sm font-medium"
-                        :class="pattern.deniedDollarsChange < 0 ? 'text-success-600' : pattern.deniedDollarsChange > 0 ? 'text-error-600' : 'text-neutral-600'"
+                        :class="pattern.current.deniedDollars > 0 ? 'text-error-600' : 'text-neutral-600'"
                       >
-                        {{ pattern.deniedDollarsChange < 0 ? '' : pattern.deniedDollarsChange > 0 ? '+' : '' }}{{ formatCurrencyCompact(pattern.deniedDollarsChange) }}
+                        {{ formatCurrencyCompact(pattern.current.deniedDollars) }}
                       </span>
                     </td>
                   </tr>
@@ -435,52 +428,34 @@
                         </div>
 
                         <div class="bg-white rounded-lg border border-neutral-200 p-4">
-                          <div class="text-xs text-neutral-600 mb-2">Appeal Rate</div>
-                          <template v-if="hasAppealData">
+                          <div class="text-xs text-neutral-600 mb-2">Appeals</div>
+                          <template v-if="pattern.appealCount > 0">
                             <div class="text-lg font-semibold text-neutral-900 mb-2">
-                              {{ formatPercentage(pattern.baseline.appealRate) }} → {{ formatPercentage(pattern.current.appealRate) }}
+                              {{ formatPercentage(pattern.current.appealRate) }} rate
                             </div>
-                            <div class="h-16">
-                              <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
-                                <path
-                                  :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])"
-                                  fill="none"
-                                  :stroke="pattern.current.appealRate < pattern.baseline.appealRate ? '#10B981' : '#EF4444'"
-                                  stroke-width="2"
-                                />
-                              </svg>
+                            <div class="flex items-center gap-4 text-sm text-neutral-600">
+                              <span>{{ pattern.appealCount }} filed</span>
+                              <span>{{ pattern.overturnedCount }} overturned</span>
                             </div>
-                            <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
                           </template>
                           <template v-else>
-                            <div class="text-sm text-neutral-400 text-center py-4">Coming soon</div>
+                            <div class="text-sm text-neutral-400 text-center py-4">No appeals filed</div>
                           </template>
                         </div>
 
                         <div class="bg-white rounded-lg border border-neutral-200 p-4">
                           <div class="text-xs text-neutral-600 mb-2">Denied Dollars</div>
                           <div class="text-lg font-semibold text-neutral-900 mb-2">
-                            {{ formatCurrencyCompact(pattern.baseline.deniedDollars) }} → {{ formatCurrencyCompact(pattern.current.deniedDollars) }}
+                            {{ formatCurrency(pattern.current.deniedDollars) }}
                           </div>
-                          <div class="h-16">
-                            <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
-                              <path
-                                :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])"
-                                fill="none"
-                                :stroke="pattern.current.deniedDollars < pattern.baseline.deniedDollars ? '#10B981' : '#EF4444'"
-                                stroke-width="2"
-                              />
-                            </svg>
-                          </div>
-                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                          <div class="text-xs text-neutral-500 mt-2">total at risk from linked claim lines</div>
                         </div>
                       </div>
 
                       <!-- Additional Info -->
                       <div class="flex items-center gap-6 text-sm text-neutral-600">
                         <span>
-                          <strong class="text-neutral-900">{{ pattern.baseline.claimsCount }}</strong> → <strong class="text-neutral-900">{{ pattern.current.claimsCount }}</strong> claims affected
-                          <span v-if="pattern.claimsReductionPercent" class="text-success-600 ml-1">({{ pattern.claimsReductionPercent }}% reduction)</span>
+                          <strong class="text-neutral-900">{{ pattern.claimsCount }}</strong> claims affected
                         </span>
                         <span v-if="pattern.firstImprovementDate">
                           First improvement observed: <strong class="text-neutral-900">{{ formatDate(pattern.firstImprovementDate) }}</strong>
@@ -1134,40 +1109,36 @@ function generateSparklineData(
   currentVal: number
 ): number[] {
   const weeks = Math.ceil(periodDays.value / 7)
-  const numPoints = Math.max(Math.min(weeks, 12), 5) // At least 5 points for a good curve
+  const numPoints = Math.max(Math.min(weeks, 12), 5)
+  const range = Math.abs(baselineVal - currentVal)
 
-  // Generate points that start at baseline and end at current
   return Array.from({ length: numPoints }, (_, i) => {
-    if (i === 0) return baselineVal // First point is exactly baseline
-    if (i === numPoints - 1) return currentVal // Last point is exactly current
+    if (i === 0) return baselineVal
+    if (i === numPoints - 1) return currentVal
 
     const progress = i / (numPoints - 1)
-    const range = Math.abs(baselineVal - currentVal)
-    // Add noise that's proportional to the range, but scaled down
-    const maxNoise = Math.max(range * 0.15, Math.abs(baselineVal) * 0.05)
-    const noise = (Math.random() - 0.5) * maxNoise
+    // No noise when values are effectively the same (flat line)
+    const noise = range < 0.5 ? 0 : (Math.random() - 0.5) * range * 0.15
     return baselineVal + (currentVal - baselineVal) * progress + noise
   })
 }
 
 // Generate pattern-specific sparkline data
-// Uses the actual baseline and current values to ensure alignment with displayed numbers
 function generatePatternSparklineData(
   baselineVal: number,
   currentVal: number
 ): number[] {
   const weeks = Math.ceil(periodDays.value / 7)
   const numPoints = Math.max(Math.min(weeks, 12), 5)
+  const range = Math.abs(baselineVal - currentVal)
 
-  // Generate points that start at baseline and end at current
   return Array.from({ length: numPoints }, (_, i) => {
     if (i === 0) return baselineVal
     if (i === numPoints - 1) return currentVal
 
     const progress = i / (numPoints - 1)
-    const range = Math.abs(baselineVal - currentVal)
-    const maxNoise = Math.max(range * 0.2, Math.abs(baselineVal) * 0.08)
-    const noise = (Math.random() - 0.5) * maxNoise
+    // No noise when values are effectively the same (flat line)
+    const noise = range < 0.5 ? 0 : (Math.random() - 0.5) * range * 0.2
     return baselineVal + (currentVal - baselineVal) * progress + noise
   })
 }
@@ -1182,11 +1153,12 @@ function dataToSparklinePath(data: number[]): string {
 
   const min = Math.min(...data)
   const max = Math.max(...data)
-  const range = max - min || 1
+  const isFlat = max - min < 0.01
 
   const points = data.map((val, i) => {
     const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
-    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    // Flat line draws at vertical midpoint instead of stretching noise to fill height
+    const y = isFlat ? height / 2 : height - padding - ((val - min) / (max - min)) * (height - 2 * padding)
     return { x, y }
   })
 
@@ -1202,11 +1174,11 @@ function dataToSparklineFill(data: number[]): string {
 
   const min = Math.min(...data)
   const max = Math.max(...data)
-  const range = max - min || 1
+  const isFlat = max - min < 0.01
 
   const points = data.map((val, i) => {
     const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
-    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    const y = isFlat ? height / 2 : height - padding - ((val - min) / (max - min)) * (height - 2 * padding)
     return { x, y }
   })
 
@@ -1251,52 +1223,52 @@ const patternPerformance = computed(() => {
     const baselineDenialRate = (pattern.baselineDenialRate ?? 0) * 100
     const currentDenialRate = (pattern.currentDenialRate ?? 0) * 100
 
-    // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines
+    // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines (absolute current value)
     const currentDeniedDollars = pattern.totalAtRisk
-    // No historical baseline for dollars — use current as baseline
-    const baselineDeniedDollars = currentDeniedDollars
 
     // Claims count from affected claims (live from patterns API)
     const claimsCount = pattern.affectedClaims?.length || 0
 
+    // Appeal rate from the patterns API (already computed server-side)
+    const appealRate = pattern.appealRate ?? 0
+
     const denialRateChange = currentDenialRate - baselineDenialRate
-    const deniedDollarsChange = currentDeniedDollars - baselineDeniedDollars
 
     // Find first improvement date from pattern improvements
     const firstImprovement = pattern.improvements?.[0]
     const firstImprovementDate = firstImprovement?.date
+
+    // Flag patterns with no linked claim data (pipeline-only rates)
+    const hasClaimLinkage = claimsCount > 0 || currentDeniedDollars > 0
 
     return {
       id: pattern.id,
       title: pattern.title,
       category: pattern.category,
       claimsCount,
+      hasClaimLinkage,
       baseline: {
         denialRate: baselineDenialRate,
-        appealRate: 0,
-        deniedDollars: baselineDeniedDollars,
         claimsCount,
       },
       current: {
         denialRate: currentDenialRate,
-        appealRate: 0,
         deniedDollars: currentDeniedDollars,
+        appealRate,
         claimsCount,
       },
       denialRateImproving: denialRateChange < -0.5,
       denialRateWorsening: denialRateChange > 0.5,
-      appealRateImproving: false,
-      appealRateWorsening: false,
-      deniedDollarsChange,
+      appealCount: pattern.appealCount ?? 0,
+      overturnedCount: pattern.overturnedCount ?? 0,
       claimsReductionPercent: null as number | null,
       firstImprovementDate,
       trendData: {
         denialRate: generatePatternSparklineData(baselineDenialRate, currentDenialRate),
-        appealRate: [] as number[],
-        deniedDollars: generatePatternSparklineData(baselineDeniedDollars, currentDeniedDollars),
+        deniedDollars: generatePatternSparklineData(0, currentDeniedDollars),
       },
     }
-  }).sort((a, b) => Math.abs(b.deniedDollarsChange) - Math.abs(a.deniedDollarsChange))
+  }).sort((a, b) => b.current.deniedDollars - a.current.deniedDollars)
 })
 
 // Pattern expand toggle
@@ -1324,11 +1296,11 @@ function generatePatternTrendPath(data: number[]): string {
 
   const min = Math.min(...data)
   const max = Math.max(...data)
-  const range = max - min || 1
+  const isFlat = max - min < 0.01
 
   const points = data.map((val, i) => {
     const x = padding + (i / (data.length - 1)) * (width - 2 * padding)
-    const y = height - padding - ((val - min) / range) * (height - 2 * padding)
+    const y = isFlat ? height / 2 : height - padding - ((val - min) / (max - min)) * (height - 2 * padding)
     return { x, y }
   })
 

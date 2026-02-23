@@ -9,8 +9,8 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { patterns, patternClaimLines, claimLineItems, claimLinePolicies, policies } from '~/server/database/schema'
-import { eq, desc, and, sql, count } from 'drizzle-orm'
+import { patterns, patternClaimLines, claimLineItems, claimLinePolicies, policies, claims, claimAppeals } from '~/server/database/schema'
+import { eq, desc, and, sql, count, sum } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -148,6 +148,25 @@ export default defineEventHandler(async (event) => {
 
         const affectedClaims = affectedClaimsResult.map(r => r.claimId)
 
+        // Get appeal metrics for claims linked to this pattern
+        // Join: pattern_claim_lines → claim_line_items → claims → claim_appeals
+        const [appealResult] = await db
+          .select({
+            appealCount: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealFiled} = 1 THEN ${claimAppeals.id} END)`,
+            overturnedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealOutcome} = 'overturned' THEN ${claimAppeals.id} END)`,
+            // Denominator: claims that were ever denied (status='denied' or status='appealed')
+            everDeniedClaims: sql<number>`COUNT(DISTINCT CASE WHEN ${claims.status} IN ('denied', 'appealed') THEN ${claims.id} END)`,
+          })
+          .from(patternClaimLines)
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+          .leftJoin(claimAppeals, eq(claims.id, claimAppeals.claimId))
+          .where(eq(patternClaimLines.patternId, pattern.id))
+
+        const appealCount = Number(appealResult?.appealCount) || 0
+        const overturnedCount = Number(appealResult?.overturnedCount) || 0
+        const everDeniedClaims = Number(appealResult?.everDeniedClaims) || 0
+
         return {
           ...pattern,
           liveLineCount: deniedLineCountResult?.count || 0,
@@ -155,6 +174,9 @@ export default defineEventHandler(async (event) => {
           liveTotalBilled: Number(impactResult?.totalBilled) || 0,
           relatedPolicies,
           affectedClaims,
+          appealCount,
+          overturnedCount,
+          appealRate: everDeniedClaims > 0 ? Math.round((appealCount / everDeniedClaims) * 10000) / 100 : 0,
         }
       })
     )
