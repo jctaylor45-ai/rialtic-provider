@@ -53,6 +53,29 @@ interface DbPattern {
   shortTermCanResubmit?: number
   longTermDescription?: string
   longTermSteps?: string
+  denialReason?: string
+  relatedCodes?: string[]
+  actions?: Array<{
+    id: string
+    actionType: string
+    notes?: string
+    timestamp?: string
+  }>
+  evidence?: Array<{
+    claimId: string
+    procedureCode?: string
+    modifier?: string
+    billedAmount?: number
+    denialDate?: string
+    denialReason?: string
+  }>
+  snapshots?: Array<{
+    month: string
+    denialRate?: number
+    dollarsDenied?: number
+    claimCount?: number
+    deniedCount?: number
+  }>
 }
 
 interface PatternApiResponse {
@@ -330,6 +353,9 @@ export const usePatternsStore = defineStore('patterns', () => {
     // Extract policy IDs from related policies
     const relatedPolicyIds = dbPattern.relatedPolicies?.map(p => p.policyId) || []
 
+    const patternActionCategory = (dbPattern.actionCategory || 'coding_knowledge') as ActionCategory
+    const patternRecoveryStatus = (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus
+
     return {
       id: dbPattern.id,
       title: dbPattern.title,
@@ -359,19 +385,35 @@ export const usePatternsStore = defineStore('patterns', () => {
       suggestedAction: dbPattern.suggestedAction || '',
       affectedClaims: dbPattern.affectedClaims || [],
       relatedPolicies: relatedPolicyIds,
-      relatedCodes: [],
+      relatedCodes: dbPattern.relatedCodes || [],
       improvements: [],
-      actions: [],
-      evidence: [],
+      actions: (dbPattern.actions || []).map(a => ({
+        id: a.id,
+        timestamp: a.timestamp || now,
+        actionType: a.actionType as ActionType,
+        notes: a.notes,
+      })),
+      evidence: (dbPattern.evidence || []).map(e => ({
+        claimId: e.claimId,
+        denialDate: e.denialDate || '',
+        denialReason: e.denialReason || dbPattern.denialReason || '',
+        billedAmount: e.billedAmount || 0,
+        procedureCode: e.procedureCode,
+        modifier: e.modifier,
+      })),
       firstDetected: dbPattern.baselineStart || now,
       lastUpdated: now,
       lastSeen: now,
-      actionCategory: (dbPattern.actionCategory || 'coding_knowledge') as ActionCategory,
-      recoveryStatus: (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus,
-      recoverableAmount: liveTotalAtRisk,
-      recoverableClaimCount: liveClaimCount,
+      actionCategory: patternActionCategory,
+      recoveryStatus: patternRecoveryStatus,
+      recoverableAmount: patternRecoveryStatus === 'not_recoverable' ? 0
+        : patternRecoveryStatus === 'partial' ? liveTotalAtRisk * 0.5
+        : liveTotalAtRisk,
+      recoverableClaimCount: patternRecoveryStatus === 'not_recoverable' ? 0
+        : patternRecoveryStatus === 'partial' ? Math.round(liveClaimCount * 0.5)
+        : liveClaimCount,
       possibleRootCauses: dbPattern.relatedPolicies?.filter(p => p.commonMistake).map(p => ({
-        category: 'coding_knowledge' as ActionCategory,
+        category: patternActionCategory,
         confidence: 'high' as const,
         signals: [p.policyName],
         explanation: p.commonMistake || '',
@@ -393,6 +435,7 @@ export const usePatternsStore = defineStore('patterns', () => {
           ? JSON.parse(dbPattern.longTermSteps) as string[]
           : generateLongTermSteps(dbPattern.relatedPolicies || []),
       },
+      snapshots: dbPattern.snapshots || [],
       detectionConfidence: dbPattern.scoreConfidence || 0.5,
     }
   }

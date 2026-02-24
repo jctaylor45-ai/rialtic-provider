@@ -9,8 +9,8 @@
 
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
-import { patterns, patternClaimLines, claimLineItems, claimLinePolicies, policies, claims, claimAppeals } from '~/server/database/schema'
-import { eq, desc, and, sql, count, sum } from 'drizzle-orm'
+import { patterns, patternClaimLines, claimLineItems, claimLinePolicies, policies, claims, claimAppeals, patternRelatedCodes, patternActions, patternEvidence, patternSnapshots } from '~/server/database/schema'
+import { eq, desc, and, sql, count, asc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -72,6 +72,7 @@ export default defineEventHandler(async (event) => {
         shortTermCanResubmit: patterns.shortTermCanResubmit,
         longTermDescription: patterns.longTermDescription,
         longTermSteps: patterns.longTermSteps,
+        denialReason: patterns.denialReason,
       })
       .from(patterns)
       .where(where)
@@ -173,6 +174,53 @@ export default defineEventHandler(async (event) => {
         const overturnedCount = Number(appealResult?.overturnedCount) || 0
         const everDeniedClaims = Number(appealResult?.everDeniedClaims) || 0
 
+        // Fix 1: Related codes from pattern_related_codes table
+        const relatedCodes = await db
+          .select({ code: patternRelatedCodes.code })
+          .from(patternRelatedCodes)
+          .where(eq(patternRelatedCodes.patternId, pattern.id))
+
+        // Fix 2: Actions from pattern_actions table
+        const actions = await db
+          .select({
+            id: patternActions.id,
+            actionType: patternActions.actionType,
+            notes: patternActions.notes,
+            timestamp: patternActions.timestamp,
+          })
+          .from(patternActions)
+          .where(eq(patternActions.patternId, pattern.id))
+          .orderBy(desc(patternActions.timestamp))
+
+        // Fix 3: Evidence from denied claim lines (sample of 10)
+        const evidence = await db
+          .select({
+            claimId: claimLineItems.claimId,
+            procedureCode: claimLineItems.procedureCode,
+            billedAmount: claimLineItems.billedAmount,
+            denialDate: patternClaimLines.denialDate,
+          })
+          .from(patternClaimLines)
+          .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            eq(claimLineItems.status, 'denied')
+          ))
+          .limit(10)
+
+        // Fix 4: Snapshots from pattern_snapshots table
+        const snapshots = await db
+          .select({
+            month: patternSnapshots.snapshotDate,
+            denialRate: patternSnapshots.denialRate,
+            dollarsDenied: patternSnapshots.dollarsDenied,
+            claimCount: patternSnapshots.claimCount,
+            deniedCount: patternSnapshots.deniedCount,
+          })
+          .from(patternSnapshots)
+          .where(eq(patternSnapshots.patternId, pattern.id))
+          .orderBy(asc(patternSnapshots.snapshotDate))
+
         return {
           ...pattern,
           liveLineCount: deniedLineCountResult?.count || 0,
@@ -183,6 +231,16 @@ export default defineEventHandler(async (event) => {
           appealCount,
           overturnedCount,
           appealRate: everDeniedClaims > 0 ? Math.round((appealCount / everDeniedClaims) * 10000) / 100 : 0,
+          relatedCodes: relatedCodes.map(r => r.code),
+          actions,
+          evidence: evidence.map(e => ({
+            claimId: e.claimId,
+            procedureCode: e.procedureCode,
+            billedAmount: e.billedAmount,
+            denialDate: e.denialDate,
+            denialReason: pattern.denialReason || '',
+          })),
+          snapshots,
         }
       })
     )

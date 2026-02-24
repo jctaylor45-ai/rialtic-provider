@@ -835,9 +835,10 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         baseline_denial_rate, baseline_dollars_denied,
         current_start, current_end, current_claim_count, current_denied_count,
         current_denial_rate, current_dollars_denied,
+        denial_reason,
         short_term_description, short_term_can_resubmit, long_term_description, long_term_steps,
         recovery_status, action_category
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const pattern of scenario.patterns) {
       // Derive score columns from trajectory data
@@ -901,6 +902,7 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         pattern.trajectory.current.deniedCount,
         pattern.trajectory.current.denialRate,
         pattern.trajectory.current.dollarsDenied,
+        pattern.denialReason || null,
         pattern.remediation?.shortTerm?.description || null,
         pattern.remediation?.shortTerm?.canResubmit ? 1 : 0,
         pattern.remediation?.longTerm?.description || null,
@@ -908,6 +910,40 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         recoveryStatus,
         actionCategory
       )
+    }
+
+    // Insert pattern related codes (procedure codes from scenario JSON)
+    const insertRelatedCode = db.prepare(`
+      INSERT OR IGNORE INTO pattern_related_codes (pattern_id, code)
+      VALUES (?, ?)
+    `)
+    for (const pattern of scenario.patterns) {
+      if (pattern.procedureCodes) {
+        for (const code of pattern.procedureCodes) {
+          insertRelatedCode.run(pattern.id, code)
+        }
+      }
+    }
+
+    // Insert pattern actions from engagement data
+    const insertPatternAction = db.prepare(`
+      INSERT OR IGNORE INTO pattern_actions (id, pattern_id, action_type, notes, timestamp)
+      VALUES (?, ?, ?, ?, ?)
+    `)
+    for (const pattern of scenario.patterns) {
+      if (pattern.engagement?.actionsRecorded) {
+        pattern.engagement.actionsRecorded.forEach((action, i) => {
+          // JSON may use 'description' instead of 'notes'
+          const notes = action.notes || (action as unknown as { description?: string }).description || null
+          insertPatternAction.run(
+            `${pattern.id}-action-${i}`,
+            pattern.id,
+            action.type,
+            notes,
+            action.date
+          )
+        })
+      }
     }
 
     // Insert policies from policy library.

@@ -147,6 +147,15 @@ export interface Pattern {
   shortTermAction: ShortTermAction
   longTermAction: LongTermAction
 
+  // Trend data
+  snapshots?: Array<{
+    month: string
+    denialRate?: number
+    dollarsDenied?: number
+    claimCount?: number
+    deniedCount?: number
+  }>
+
   // AI metadata
   detectionConfidence: number
   lastUpdated: string

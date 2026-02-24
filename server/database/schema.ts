@@ -466,6 +466,9 @@ export const patterns = sqliteTable('patterns', {
   currentDenialRate: real('current_denial_rate'),
   currentDollarsDenied: real('current_dollars_denied'),
 
+  // Denial context
+  denialReason: text('denial_reason'),
+
   // Remediation Data
   shortTermDescription: text('short_term_description'),
   shortTermCanResubmit: integer('short_term_can_resubmit'),
