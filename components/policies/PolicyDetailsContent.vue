@@ -243,7 +243,7 @@ const showCodeIntelligence = (code: string) => {
       </div>
 
       <!-- Secondary Metrics -->
-      <div class="grid grid-cols-4 gap-3 mt-3">
+      <div class="grid grid-cols-3 gap-3 mt-3">
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
           <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(displayPolicy.impact) }}</div>
@@ -255,10 +255,6 @@ const showCodeIntelligence = (code: string) => {
         <div class="bg-neutral-50 rounded-lg p-3">
           <div class="text-xs text-neutral-600 mb-1">Providers Impacted</div>
           <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.providersImpacted }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Recent Tests</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.recentTests }}</div>
         </div>
       </div>
     </div>
@@ -316,10 +312,6 @@ const showCodeIntelligence = (code: string) => {
           <div>
             <div class="text-neutral-500 text-xs mb-1">Topic</div>
             <div class="text-neutral-900 font-medium">{{ displayPolicy.topicName || '–' }}</div>
-          </div>
-          <div>
-            <div class="text-neutral-500 text-xs mb-1">Mode</div>
-            <div class="text-neutral-900 font-medium">{{ displayPolicy.mode }}</div>
           </div>
           <div>
             <div class="text-neutral-500 text-xs mb-1">Logic Type</div>

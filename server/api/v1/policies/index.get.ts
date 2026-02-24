@@ -19,8 +19,11 @@ import {
   claimLinePolicies,
   claimLineItems,
   claims,
+  claimAppeals,
+  patternClaimLines,
+  patterns,
 } from '~/server/database/schema'
-import { eq, desc, and, like, sql, count, sum } from 'drizzle-orm'
+import { eq, desc, and, like, sql, count } from 'drizzle-orm'
 import { policyListAdapter, type DbPolicy, type DbReferenceDoc } from '~/server/utils/policyAdapter'
 import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
 
@@ -69,35 +72,123 @@ export default defineEventHandler(async (event) => {
 
     // Local database source
 
-    // First, compute metrics for all policies from claim_line_policies
-    // Hit Rate = % of claim lines that hit the policy
-    // Denial Rate = % of claim lines that hit the policy that are denied
-    const [totalClaimLinesResult] = await db
+    // Compute comprehensive metrics for policies with claim data.
+    // claim_line_policies only contains denied claim lines, so we derive the
+    // true denial rate from the linked patterns' current_denial_rate.
+
+    const [totalClaimsResult] = await db
       .select({ count: count() })
-      .from(claimLineItems)
+      .from(claims)
 
-    const totalClaimLines = totalClaimLinesResult?.count || 1 // Avoid division by zero
+    const totalClaimsCount = totalClaimsResult?.count || 1
 
-    // Get policy metrics aggregated from claim_line_policies
-    const policyMetrics = await db
-      .select({
-        policyId: claimLinePolicies.policyId,
-        totalHits: count(),
-        deniedHits: sql<number>`SUM(CASE WHEN ${claimLinePolicies.isDenied} = 1 THEN 1 ELSE 0 END)`,
-        totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+    // Run 3 targeted queries in parallel to avoid cross-join inflation
+    const [coreMetrics, appealMetrics, patternMetrics] = await Promise.all([
+      // Query A: Core metrics per policy (denied counts, impact, providers)
+      db
+        .select({
+          policyId: claimLinePolicies.policyId,
+          deniedLines: count(),
+          totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+          deniedClaims: sql<number>`COUNT(DISTINCT ${claims.id})`,
+          providersImpacted: sql<number>`COUNT(DISTINCT ${claims.providerId})`,
+        })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+        .groupBy(claimLinePolicies.policyId),
+
+      // Query B: Appeal metrics per policy
+      db
+        .select({
+          policyId: claimLinePolicies.policyId,
+          appealsFiled: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealFiled} = 1 THEN ${claimAppeals.claimId} END)`,
+          overturned: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealOutcome} = 'overturned' THEN ${claimAppeals.claimId} END)`,
+        })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .innerJoin(claimAppeals, eq(claimLineItems.claimId, claimAppeals.claimId))
+        .groupBy(claimLinePolicies.policyId),
+
+      // Query C: Distinct (policy, pattern, denialRate) triples via claim chain
+      db
+        .selectDistinct({
+          policyId: claimLinePolicies.policyId,
+          patternId: patternClaimLines.patternId,
+          currentDenialRate: patterns.currentDenialRate,
+        })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .innerJoin(patternClaimLines, eq(claimLineItems.id, patternClaimLines.lineItemId))
+        .innerJoin(patterns, eq(patternClaimLines.patternId, patterns.id)),
+    ])
+
+    // Build lookup maps
+    const appealMap = new Map(appealMetrics.map(m => [m.policyId, m]))
+
+    // Aggregate pattern data per policy from the distinct triples
+    const patternDataByPolicy = new Map<string, { patternCount: number; avgDenialRate: number }>()
+    const tempMap = new Map<string, { patternIds: Set<string>; totalRate: number }>()
+    for (const link of patternMetrics) {
+      const existing = tempMap.get(link.policyId) || { patternIds: new Set<string>(), totalRate: 0 }
+      if (!existing.patternIds.has(link.patternId)) {
+        existing.patternIds.add(link.patternId)
+        existing.totalRate += link.currentDenialRate || 0
+      }
+      tempMap.set(link.policyId, existing)
+    }
+    for (const [policyId, data] of tempMap) {
+      patternDataByPolicy.set(policyId, {
+        patternCount: data.patternIds.size,
+        avgDenialRate: data.patternIds.size > 0 ? data.totalRate / data.patternIds.size : 0,
       })
-      .from(claimLinePolicies)
-      .groupBy(claimLinePolicies.policyId)
+    }
 
-    // Create a map for quick lookup
-    // Rates are stored as whole number percentages (3 = 3%) for consistency with rest of app
-    const metricsMap = new Map(
-      policyMetrics.map(m => [m.policyId, {
-        hitRate: (m.totalHits / totalClaimLines) * 100,
-        denialRate: m.totalHits > 0 ? ((m.deniedHits || 0) / m.totalHits) * 100 : 0,
-        impact: m.totalImpact || 0,
-      }])
-    )
+    // Create a unified metrics map
+    // Rates are whole number percentages (8 = 8%) for consistency with rest of app
+    const metricsMap = new Map<string, {
+      hitRate: number
+      denialRate: number
+      appealRate: number
+      overturnRate: number
+      impact: number
+      insightCount: number
+      providersImpacted: number
+    }>()
+
+    for (const core of coreMetrics) {
+      const appeal = appealMap.get(core.policyId)
+      const patternData = patternDataByPolicy.get(core.policyId)
+
+      const deniedClaims = Number(core.deniedClaims) || 0
+      const appealsFiled = Number(appeal?.appealsFiled) || 0
+      const overturned = Number(appeal?.overturned) || 0
+      const avgDenialRate = patternData?.avgDenialRate || 0
+
+      // Denial rate from linked patterns (stored as decimal 0.08 → convert to 8%)
+      const denialRate = avgDenialRate * 100
+
+      // Hit rate: estimate total claims evaluated from denied count and denial rate,
+      // then express as % of total claims
+      const estimatedEvaluated = avgDenialRate > 0 ? deniedClaims / avgDenialRate : deniedClaims
+      const hitRate = (estimatedEvaluated / totalClaimsCount) * 100
+
+      // Appeal rate: appeals filed / denied claims
+      const appealRate = deniedClaims > 0 ? (appealsFiled / deniedClaims) * 100 : 0
+
+      // Overturn rate: overturned / appeals filed
+      const overturnRate = appealsFiled > 0 ? (overturned / appealsFiled) * 100 : 0
+
+      metricsMap.set(core.policyId, {
+        hitRate: Math.round(hitRate * 100) / 100,
+        denialRate: Math.round(denialRate * 100) / 100,
+        appealRate: Math.round(appealRate * 100) / 100,
+        overturnRate: Math.round(overturnRate * 100) / 100,
+        impact: Number(core.totalImpact) || 0,
+        insightCount: patternData?.patternCount || 0,
+        providersImpacted: Number(core.providersImpacted) || 0,
+      })
+    }
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
@@ -204,14 +295,18 @@ export default defineEventHandler(async (event) => {
         (refDocsByPolicy.get(policy.id) || []) as DbReferenceDoc[],
       )
 
-      // Merge computed metrics from claim_line_policies
+      // Merge computed metrics from claim data
       const metrics = metricsMap.get(policy.id)
       if (metrics) {
         return {
           ...basePolicy,
           hit_rate: metrics.hitRate,
           denial_rate: metrics.denialRate,
+          appeal_rate: metrics.appealRate,
+          overturn_rate: metrics.overturnRate,
           impact: metrics.impact,
+          insight_count: metrics.insightCount,
+          providers_impacted: metrics.providersImpacted,
         }
       }
 

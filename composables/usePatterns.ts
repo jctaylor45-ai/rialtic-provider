@@ -85,7 +85,7 @@ export function usePatterns() {
     })
 
     // Navigate to Claim Lab with pattern context
-    return navigateTo(`/claim-lab?pattern=${pattern.id}`)
+    return navigateTo(`/provider-portal/claim-lab?pattern=${pattern.id}`)
   }
 
   // Complete practice session

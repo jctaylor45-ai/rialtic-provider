@@ -190,7 +190,7 @@
                   >
                     <div class="flex items-start justify-between mb-1">
                       <NuxtLink
-                        :to="`/claims/${evidence.claimId}`"
+                        :to="`/provider-portal/claims/${evidence.claimId}`"
                         class="text-sm font-medium text-primary-600 hover:text-primary-700 font-mono"
                       >
                         {{ evidence.claimId }}
@@ -238,7 +238,7 @@
                   <NuxtLink
                     v-for="policyId in pattern.relatedPolicies"
                     :key="policyId"
-                    :to="`/policies?id=${policyId}`"
+                    :to="`/provider-portal/policies?id=${policyId}`"
                     class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-mono text-gray-700 hover:bg-gray-50 hover:border-primary-300 transition-colors"
                   >
                     {{ policyId }}

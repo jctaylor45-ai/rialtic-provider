@@ -169,7 +169,7 @@ const lineSummary = computed(() => {
 const testLineInClaimLab = (lineNumber: number) => {
   const patternId = matchingPatterns.value[0]?.id
   navigateTo({
-    path: '/claim-lab',
+    path: '/provider-portal/claim-lab',
     query: {
       claim: claim.value?.id,
       pattern: patternId || undefined,
@@ -230,7 +230,7 @@ const viewPolicy = (policy: any) => {
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPolicyId', policy.id)
   }
-  navigateTo('/policies')
+  navigateTo('/provider-portal/policies')
 }
 
 // Track claim view
@@ -402,7 +402,7 @@ onMounted(() => {
               v-for="pattern in matchingPatterns"
               :key="pattern.id"
               class="bg-white border border-orange-200 rounded-lg p-4 hover:border-orange-400 cursor-pointer transition-colors"
-              @click="navigateTo(`/insights`)"
+              @click="navigateTo(`/provider-portal/insights`)"
             >
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center gap-3">
@@ -440,7 +440,7 @@ onMounted(() => {
 
           <div class="mt-4 flex items-center gap-2">
             <NuxtLink
-              to="/insights"
+              to="/provider-portal/insights"
               class="text-sm font-medium text-orange-700 hover:text-orange-800 no-underline flex items-center gap-1"
             >
               View all patterns
@@ -640,7 +640,7 @@ onMounted(() => {
                 </button>
                 <button
                   v-if="primaryPattern"
-                  @click="navigateTo(`/insights?pattern=${primaryPattern.id}`)"
+                  @click="navigateTo(`/provider-portal/insights?pattern=${primaryPattern.id}`)"
                   class="inline-flex items-center gap-2 px-3 py-1.5 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors"
                 >
                   View Pattern →
@@ -737,7 +737,7 @@ onMounted(() => {
                     Test This Correction in Claim Lab
                   </button>
                   <button
-                    @click="navigateTo(`/insights`)"
+                    @click="navigateTo(`/provider-portal/insights`)"
                     class="px-4 py-2 border border-neutral-300 text-neutral-700 text-sm font-medium rounded-lg hover:bg-neutral-50 transition-colors"
                   >
                     View Pattern Details
@@ -755,7 +755,7 @@ onMounted(() => {
                   <p class="text-sm text-neutral-700">{{ claim.aiInsight.guidance }}</p>
                 </div>
                 <button
-                  @click="navigateTo(`/claim-lab?claim=${claim.id}`)"
+                  @click="navigateTo(`/provider-portal/claim-lab?claim=${claim.id}`)"
                   class="px-4 py-2 bg-success-600 text-white text-sm font-medium rounded-lg hover:bg-success-700 transition-colors"
                 >
                   Test This Correction in Claim Lab
@@ -842,7 +842,7 @@ onMounted(() => {
     <div class="border-t border-neutral-200 p-4 bg-neutral-50">
       <div class="flex items-center gap-3">
         <NuxtLink
-          :to="`/claim-lab?claim=${claim.id}`"
+          :to="`/provider-portal/claim-lab?claim=${claim.id}`"
           class="flex-1 py-2.5 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors text-center text-sm no-underline"
         >
           Test in Claim Lab

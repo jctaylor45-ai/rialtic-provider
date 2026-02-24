@@ -460,7 +460,7 @@ const viewPattern = (pattern: Pattern) => {
   if (typeof window !== 'undefined') {
     sessionStorage.setItem('openPatternId', pattern.id)
   }
-  router.push('/insights')
+  router.push('/provider-portal/insights')
 }
 
 // Column definitions for TanStack Table

@@ -22,6 +22,6 @@ const claimId = route.params.id as string
 
 // Redirect to claims list with drawer open
 onMounted(() => {
-  router.replace({ path: '/claims', query: { claim: claimId } })
+  router.replace({ path: '/provider-portal/claims', query: { claim: claimId } })
 })
 </script>

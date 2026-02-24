@@ -389,7 +389,7 @@ onMounted(() => {
           >
             <div class="flex items-start justify-between mb-1">
               <NuxtLink
-                :to="`/claims?claim=${evidence.claimId}`"
+                :to="`/provider-portal/claims?claim=${evidence.claimId}`"
                 class="text-sm font-medium text-primary-600 hover:text-primary-700 font-mono"
               >
                 {{ evidence.claimId }}
@@ -456,7 +456,7 @@ onMounted(() => {
           <NuxtLink
             v-for="policyId in pattern.relatedPolicies"
             :key="policyId"
-            :to="`/policies?policy=${policyId}`"
+            :to="`/provider-portal/policies?policy=${policyId}`"
             class="px-3 py-1.5 bg-white border border-neutral-300 rounded-lg text-sm font-mono text-neutral-700 hover:bg-neutral-50 hover:border-primary-300 transition-colors"
           >
             {{ policyId }}

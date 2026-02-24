@@ -12,12 +12,12 @@ export function useTracking() {
   // Get current context from route
   const getCurrentContext = (): EventContext => {
     const path = route.path
-    if (path === '/') return 'dashboard'
-    if (path.startsWith('/claims')) return 'claims'
-    if (path.startsWith('/insights')) return 'insights'
-    if (path.startsWith('/claim-lab')) return 'claim-lab'
-    if (path.startsWith('/impact')) return 'impact'
-    if (path.startsWith('/policies')) return 'policies'
+    if (path === '/provider-portal' || path === '/provider-portal/') return 'dashboard'
+    if (path.startsWith('/provider-portal/claims')) return 'claims'
+    if (path.startsWith('/provider-portal/insights')) return 'insights'
+    if (path.startsWith('/provider-portal/claim-lab')) return 'claim-lab'
+    if (path.startsWith('/provider-portal/impact')) return 'impact'
+    if (path.startsWith('/provider-portal/policies')) return 'policies'
     return 'dashboard'
   }
 

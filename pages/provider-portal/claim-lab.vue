@@ -93,7 +93,7 @@
           </div>
         </div>
         <button
-          @click="navigateTo(`/insights?pattern=${contextPattern.id}`)"
+          @click="navigateTo(`/provider-portal/insights?pattern=${contextPattern.id}`)"
           class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
         >
           View Pattern
@@ -117,7 +117,7 @@
         <h2 class="text-xl font-semibold text-neutral-900 mb-2">No Claim Selected</h2>
         <p class="text-neutral-600 mb-6">Select a claim to test in the Claim Lab</p>
         <button
-          @click="navigateTo('/claims')"
+          @click="navigateTo('/provider-portal/claims')"
           class="px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
         >
           Browse Claims
@@ -554,14 +554,14 @@ async function handleClaimSearch() {
   try {
     await $fetch<ProcessedClaim>(`/api/v1/claims/${searchId}`)
     // If successful, navigate to it
-    navigateTo({ path: '/claim-lab', query: { claim: searchId, pattern: patternId.value || undefined } })
+    navigateTo({ path: '/provider-portal/claim-lab', query: { claim: searchId, pattern: patternId.value || undefined } })
     claimSearch.value = ''
     searchError.value = ''
   } catch {
     // If API fails, check store as fallback
     const claim = appStore.getClaimById(searchId)
     if (claim) {
-      navigateTo({ path: '/claim-lab', query: { claim: claim.id, pattern: patternId.value || undefined } })
+      navigateTo({ path: '/provider-portal/claim-lab', query: { claim: claim.id, pattern: patternId.value || undefined } })
       claimSearch.value = ''
       searchError.value = ''
     } else {

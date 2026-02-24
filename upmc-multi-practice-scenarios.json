@@ -1,0 +1,4477 @@
+{
+  "scenarios": [
+    {
+      "id": "upmc-primary-care-north-hills",
+      "name": "North Hills Family Medicine Associates",
+      "description": "Large 8-physician primary care group demonstrating rapid E/M coding improvement and gradual documentation enhancement. Starting denial rate 14.2%, target 8.1%. Key wins: Modifier 25 pattern resolved, medical necessity documentation improving, duplicate claims eliminated via system fix.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2026-03-28",
+        "periodDays": 270,
+        "keyEvents": [
+          {
+            "date": "2025-07-01",
+            "type": "baseline",
+            "description": "Baseline period begins - practice submitting ~800 claims/month to UPMC Health Plan",
+            "impactedPatterns": []
+          },
+          {
+            "date": "2025-08-01",
+            "type": "detection",
+            "description": "Missing Modifier 25 pattern detected - 47 denials in first month",
+            "impactedPatterns": [
+              "PPC-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-08-15",
+            "type": "detection",
+            "description": "Medical necessity documentation gaps identified for extended E/M visits",
+            "impactedPatterns": [
+              "PPC-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-09-01",
+            "type": "detection",
+            "description": "Preventive + problem-oriented visit coding overlap flagged",
+            "impactedPatterns": [
+              "PPC-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-09-15",
+            "type": "engagement",
+            "description": "Billing manager views modifier 25 pattern, exports claims, tests corrections in Claim Lab",
+            "impactedPatterns": [
+              "PPC-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-01",
+            "type": "training",
+            "description": "Billing team implements modifier 25 checklist for all E/M + procedure claims",
+            "impactedPatterns": [
+              "PPC-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-15",
+            "type": "detection",
+            "description": "Duplicate claim submissions detected - clearinghouse resubmission timing issue",
+            "impactedPatterns": [
+              "PPC-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-11-01",
+            "type": "system_change",
+            "description": "Clearinghouse resubmission timer and duplicate detection rules configured",
+            "impactedPatterns": [
+              "PPC-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-11-15",
+            "type": "engagement",
+            "description": "Lead physician reviews medical necessity documentation guidelines",
+            "impactedPatterns": [
+              "PPC-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-12-01",
+            "type": "detection",
+            "description": "Annual wellness visit frequency limit pattern detected",
+            "impactedPatterns": [
+              "PPC-PTN-005"
+            ]
+          },
+          {
+            "date": "2025-12-15",
+            "type": "resolution",
+            "description": "Modifier 25 pattern resolved - denial rate at 2.1% (down from 22%)",
+            "impactedPatterns": [
+              "PPC-PTN-001"
+            ]
+          },
+          {
+            "date": "2026-01-15",
+            "type": "training",
+            "description": "Coding team reviews preventive vs problem visit split-billing rules",
+            "impactedPatterns": [
+              "PPC-PTN-003"
+            ]
+          },
+          {
+            "date": "2026-02-15",
+            "type": "workflow",
+            "description": "Documentation template updated with medical necessity prompts",
+            "impactedPatterns": [
+              "PPC-PTN-002"
+            ]
+          },
+          {
+            "date": "2026-03-28",
+            "type": "milestone",
+            "description": "Current state - overall denial rate reduced from 14.2% to 8.1%",
+            "impactedPatterns": []
+          }
+        ]
+      },
+      "practice": {
+        "id": "PRV-UPMC-NHFMA",
+        "name": "North Hills Family Medicine Associates",
+        "taxId": "25-1847362",
+        "address": {
+          "street": "8080 McKnight Road, Suite 200",
+          "city": "Pittsburgh",
+          "state": "PA",
+          "zip": "15237"
+        },
+        "providers": [
+          {
+            "id": "DOC-PC-001",
+            "name": "Dr. Margaret Sullivan",
+            "npi": "1467582301",
+            "specialty": "Family Medicine",
+            "taxonomy": "207Q00000X",
+            "claimWeight": 1.2
+          },
+          {
+            "id": "DOC-PC-002",
+            "name": "Dr. Robert Kim",
+            "npi": "1467582302",
+            "specialty": "Family Medicine",
+            "taxonomy": "207Q00000X",
+            "claimWeight": 1.1
+          },
+          {
+            "id": "DOC-PC-003",
+            "name": "Dr. Sandra Petrov",
+            "npi": "1467582303",
+            "specialty": "Internal Medicine",
+            "taxonomy": "207R00000X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-PC-004",
+            "name": "Dr. Anthony Moretti",
+            "npi": "1467582304",
+            "specialty": "Family Medicine",
+            "taxonomy": "207Q00000X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-PC-005",
+            "name": "Dr. Lisa Tran",
+            "npi": "1467582305",
+            "specialty": "Internal Medicine",
+            "taxonomy": "207R00000X",
+            "claimWeight": 0.9
+          },
+          {
+            "id": "DOC-PC-006",
+            "name": "Dr. William Davis",
+            "npi": "1467582306",
+            "specialty": "Family Medicine",
+            "taxonomy": "207Q00000X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-PC-007",
+            "name": "Dr. Catherine Okafor",
+            "npi": "1467582307",
+            "specialty": "Preventive Medicine",
+            "taxonomy": "2083P0901X",
+            "claimWeight": 0.8
+          },
+          {
+            "id": "DOC-PC-008",
+            "name": "Dr. James Kowalski",
+            "npi": "1467582308",
+            "specialty": "Internal Medicine",
+            "taxonomy": "207R00000X",
+            "claimWeight": 1.0
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 7200,
+        "monthlyVariation": {
+          "2025-07": 0.975,
+          "2025-08": 0.988,
+          "2025-09": 1.025,
+          "2025-10": 1.013,
+          "2025-11": 0.975,
+          "2025-12": 0.9,
+          "2026-01": 1.05,
+          "2026-02": 1.038,
+          "2026-03": 1.038
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 3
+        },
+        "claimValueRanges": {
+          "low": {
+            "min": 45,
+            "max": 150
+          },
+          "medium": {
+            "min": 150,
+            "max": 500
+          },
+          "high": {
+            "min": 500,
+            "max": 2000
+          }
+        }
+      },
+      "patterns": [
+        {
+          "id": "PPC-PTN-001",
+          "title": "Missing Modifier 25 on E/M with Same-Day Minor Procedure",
+          "description": "When an E/M visit (99213-99215) is billed on the same day as a minor procedure, modifier 25 is required to indicate the E/M was a significant, separately identifiable service. This practice was consistently omitting modifier 25, causing automatic denials. High appeal rate (65%) with 73% overturn rate confirms these are pure administrative waste.",
+          "category": "modifier-missing",
+          "status": "resolved",
+          "tier": "critical",
+          "procedureCodes": [
+            "99213",
+            "99214",
+            "99215",
+            "99203",
+            "99204"
+          ],
+          "policies": [
+            {
+              "id": "policy_10",
+              "triggerRate": 0.88
+            },
+            {
+              "id": "policy_26",
+              "triggerRate": 0.72
+            }
+          ],
+          "denialReason": "Modifier-25 required for significant, separately identifiable E/M service on same date as procedure",
+          "claimDistribution": {
+            "total": 870,
+            "deniedBaseline": 190,
+            "deniedCurrent": 18,
+            "appealsFiled": 124,
+            "appealsOverturned": 90
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 140,
+              "deniedCount": 31,
+              "denialRate": 0.221,
+              "dollarsDenied": 12400
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 150,
+              "deniedCount": 3,
+              "denialRate": 0.02,
+              "dollarsDenied": 1200
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.225,
+                "dollarsDenied": 6300
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.218,
+                "dollarsDenied": 6100
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.19,
+                "dollarsDenied": 5510
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.098,
+                "dollarsDenied": 2940
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.052,
+                "dollarsDenied": 1456
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.028,
+                "dollarsDenied": 756
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.022,
+                "dollarsDenied": 660
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.02,
+                "dollarsDenied": 600
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.019,
+                "dollarsDenied": 570
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-15",
+            "totalViews": 34,
+            "claimLabTests": 12,
+            "claimsExported": 8,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-10-01",
+                "description": "Billing team trained on modifier 25 requirements"
+              },
+              {
+                "type": "workflow_update",
+                "date": "2025-10-15",
+                "description": "Modifier 25 checklist added to EHR workflow"
+              },
+              {
+                "type": "sop_created",
+                "date": "2025-11-01",
+                "description": "Standard operating procedure for E/M + procedure claims"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied claims from last 90 days with modifier 25 appended and supporting documentation",
+              "canResubmit": true,
+              "claimCount": 45,
+              "amount": 18000
+            },
+            "longTerm": {
+              "description": "Embed modifier 25 logic into E/M billing workflow so claims are never submitted without it when a same-day procedure exists",
+              "steps": [
+                "Add modifier 25 auto-prompt in EHR when procedure + E/M on same date",
+                "Train all billing staff on modifier 25 criteria",
+                "Implement monthly audit of E/M + procedure same-day claims",
+                "Create quick-reference card for front desk/coders"
+              ]
+            }
+          }
+        },
+        {
+          "id": "PPC-PTN-002",
+          "title": "Insufficient Medical Necessity Documentation for Extended E/M Visits",
+          "description": "Extended office visits (99215, 99205) denied for insufficient medical necessity documentation. Visits are clinically appropriate but documentation doesn't clearly articulate why the higher-level service was required. Requires physician behavior change - improvement is gradual. 52% appeal rate, 48% overturn.",
+          "category": "documentation",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": [
+            "99215",
+            "99205",
+            "99245"
+          ],
+          "policies": [
+            {
+              "id": "policy_45",
+              "triggerRate": 0.78
+            }
+          ],
+          "denialReason": "Documentation does not support medical necessity for the level of E/M service billed",
+          "claimDistribution": {
+            "total": 560,
+            "deniedBaseline": 89,
+            "deniedCurrent": 58,
+            "appealsFiled": 46,
+            "appealsOverturned": 22
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 97,
+              "deniedCount": 15,
+              "denialRate": 0.155,
+              "dollarsDenied": 9000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 103,
+              "deniedCount": 11,
+              "denialRate": 0.107,
+              "dollarsDenied": 6600
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.158,
+                "dollarsDenied": 4582
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.152,
+                "dollarsDenied": 4408
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.149,
+                "dollarsDenied": 4321
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.145,
+                "dollarsDenied": 4205
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.14,
+                "dollarsDenied": 3920
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.132,
+                "dollarsDenied": 3564
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.12,
+                "dollarsDenied": 3480
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.11,
+                "dollarsDenied": 3300
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.103,
+                "dollarsDenied": 3090
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-15",
+            "totalViews": 18,
+            "claimLabTests": 6,
+            "claimsExported": 4,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2026-02-01",
+                "description": "Provider meeting on medical necessity documentation standards"
+              },
+              {
+                "type": "workflow_update",
+                "date": "2026-02-15",
+                "description": "Documentation template updated with medical necessity prompts"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Append additional clinical documentation and resubmit with medical necessity justification",
+              "canResubmit": true,
+              "claimCount": 18,
+              "amount": 10800
+            },
+            "longTerm": {
+              "description": "Update clinical documentation templates to prompt medical necessity language for extended E/M visits",
+              "steps": [
+                "Add medical necessity prompts to EHR visit templates for 99215/99205",
+                "Conduct physician education sessions on documentation requirements",
+                "Implement pre-submission documentation review for high-level E/M",
+                "Schedule quarterly chart audits focused on extended E/M visits"
+              ]
+            }
+          }
+        },
+        {
+          "id": "PPC-PTN-003",
+          "title": "Preventive Visit and Problem-Oriented Visit Coding Overlap",
+          "description": "When a patient presents for a preventive wellness visit and a problem is also addressed, split-billing with modifier 25 on the problem-oriented E/M is required. Many claims submitted with both codes but without proper modifier or documentation.",
+          "category": "bundling",
+          "status": "improving",
+          "tier": "medium",
+          "procedureCodes": [
+            "99395",
+            "99396",
+            "99397",
+            "99213",
+            "99214"
+          ],
+          "policies": [
+            {
+              "id": "policy_78",
+              "triggerRate": 0.8
+            }
+          ],
+          "denialReason": "Preventive and problem-oriented E/M services billed same day without appropriate modifier or documentation of distinct service",
+          "claimDistribution": {
+            "total": 670,
+            "deniedBaseline": 82,
+            "deniedCurrent": 60,
+            "appealsFiled": 37,
+            "appealsOverturned": 20
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 120,
+              "deniedCount": 15,
+              "denialRate": 0.125,
+              "dollarsDenied": 5250
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 127,
+              "deniedCount": 11,
+              "denialRate": 0.087,
+              "dollarsDenied": 3850
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.126,
+                "dollarsDenied": 2646
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.123,
+                "dollarsDenied": 2583
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.121,
+                "dollarsDenied": 2662
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.118,
+                "dollarsDenied": 2596
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.114,
+                "dollarsDenied": 2394
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.108,
+                "dollarsDenied": 2160
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.098,
+                "dollarsDenied": 2156
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.09,
+                "dollarsDenied": 1980
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.085,
+                "dollarsDenied": 1870
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2026-01-15",
+            "totalViews": 8,
+            "claimLabTests": 3,
+            "claimsExported": 2,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2026-02-01",
+                "description": "Coding team reviewed preventive vs problem visit split-billing rules"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with modifier 25 and documentation of distinct problem-oriented service",
+              "canResubmit": true,
+              "claimCount": 12,
+              "amount": 4200
+            },
+            "longTerm": {
+              "description": "Establish split-billing workflow for wellness visits where problems are also addressed",
+              "steps": [
+                "Create EHR alert when wellness + E/M codes on same encounter",
+                "Train physicians on documenting separate clinical decision-making",
+                "Add modifier 25 auto-prompt for dual-purpose visits"
+              ]
+            }
+          }
+        },
+        {
+          "id": "PPC-PTN-004",
+          "title": "Duplicate Claim Submissions from Clearinghouse Resubmission Logic",
+          "description": "Practice management system was automatically resubmitting claims before receiving payer response, generating duplicate submissions. Pure system configuration fix - once the resubmission timer was adjusted and duplicate detection enabled, the problem nearly disappeared.",
+          "category": "administrative",
+          "status": "resolved",
+          "tier": "medium",
+          "procedureCodes": [],
+          "policies": [],
+          "denialReason": "Duplicate claim - previously submitted claim for same service, same date, same provider",
+          "claimDistribution": {
+            "total": 174,
+            "deniedBaseline": 144,
+            "deniedCurrent": 9,
+            "appealsFiled": 5,
+            "appealsOverturned": 0
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 32,
+              "deniedCount": 32,
+              "denialRate": 1.0,
+              "dollarsDenied": 9600
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 2,
+              "deniedCount": 2,
+              "denialRate": 1.0,
+              "dollarsDenied": 600
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 4800
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 4800
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 4500
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 4200
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 900
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 600
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 600
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 300
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 300
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-10-20",
+            "totalViews": 5,
+            "claimLabTests": 0,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "system_config",
+                "date": "2025-11-01",
+                "description": "Clearinghouse resubmission timer adjusted from 24h to 72h"
+              },
+              {
+                "type": "system_config",
+                "date": "2025-11-15",
+                "description": "Duplicate detection rule enabled in practice management system"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "No resubmission needed - these are true duplicates. Write off denied duplicates.",
+              "canResubmit": false,
+              "claimCount": 0,
+              "amount": 0
+            },
+            "longTerm": {
+              "description": "Configure clearinghouse and PMS to prevent duplicate submissions",
+              "steps": [
+                "Extend clearinghouse resubmission wait timer to 72 hours",
+                "Enable duplicate claim detection in practice management system",
+                "Set up daily report flagging potential duplicate submissions"
+              ]
+            }
+          }
+        },
+        {
+          "id": "PPC-PTN-005",
+          "title": "Annual Wellness Visit Frequency Limit - Multiple Visits in Benefit Year",
+          "description": "Patients occasionally have two annual wellness visits billed in the same benefit year. These denials are legitimate and rarely appealed. The practice now checks eligibility but cannot eliminate all instances.",
+          "category": "frequency-limit",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": [
+            "99385",
+            "99386",
+            "99387",
+            "99395",
+            "99396",
+            "99397",
+            "G0438",
+            "G0439"
+          ],
+          "policies": [
+            {
+              "id": "policy_156",
+              "triggerRate": 1.0
+            }
+          ],
+          "denialReason": "Frequency limit exceeded - annual wellness visit already billed within benefit year",
+          "claimDistribution": {
+            "total": 115,
+            "deniedBaseline": 105,
+            "deniedCurrent": 84,
+            "appealsFiled": 4,
+            "appealsOverturned": 0
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 24,
+              "deniedCount": 24,
+              "denialRate": 1.0,
+              "dollarsDenied": 4800
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 18,
+              "deniedCount": 18,
+              "denialRate": 1.0,
+              "dollarsDenied": 3600
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 2200
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 2200
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 2000
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 2000
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-12-05",
+            "totalViews": 3,
+            "claimLabTests": 0,
+            "claimsExported": 0,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Cannot resubmit - legitimate frequency limit denials",
+              "canResubmit": false,
+              "claimCount": 0,
+              "amount": 0
+            },
+            "longTerm": {
+              "description": "Improve front-desk eligibility verification to catch frequency limits before scheduling",
+              "steps": [
+                "Check preventive visit history at scheduling",
+                "Add benefit year wellness visit flag to patient chart",
+                "Train schedulers to verify wellness visit eligibility"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 42,
+          "claim_inspected": 55,
+          "claims_exported": 17,
+          "action_recorded": 14
+        },
+        "eventClustering": {
+          "PPC-PTN-001": [
+            "2025-09-15",
+            "2025-09-16",
+            "2025-09-22",
+            "2025-10-01",
+            "2025-10-15",
+            "2025-11-01"
+          ],
+          "PPC-PTN-002": [
+            "2025-11-15",
+            "2025-11-18",
+            "2026-02-01",
+            "2026-02-15"
+          ],
+          "PPC-PTN-003": [
+            "2026-01-15",
+            "2026-01-20",
+            "2026-02-01"
+          ],
+          "PPC-PTN-004": [
+            "2025-10-20",
+            "2025-11-01",
+            "2025-11-15"
+          ],
+          "PPC-PTN-005": [
+            "2025-12-05"
+          ]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 7200,
+        "totalDenied": 583,
+        "overallDenialRate": 0.081,
+        "totalDollarsDenied": 58320,
+        "totalAppeals": 87,
+        "appealSuccessRate": 0.38
+      }
+    },
+    {
+      "id": "upmc-ortho-south-hills",
+      "name": "South Hills Orthopedics & Sports Medicine",
+      "description": "Mid-size orthopedic group with surgical and non-surgical providers. Highest-dollar recovery scenario due to surgical claim values. Key patterns: bilateral modifier 50, injection bundling with E/M, NCCI edit violations, prior auth for imaging. Starting denial rate 16.8%, target 9.4%.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2026-03-28",
+        "periodDays": 270,
+        "keyEvents": [
+          {
+            "date": "2025-07-01",
+            "type": "baseline",
+            "description": "Baseline period - practice submitting ~450 claims/month, high surgical mix",
+            "impactedPatterns": []
+          },
+          {
+            "date": "2025-07-20",
+            "type": "detection",
+            "description": "Missing bilateral modifier (50) on bilateral knee/shoulder procedures",
+            "impactedPatterns": [
+              "ORT-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-08-05",
+            "type": "detection",
+            "description": "E/M billed same day as injection without modifier 25",
+            "impactedPatterns": [
+              "ORT-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-08-20",
+            "type": "detection",
+            "description": "Prior authorization missing for MRI and advanced imaging",
+            "impactedPatterns": [
+              "ORT-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-09-10",
+            "type": "engagement",
+            "description": "Lead surgeon reviews bilateral modifier rules, shares with partners",
+            "impactedPatterns": [
+              "ORT-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-09-25",
+            "type": "training",
+            "description": "Billing department adds bilateral check to surgical claim review",
+            "impactedPatterns": [
+              "ORT-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-10",
+            "type": "detection",
+            "description": "NCCI bundling edit violations - distinct procedure modifier 59 needed",
+            "impactedPatterns": [
+              "ORT-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-10-25",
+            "type": "engagement",
+            "description": "Pain management physician tests injection + E/M corrections in Claim Lab",
+            "impactedPatterns": [
+              "ORT-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-11-15",
+            "type": "workflow",
+            "description": "Front desk begins checking prior auth status before scheduling imaging",
+            "impactedPatterns": [
+              "ORT-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-12-01",
+            "type": "resolution",
+            "description": "Bilateral modifier pattern resolved - near zero denials",
+            "impactedPatterns": [
+              "ORT-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-12-15",
+            "type": "detection",
+            "description": "Physical therapy frequency limit exceeded for some patients",
+            "impactedPatterns": [
+              "ORT-PTN-005"
+            ]
+          },
+          {
+            "date": "2026-01-15",
+            "type": "training",
+            "description": "Injection bundling SOP distributed to all providers",
+            "impactedPatterns": [
+              "ORT-PTN-002"
+            ]
+          },
+          {
+            "date": "2026-02-01",
+            "type": "detection",
+            "description": "Global surgery period - E/M billed during post-op window",
+            "impactedPatterns": [
+              "ORT-PTN-006"
+            ]
+          },
+          {
+            "date": "2026-03-28",
+            "type": "milestone",
+            "description": "Current state - denial rate reduced from 16.8% to 9.4%",
+            "impactedPatterns": []
+          }
+        ]
+      },
+      "practice": {
+        "id": "PRV-UPMC-SHOSM",
+        "name": "South Hills Orthopedics & Sports Medicine",
+        "taxId": "25-2946183",
+        "address": {
+          "street": "2000 Oxford Drive, Suite 610",
+          "city": "Pittsburgh",
+          "state": "PA",
+          "zip": "15102"
+        },
+        "providers": [
+          {
+            "id": "DOC-ORT-001",
+            "name": "Dr. Thomas Brennan",
+            "npi": "1538274001",
+            "specialty": "Orthopedic Surgery",
+            "taxonomy": "207X00000X",
+            "claimWeight": 1.4
+          },
+          {
+            "id": "DOC-ORT-002",
+            "name": "Dr. Priya Kapoor",
+            "npi": "1538274002",
+            "specialty": "Orthopedic Surgery",
+            "taxonomy": "207X00000X",
+            "claimWeight": 1.3
+          },
+          {
+            "id": "DOC-ORT-003",
+            "name": "Dr. Steven Volkov",
+            "npi": "1538274003",
+            "specialty": "Orthopedic Surgery",
+            "taxonomy": "207X00000X",
+            "claimWeight": 1.2
+          },
+          {
+            "id": "DOC-ORT-004",
+            "name": "Dr. Jennifer Yao",
+            "npi": "1538274004",
+            "specialty": "Sports Medicine",
+            "taxonomy": "207QS0010X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-ORT-005",
+            "name": "Dr. Marcus Hall",
+            "npi": "1538274005",
+            "specialty": "Sports Medicine",
+            "taxonomy": "207QS0010X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-ORT-006",
+            "name": "Dr. Angela Rossi",
+            "npi": "1538274006",
+            "specialty": "Pain Management",
+            "taxonomy": "208VP0014X",
+            "claimWeight": 0.9
+          },
+          {
+            "id": "DOC-ORT-007",
+            "name": "Karen Mitchell, PT, DPT",
+            "npi": "1538274007",
+            "specialty": "Physical Therapy",
+            "taxonomy": "225100000X",
+            "claimWeight": 0.7
+          },
+          {
+            "id": "DOC-ORT-008",
+            "name": "David Chen, PT, DPT",
+            "npi": "1538274008",
+            "specialty": "Physical Therapy",
+            "taxonomy": "225100000X",
+            "claimWeight": 0.7
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 4050,
+        "monthlyVariation": {
+          "2025-07": 1.022,
+          "2025-08": 1.044,
+          "2025-09": 0.978,
+          "2025-10": 0.989,
+          "2025-11": 0.956,
+          "2025-12": 0.889,
+          "2026-01": 1.011,
+          "2026-02": 1.022,
+          "2026-03": 1.089
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 5
+        },
+        "claimValueRanges": {
+          "low": {
+            "min": 75,
+            "max": 350
+          },
+          "medium": {
+            "min": 350,
+            "max": 3500
+          },
+          "high": {
+            "min": 3500,
+            "max": 25000
+          }
+        }
+      },
+      "patterns": [
+        {
+          "id": "ORT-PTN-001",
+          "title": "Missing Bilateral Modifier (50) on Bilateral Joint Procedures",
+          "description": "When bilateral procedures (both knees, both shoulders) are performed, modifier 50 is required. Without it, the second side is denied as a duplicate. High-dollar surgical claims ($6K+ each) - massive financial impact. 71% appeal rate, 80% overturn. Pure waste.",
+          "category": "modifier-missing",
+          "status": "resolved",
+          "tier": "critical",
+          "procedureCodes": [
+            "27447",
+            "29881",
+            "29880",
+            "23472",
+            "27130"
+          ],
+          "policies": [
+            {
+              "id": "policy_10",
+              "triggerRate": 0.92
+            }
+          ],
+          "denialReason": "Bilateral modifier (50) required for bilateral joint procedure - second side denied as potential duplicate",
+          "claimDistribution": {
+            "total": 155,
+            "deniedBaseline": 52,
+            "deniedCurrent": 4,
+            "appealsFiled": 37,
+            "appealsOverturned": 30
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 25,
+              "deniedCount": 9,
+              "denialRate": 0.36,
+              "dollarsDenied": 54000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 28,
+              "deniedCount": 1,
+              "denialRate": 0.036,
+              "dollarsDenied": 6000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.37,
+                "dollarsDenied": 27750
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.355,
+                "dollarsDenied": 26625
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.24,
+                "dollarsDenied": 16800
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.1,
+                "dollarsDenied": 7000
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.05,
+                "dollarsDenied": 3250
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.035,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.03,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.035,
+                "dollarsDenied": 2450
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.036,
+                "dollarsDenied": 2520
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-10",
+            "totalViews": 22,
+            "claimLabTests": 8,
+            "claimsExported": 6,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-09-25",
+                "description": "Surgeons briefed on bilateral modifier requirements"
+              },
+              {
+                "type": "workflow_update",
+                "date": "2025-10-05",
+                "description": "Bilateral check added to surgical claim template"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied bilateral claims with modifier 50",
+              "canResubmit": true,
+              "claimCount": 12,
+              "amount": 72000
+            },
+            "longTerm": {
+              "description": "Embed bilateral modifier logic into surgical claim workflow",
+              "steps": [
+                "Add bilateral flag to surgery scheduling form",
+                "Auto-populate modifier 50 when bilateral procedure scheduled",
+                "Monthly audit of bilateral surgical claims"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ORT-PTN-002",
+          "title": "E/M Visit Billed Same Day as Joint Injection Without Modifier 25",
+          "description": "When a physician performs an evaluation AND a joint injection on the same day, the E/M requires modifier 25. Pain management and sports medicine providers frequently omit this.",
+          "category": "bundling",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": [
+            "20610",
+            "20611",
+            "99213",
+            "99214",
+            "J3301",
+            "J0702"
+          ],
+          "policies": [
+            {
+              "id": "policy_26",
+              "triggerRate": 0.82
+            }
+          ],
+          "denialReason": "E/M service bundled with injection procedure - modifier 25 required for separate E/M",
+          "claimDistribution": {
+            "total": 380,
+            "deniedBaseline": 76,
+            "deniedCurrent": 30,
+            "appealsFiled": 44,
+            "appealsOverturned": 28
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 63,
+              "deniedCount": 13,
+              "denialRate": 0.206,
+              "dollarsDenied": 6500
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 68,
+              "deniedCount": 5,
+              "denialRate": 0.074,
+              "dollarsDenied": 2500
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.21,
+                "dollarsDenied": 3360
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.202,
+                "dollarsDenied": 3232
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.185,
+                "dollarsDenied": 2775
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.155,
+                "dollarsDenied": 2325
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.12,
+                "dollarsDenied": 1680
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.098,
+                "dollarsDenied": 1274
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.082,
+                "dollarsDenied": 1148
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.076,
+                "dollarsDenied": 1064
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.071,
+                "dollarsDenied": 1065
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-10-25",
+            "totalViews": 15,
+            "claimLabTests": 9,
+            "claimsExported": 5,
+            "actionsRecorded": [
+              {
+                "type": "sop_created",
+                "date": "2026-01-15",
+                "description": "Injection + E/M billing SOP distributed"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with modifier 25 and documentation of separate E/M",
+              "canResubmit": true,
+              "claimCount": 15,
+              "amount": 7500
+            },
+            "longTerm": {
+              "description": "Train all injection providers on modifier 25 requirements",
+              "steps": [
+                "Create injection visit billing SOP",
+                "Add modifier 25 prompt to injection encounter template",
+                "Quarterly audit of injection + E/M claims"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ORT-PTN-003",
+          "title": "Prior Authorization Missing for Advanced Imaging (MRI/CT)",
+          "description": "MRI and CT imaging for orthopedic conditions requires prior authorization from UPMC Health Plan. The front desk ordering process doesn't consistently capture PA before the study is performed.",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": [
+            "73721",
+            "73723",
+            "72148",
+            "72141",
+            "73221",
+            "73223"
+          ],
+          "policies": [
+            {
+              "id": "policy_203",
+              "triggerRate": 0.76
+            }
+          ],
+          "denialReason": "Prior authorization required for advanced imaging - no authorization on file at time of service",
+          "claimDistribution": {
+            "total": 310,
+            "deniedBaseline": 62,
+            "deniedCurrent": 44,
+            "appealsFiled": 25,
+            "appealsOverturned": 11
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 57,
+              "deniedCount": 11,
+              "denialRate": 0.193,
+              "dollarsDenied": 16500
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 60,
+              "deniedCount": 9,
+              "denialRate": 0.15,
+              "dollarsDenied": 13500
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.198,
+                "dollarsDenied": 8514
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.189,
+                "dollarsDenied": 8127
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.183,
+                "dollarsDenied": 7503
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.178,
+                "dollarsDenied": 7298
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.172,
+                "dollarsDenied": 6708
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.165,
+                "dollarsDenied": 5940
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.158,
+                "dollarsDenied": 6794
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.152,
+                "dollarsDenied": 6536
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.148,
+                "dollarsDenied": 6882
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-01",
+            "totalViews": 11,
+            "claimLabTests": 2,
+            "claimsExported": 4,
+            "actionsRecorded": [
+              {
+                "type": "workflow_update",
+                "date": "2025-11-15",
+                "description": "Front desk PA check added before imaging scheduling"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Request retroactive PA where clinical documentation supports medical necessity",
+              "canResubmit": true,
+              "claimCount": 8,
+              "amount": 12000
+            },
+            "longTerm": {
+              "description": "Redesign imaging ordering workflow to require PA confirmation before study",
+              "steps": [
+                "Add PA verification step to imaging order workflow",
+                "Create PA tracking dashboard for pending authorizations",
+                "Train front desk on payer-specific PA requirements"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ORT-PTN-004",
+          "title": "NCCI Bundling Edit Violations - Modifier 59 Required for Distinct Procedures",
+          "description": "When multiple surgical procedures are performed in the same session, NCCI edits may bundle them. Modifier 59 (or X-modifiers) is required to indicate the procedures were distinct and separate.",
+          "category": "bundling",
+          "status": "improving",
+          "tier": "medium",
+          "procedureCodes": [
+            "29881",
+            "29880",
+            "27427",
+            "27428",
+            "G0289"
+          ],
+          "policies": [
+            {
+              "id": "policy_89",
+              "triggerRate": 0.85
+            }
+          ],
+          "denialReason": "NCCI bundling edit - modifier 59/XE/XS/XP/XU required to indicate distinct procedural service",
+          "claimDistribution": {
+            "total": 195,
+            "deniedBaseline": 41,
+            "deniedCurrent": 18,
+            "appealsFiled": 23,
+            "appealsOverturned": 15
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 35,
+              "deniedCount": 7,
+              "denialRate": 0.2,
+              "dollarsDenied": 14000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 37,
+              "deniedCount": 3,
+              "denialRate": 0.081,
+              "dollarsDenied": 6000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.208,
+                "dollarsDenied": 7280
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.194,
+                "dollarsDenied": 6790
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.18,
+                "dollarsDenied": 5940
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.155,
+                "dollarsDenied": 5115
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.125,
+                "dollarsDenied": 3875
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.105,
+                "dollarsDenied": 2940
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.092,
+                "dollarsDenied": 2760
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.085,
+                "dollarsDenied": 2550
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.078,
+                "dollarsDenied": 2496
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-10-15",
+            "totalViews": 13,
+            "claimLabTests": 7,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-11-01",
+                "description": "Coders trained on NCCI edit pairs and modifier 59 usage"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with appropriate modifier 59/X-modifier and operative note documentation",
+              "canResubmit": true,
+              "claimCount": 8,
+              "amount": 16000
+            },
+            "longTerm": {
+              "description": "Implement NCCI edit check in pre-submission claim scrubbing",
+              "steps": [
+                "Add NCCI edit pair reference to coding tools",
+                "Train coders on modifier 59 vs X-modifier usage",
+                "Integrate CCI edit check into claim submission workflow"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ORT-PTN-005",
+          "title": "Physical Therapy Visit Frequency Exceeds Plan Benefit Limit",
+          "description": "Post-surgical patients sometimes exceed their plan's PT visit limit. Legitimate denials. Practice now checks remaining visits but cannot eliminate all occurrences.",
+          "category": "frequency-limit",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": [
+            "97110",
+            "97140",
+            "97530",
+            "97542",
+            "97112"
+          ],
+          "policies": [
+            {
+              "id": "policy_312",
+              "triggerRate": 1.0
+            }
+          ],
+          "denialReason": "Physical therapy visit frequency exceeds plan benefit limit for current benefit period",
+          "claimDistribution": {
+            "total": 135,
+            "deniedBaseline": 120,
+            "deniedCurrent": 105,
+            "appealsFiled": 6,
+            "appealsOverturned": 0
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 27,
+              "deniedCount": 27,
+              "denialRate": 1.0,
+              "dollarsDenied": 4050
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 23,
+              "deniedCount": 23,
+              "denialRate": 1.0,
+              "dollarsDenied": 3450
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 1950
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 1650
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 1500
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 1725
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 1725
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-12-20",
+            "totalViews": 4,
+            "claimLabTests": 0,
+            "claimsExported": 0,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Cannot resubmit - legitimate benefit limit exceeded",
+              "canResubmit": false,
+              "claimCount": 0,
+              "amount": 0
+            },
+            "longTerm": {
+              "description": "Check remaining PT visits before scheduling",
+              "steps": [
+                "Verify remaining PT visits at each appointment",
+                "Alert PT when patient approaching visit limit",
+                "Discuss self-pay options with patient"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ORT-PTN-006",
+          "title": "E/M Visit During Global Surgery Post-Operative Period",
+          "description": "E/M visits billed during the global surgery period (10 or 90 day post-op window) are denied because follow-up care is included in the surgical fee. Some visits are legitimately separate (new problem, modifier 24).",
+          "category": "global-period",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": [
+            "99213",
+            "99214",
+            "99024"
+          ],
+          "policies": [
+            {
+              "id": "policy_67",
+              "triggerRate": 0.9
+            }
+          ],
+          "denialReason": "E/M service billed during global surgery post-operative period - included in surgical package",
+          "claimDistribution": {
+            "total": 92,
+            "deniedBaseline": 84,
+            "deniedCurrent": 61,
+            "appealsFiled": 15,
+            "appealsOverturned": 6
+          },
+          "trajectory": {
+            "curve": "slight_decline",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 19,
+              "deniedCount": 19,
+              "denialRate": 1.0,
+              "dollarsDenied": 5700
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 15,
+              "deniedCount": 13,
+              "denialRate": 0.867,
+              "dollarsDenied": 3900
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 3000
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 2700
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 2700
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.95,
+                "dollarsDenied": 2565
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.941,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.923,
+                "dollarsDenied": 2160
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.9,
+                "dollarsDenied": 2430
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.875,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.857,
+                "dollarsDenied": 1800
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2026-02-10",
+            "totalViews": 6,
+            "claimLabTests": 2,
+            "claimsExported": 1,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "For visits addressing new/unrelated problems, resubmit with modifier 24",
+              "canResubmit": true,
+              "claimCount": 4,
+              "amount": 1200
+            },
+            "longTerm": {
+              "description": "Educate surgeons on global period rules and modifier 24 criteria",
+              "steps": [
+                "Create global period quick-reference for common surgical CPT codes",
+                "Flag scheduled post-op visits in EMR during global period",
+                "Train surgeons on modifier 24 criteria for unrelated problems"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 38,
+          "claim_inspected": 42,
+          "claims_exported": 19,
+          "action_recorded": 11
+        },
+        "eventClustering": {
+          "ORT-PTN-001": [
+            "2025-09-10",
+            "2025-09-12",
+            "2025-09-25",
+            "2025-10-05"
+          ],
+          "ORT-PTN-002": [
+            "2025-10-25",
+            "2025-10-28",
+            "2026-01-15"
+          ],
+          "ORT-PTN-003": [
+            "2025-11-01",
+            "2025-11-05",
+            "2025-11-15"
+          ],
+          "ORT-PTN-004": [
+            "2025-10-15",
+            "2025-10-20",
+            "2025-11-01"
+          ],
+          "ORT-PTN-005": [
+            "2025-12-20"
+          ],
+          "ORT-PTN-006": [
+            "2026-02-10",
+            "2026-02-15"
+          ]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 4050,
+        "totalDenied": 381,
+        "overallDenialRate": 0.094,
+        "totalDollarsDenied": 35910,
+        "totalAppeals": 52,
+        "appealSuccessRate": 0.46
+      }
+    },
+    {
+      "id": "upmc-cardiology-monroeville",
+      "name": "Allegheny Cardiovascular Associates",
+      "description": "Cardiology practice with highest dollar recovery due to high-value procedural claims. Key patterns: cardiac diagnostic bundling, cath lab prior auth, stress test medical necessity, POS errors. Starting denial rate 15.4%, target 10.2%.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2026-03-28",
+        "periodDays": 270,
+        "keyEvents": [
+          {
+            "date": "2025-07-01",
+            "type": "baseline",
+            "description": "Baseline period - ~320 claims/month, heavy diagnostic and interventional mix",
+            "impactedPatterns": []
+          },
+          {
+            "date": "2025-08-01",
+            "type": "detection",
+            "description": "Cardiac diagnostic test bundling violations detected",
+            "impactedPatterns": [
+              "CAR-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-08-20",
+            "type": "detection",
+            "description": "Prior auth missing for cardiac catheterization",
+            "impactedPatterns": [
+              "CAR-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-09-10",
+            "type": "detection",
+            "description": "Medical necessity documentation insufficient for stress testing",
+            "impactedPatterns": [
+              "CAR-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-09-25",
+            "type": "engagement",
+            "description": "Cardiology coding specialist deep-dives bundling rules in portal",
+            "impactedPatterns": [
+              "CAR-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-15",
+            "type": "training",
+            "description": "Bundling edit check integrated into billing workflow",
+            "impactedPatterns": [
+              "CAR-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-11-01",
+            "type": "detection",
+            "description": "Place of service errors on outpatient cardiac procedures",
+            "impactedPatterns": [
+              "CAR-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-11-20",
+            "type": "workflow",
+            "description": "Office manager overhauls PA tracking process for cath lab",
+            "impactedPatterns": [
+              "CAR-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-12-15",
+            "type": "resolution",
+            "description": "Diagnostic bundling pattern resolved",
+            "impactedPatterns": [
+              "CAR-PTN-001"
+            ]
+          },
+          {
+            "date": "2026-01-10",
+            "type": "detection",
+            "description": "Experimental/investigational denial on newer cardiac devices",
+            "impactedPatterns": [
+              "CAR-PTN-005"
+            ]
+          },
+          {
+            "date": "2026-02-15",
+            "type": "milestone",
+            "description": "PA compliance rate reaches 94% for cath procedures",
+            "impactedPatterns": [
+              "CAR-PTN-002"
+            ]
+          },
+          {
+            "date": "2026-03-28",
+            "type": "milestone",
+            "description": "Current state - denial rate from 15.4% to 10.2%",
+            "impactedPatterns": []
+          }
+        ]
+      },
+      "practice": {
+        "id": "PRV-UPMC-ACA",
+        "name": "Allegheny Cardiovascular Associates",
+        "taxId": "25-3847261",
+        "address": {
+          "street": "4815 Liberty Avenue, Suite 400",
+          "city": "Pittsburgh",
+          "state": "PA",
+          "zip": "15224"
+        },
+        "providers": [
+          {
+            "id": "DOC-CAR-001",
+            "name": "Dr. Richard Nguyen",
+            "npi": "1629384001",
+            "specialty": "Cardiology",
+            "taxonomy": "207RC0000X",
+            "claimWeight": 1.1
+          },
+          {
+            "id": "DOC-CAR-002",
+            "name": "Dr. Maria Castellano",
+            "npi": "1629384002",
+            "specialty": "Interventional Cardiology",
+            "taxonomy": "207RI0011X",
+            "claimWeight": 1.4
+          },
+          {
+            "id": "DOC-CAR-003",
+            "name": "Dr. Amir Hassan",
+            "npi": "1629384003",
+            "specialty": "Cardiology",
+            "taxonomy": "207RC0000X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-CAR-004",
+            "name": "Dr. Elizabeth Grant",
+            "npi": "1629384004",
+            "specialty": "Electrophysiology",
+            "taxonomy": "207RE0101X",
+            "claimWeight": 1.3
+          },
+          {
+            "id": "DOC-CAR-005",
+            "name": "Dr. Raj Patel",
+            "npi": "1629384005",
+            "specialty": "Interventional Cardiology",
+            "taxonomy": "207RI0011X",
+            "claimWeight": 1.2
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 2880,
+        "monthlyVariation": {
+          "2025-07": 0.969,
+          "2025-08": 0.984,
+          "2025-09": 1.016,
+          "2025-10": 1.031,
+          "2025-11": 1.0,
+          "2025-12": 0.922,
+          "2026-01": 1.047,
+          "2026-02": 1.016,
+          "2026-03": 1.016
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 6
+        },
+        "claimValueRanges": {
+          "low": {
+            "min": 100,
+            "max": 500
+          },
+          "medium": {
+            "min": 500,
+            "max": 5000
+          },
+          "high": {
+            "min": 5000,
+            "max": 45000
+          }
+        }
+      },
+      "patterns": [
+        {
+          "id": "CAR-PTN-001",
+          "title": "Cardiac Diagnostic Test Bundling - Echo + EKG + Stress Test Same Day",
+          "description": "Multiple cardiac diagnostic tests performed same day triggering CCI bundling edits. Practice was billing echo, EKG, and stress test components separately without proper modifier usage. 61% appeal rate, 68% overturn - legitimate services just incorrectly unbundled.",
+          "category": "bundling",
+          "status": "resolved",
+          "tier": "critical",
+          "procedureCodes": [
+            "93000",
+            "93306",
+            "93350",
+            "93015",
+            "93016",
+            "93017",
+            "93018"
+          ],
+          "policies": [
+            {
+              "id": "policy_89",
+              "triggerRate": 0.88
+            }
+          ],
+          "denialReason": "CCI bundling edit - cardiac diagnostic components require appropriate modifier or are inclusive of primary procedure",
+          "claimDistribution": {
+            "total": 450,
+            "deniedBaseline": 116,
+            "deniedCurrent": 14,
+            "appealsFiled": 71,
+            "appealsOverturned": 48
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 80,
+              "deniedCount": 21,
+              "denialRate": 0.263,
+              "dollarsDenied": 21000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 83,
+              "deniedCount": 3,
+              "denialRate": 0.036,
+              "dollarsDenied": 3000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.268,
+                "dollarsDenied": 10720
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.258,
+                "dollarsDenied": 10320
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.22,
+                "dollarsDenied": 8360
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.12,
+                "dollarsDenied": 4560
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.065,
+                "dollarsDenied": 2340
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.042,
+                "dollarsDenied": 1386
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.038,
+                "dollarsDenied": 1368
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.035,
+                "dollarsDenied": 1260
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.036,
+                "dollarsDenied": 1296
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-25",
+            "totalViews": 28,
+            "claimLabTests": 14,
+            "claimsExported": 7,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-10-10",
+                "description": "Coding team trained on cardiac bundling rules and CCI edits"
+              },
+              {
+                "type": "system_config",
+                "date": "2025-10-15",
+                "description": "Pre-submission edit check for cardiac bundling added"
+              },
+              {
+                "type": "sop_created",
+                "date": "2025-11-01",
+                "description": "Same-day cardiac testing billing SOP created"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with appropriate modifiers and documentation of distinct services",
+              "canResubmit": true,
+              "claimCount": 20,
+              "amount": 20000
+            },
+            "longTerm": {
+              "description": "Implement pre-submission CCI edit checking for all cardiac diagnostic claims",
+              "steps": [
+                "Integrate CCI edit engine into claim scrubbing workflow",
+                "Create cardiac diagnostic billing quick-reference",
+                "Quarterly audit of same-day cardiac testing claims"
+              ]
+            }
+          }
+        },
+        {
+          "id": "CAR-PTN-002",
+          "title": "Prior Authorization Missing for Cardiac Catheterization",
+          "description": "Cardiac cath procedures ($8K+ per case) require prior authorization. Cath lab scheduling workflow didn't consistently verify PA status. High-dollar denials drive aggressive appeals (75% appeal rate, 67% overturn).",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "critical",
+          "procedureCodes": [
+            "93451",
+            "93452",
+            "93453",
+            "93454",
+            "93456",
+            "93458",
+            "93460"
+          ],
+          "policies": [
+            {
+              "id": "policy_203",
+              "triggerRate": 0.8
+            }
+          ],
+          "denialReason": "Prior authorization required for cardiac catheterization - no authorization on file",
+          "claimDistribution": {
+            "total": 105,
+            "deniedBaseline": 30,
+            "deniedCurrent": 11,
+            "appealsFiled": 22,
+            "appealsOverturned": 15
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 19,
+              "deniedCount": 5,
+              "denialRate": 0.263,
+              "dollarsDenied": 40000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 20,
+              "deniedCount": 2,
+              "denialRate": 0.1,
+              "dollarsDenied": 16000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.273,
+                "dollarsDenied": 21840
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.25,
+                "dollarsDenied": 20000
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.231,
+                "dollarsDenied": 17325
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.2,
+                "dollarsDenied": 16000
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.167,
+                "dollarsDenied": 12012
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.143,
+                "dollarsDenied": 10010
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.118,
+                "dollarsDenied": 9440
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.105,
+                "dollarsDenied": 8400
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.095,
+                "dollarsDenied": 7600
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-20",
+            "totalViews": 16,
+            "claimLabTests": 3,
+            "claimsExported": 5,
+            "actionsRecorded": [
+              {
+                "type": "workflow_update",
+                "date": "2025-12-01",
+                "description": "PA tracking system implemented for all scheduled cath procedures"
+              },
+              {
+                "type": "system_config",
+                "date": "2026-01-10",
+                "description": "EHR alerts for PA requirement on cath orders"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Request retroactive PA with clinical documentation for recent denials",
+              "canResubmit": true,
+              "claimCount": 5,
+              "amount": 40000
+            },
+            "longTerm": {
+              "description": "Require PA verification before any cath procedure is scheduled",
+              "steps": [
+                "Add PA hold to cath lab scheduling system",
+                "Create PA verification checklist for cath pre-procedure workflow",
+                "Weekly PA status report for upcoming cath procedures"
+              ]
+            }
+          }
+        },
+        {
+          "id": "CAR-PTN-003",
+          "title": "Medical Necessity Documentation Insufficient for Cardiac Stress Testing",
+          "description": "Stress tests denied for insufficient documentation of medical necessity - ordering indication not clearly linked to cardiac risk factors or symptoms. Moderate churn with mixed appeal success.",
+          "category": "documentation",
+          "status": "active",
+          "tier": "high",
+          "procedureCodes": [
+            "93015",
+            "93016",
+            "93017",
+            "93018",
+            "78451",
+            "78452"
+          ],
+          "policies": [
+            {
+              "id": "policy_45",
+              "triggerRate": 0.75
+            }
+          ],
+          "denialReason": "Medical necessity documentation insufficient - clinical indication for cardiac stress testing not adequately documented",
+          "claimDistribution": {
+            "total": 280,
+            "deniedBaseline": 45,
+            "deniedCurrent": 32,
+            "appealsFiled": 19,
+            "appealsOverturned": 6
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 50,
+              "deniedCount": 8,
+              "denialRate": 0.16,
+              "dollarsDenied": 12000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 52,
+              "deniedCount": 6,
+              "denialRate": 0.115,
+              "dollarsDenied": 9000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.163,
+                "dollarsDenied": 6194
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.157,
+                "dollarsDenied": 5966
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.151,
+                "dollarsDenied": 5436
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.145,
+                "dollarsDenied": 5220
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.138,
+                "dollarsDenied": 4692
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.13,
+                "dollarsDenied": 4030
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.122,
+                "dollarsDenied": 4392
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.118,
+                "dollarsDenied": 4248
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.113,
+                "dollarsDenied": 4068
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-15",
+            "totalViews": 10,
+            "claimLabTests": 4,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2026-01-20",
+                "description": "Physicians reviewed medical necessity criteria for stress testing"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Append clinical documentation linking symptoms/risk factors to stress test indication",
+              "canResubmit": true,
+              "claimCount": 6,
+              "amount": 9000
+            },
+            "longTerm": {
+              "description": "Add medical necessity documentation prompts to stress test ordering workflow",
+              "steps": [
+                "Create stress test order template with required clinical fields",
+                "Add ACC/AHA appropriate use criteria reference to ordering system",
+                "Conduct physician education on documentation standards"
+              ]
+            }
+          }
+        },
+        {
+          "id": "CAR-PTN-004",
+          "title": "Incorrect Place of Service Code for Outpatient Cardiac Procedures",
+          "description": "Some outpatient cardiac procedures billed with incorrect POS code. System configuration issue - once templates were corrected, volume dropped significantly.",
+          "category": "administrative",
+          "status": "improving",
+          "tier": "low",
+          "procedureCodes": [
+            "93000",
+            "93306",
+            "93798"
+          ],
+          "policies": [],
+          "denialReason": "Place of service does not match expected setting for billed procedure",
+          "claimDistribution": {
+            "total": 72,
+            "deniedBaseline": 66,
+            "deniedCurrent": 18,
+            "appealsFiled": 24,
+            "appealsOverturned": 18
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 15,
+              "deniedCount": 15,
+              "denialRate": 1.0,
+              "dollarsDenied": 4500
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 4,
+              "deniedCount": 4,
+              "denialRate": 1.0,
+              "dollarsDenied": 1200
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 2100
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 1800
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 1500
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 900
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 600
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 600
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 600
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-05",
+            "totalViews": 7,
+            "claimLabTests": 2,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "system_config",
+                "date": "2025-12-01",
+                "description": "POS codes updated in practice management system templates"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with corrected POS code",
+              "canResubmit": true,
+              "claimCount": 10,
+              "amount": 3000
+            },
+            "longTerm": {
+              "description": "Correct POS defaults in practice management system",
+              "steps": [
+                "Audit all procedure templates for correct POS codes",
+                "Update PMS templates for office vs facility settings",
+                "Add POS validation to pre-submission claim check"
+              ]
+            }
+          }
+        },
+        {
+          "id": "CAR-PTN-005",
+          "title": "Experimental/Investigational Denial on Newer Cardiac Device Procedures",
+          "description": "Newer cardiac devices (leadless pacemakers, subcutaneous ICDs) occasionally denied as experimental/investigational despite FDA approval. Sticky denial - plan policy is clear.",
+          "category": "coverage-exclusion",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": [
+            "33285",
+            "33286",
+            "33274",
+            "33275"
+          ],
+          "policies": [
+            {
+              "id": "policy_445",
+              "triggerRate": 1.0
+            }
+          ],
+          "denialReason": "Procedure classified as experimental/investigational per plan policy - not a covered benefit",
+          "claimDistribution": {
+            "total": 20,
+            "deniedBaseline": 20,
+            "deniedCurrent": 15,
+            "appealsFiled": 16,
+            "appealsOverturned": 4
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 4,
+              "deniedCount": 4,
+              "denialRate": 1.0,
+              "dollarsDenied": 36000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 3,
+              "deniedCount": 3,
+              "denialRate": 1.0,
+              "dollarsDenied": 27000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 18000
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 18000
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 9000
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 18000
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 9000
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 9000
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 18000
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 18000
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 9000
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2026-01-15",
+            "totalViews": 5,
+            "claimLabTests": 0,
+            "claimsExported": 2,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Appeal with peer-reviewed literature and FDA clearance documentation - low success rate",
+              "canResubmit": true,
+              "claimCount": 3,
+              "amount": 27000
+            },
+            "longTerm": {
+              "description": "Monitor plan policy updates - devices may be reclassified as covered",
+              "steps": [
+                "Track plan medical policy updates quarterly",
+                "Build clinical evidence portfolio for future appeals",
+                "Coordinate with device manufacturer for payer education"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 35,
+          "claim_inspected": 38,
+          "claims_exported": 20,
+          "action_recorded": 9
+        },
+        "eventClustering": {
+          "CAR-PTN-001": [
+            "2025-09-25",
+            "2025-09-28",
+            "2025-10-10",
+            "2025-10-15",
+            "2025-11-01"
+          ],
+          "CAR-PTN-002": [
+            "2025-11-20",
+            "2025-11-25",
+            "2025-12-01",
+            "2026-01-10"
+          ],
+          "CAR-PTN-003": [
+            "2025-09-15",
+            "2026-01-20"
+          ],
+          "CAR-PTN-004": [
+            "2025-11-05",
+            "2025-12-01"
+          ],
+          "CAR-PTN-005": [
+            "2026-01-15"
+          ]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 2880,
+        "totalDenied": 294,
+        "overallDenialRate": 0.102,
+        "totalDollarsDenied": 56200,
+        "totalAppeals": 38,
+        "appealSuccessRate": 0.42
+      }
+    },
+    {
+      "id": "upmc-gi-cranberry",
+      "name": "Cranberry Gastroenterology & Endoscopy Center",
+      "description": "GI practice resolving screening-to-diagnostic colonoscopy coding issues, endoscopy prior auth gaps, and anesthesia bundling. Starting denial rate 13.1%, target 7.8%. The screening-to-diagnostic conversion pattern is a classic GI coding challenge that the portal resolves quickly.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2026-03-28",
+        "periodDays": 270,
+        "keyEvents": [
+          {
+            "date": "2025-07-01",
+            "type": "baseline",
+            "description": "Baseline period - ~280 claims/month, heavy endoscopy volume",
+            "impactedPatterns": []
+          },
+          {
+            "date": "2025-08-10",
+            "type": "detection",
+            "description": "Screening-to-diagnostic colonoscopy coding errors detected",
+            "impactedPatterns": [
+              "GI-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-08-25",
+            "type": "detection",
+            "description": "Prior auth gaps on upper endoscopy (EGD)",
+            "impactedPatterns": [
+              "GI-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-09-15",
+            "type": "detection",
+            "description": "Anesthesia bundling errors on colonoscopy claims",
+            "impactedPatterns": [
+              "GI-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-10-01",
+            "type": "engagement",
+            "description": "GI physicians review screening vs diagnostic criteria in portal",
+            "impactedPatterns": [
+              "GI-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-20",
+            "type": "training",
+            "description": "Coding team implements polyp-detection coding workflow",
+            "impactedPatterns": [
+              "GI-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-11-05",
+            "type": "engagement",
+            "description": "Billing manager tests anesthesia bundling corrections in Claim Lab",
+            "impactedPatterns": [
+              "GI-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-11-20",
+            "type": "detection",
+            "description": "Surveillance colonoscopy frequency limit - too early follow-up",
+            "impactedPatterns": [
+              "GI-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-12-15",
+            "type": "resolution",
+            "description": "Screening-to-diagnostic coding pattern largely resolved",
+            "impactedPatterns": [
+              "GI-PTN-001"
+            ]
+          },
+          {
+            "date": "2026-01-10",
+            "type": "detection",
+            "description": "Pathology specimen handling codes denied - bundling with endoscopy",
+            "impactedPatterns": [
+              "GI-PTN-005"
+            ]
+          },
+          {
+            "date": "2026-02-01",
+            "type": "milestone",
+            "description": "PA compliance improves to 91% for EGD procedures",
+            "impactedPatterns": [
+              "GI-PTN-002"
+            ]
+          },
+          {
+            "date": "2026-03-28",
+            "type": "milestone",
+            "description": "Current state - denial rate from 13.1% to 7.8%",
+            "impactedPatterns": []
+          }
+        ]
+      },
+      "practice": {
+        "id": "PRV-UPMC-CGEC",
+        "name": "Cranberry Gastroenterology & Endoscopy Center",
+        "taxId": "25-4736182",
+        "address": {
+          "street": "20500 Route 19, Suite 300",
+          "city": "Cranberry Township",
+          "state": "PA",
+          "zip": "16066"
+        },
+        "providers": [
+          {
+            "id": "DOC-GI-001",
+            "name": "Dr. Jonathan Weiss",
+            "npi": "1740285001",
+            "specialty": "Gastroenterology",
+            "taxonomy": "207RG0100X",
+            "claimWeight": 1.2
+          },
+          {
+            "id": "DOC-GI-002",
+            "name": "Dr. Sunita Rao",
+            "npi": "1740285002",
+            "specialty": "Gastroenterology",
+            "taxonomy": "207RG0100X",
+            "claimWeight": 1.1
+          },
+          {
+            "id": "DOC-GI-003",
+            "name": "Dr. Kevin O'Brien",
+            "npi": "1740285003",
+            "specialty": "Gastroenterology",
+            "taxonomy": "207RG0100X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-GI-004",
+            "name": "Dr. Helen Park",
+            "npi": "1740285004",
+            "specialty": "Hepatology",
+            "taxonomy": "207RI0008X",
+            "claimWeight": 0.7
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 2520,
+        "monthlyVariation": {
+          "2025-07": 0.982,
+          "2025-08": 1.0,
+          "2025-09": 1.036,
+          "2025-10": 1.018,
+          "2025-11": 0.964,
+          "2025-12": 0.893,
+          "2026-01": 1.054,
+          "2026-02": 1.036,
+          "2026-03": 1.018
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 4
+        },
+        "claimValueRanges": {
+          "low": {
+            "min": 100,
+            "max": 400
+          },
+          "medium": {
+            "min": 400,
+            "max": 2500
+          },
+          "high": {
+            "min": 2500,
+            "max": 12000
+          }
+        }
+      },
+      "patterns": [
+        {
+          "id": "GI-PTN-001",
+          "title": "Screening-to-Diagnostic Colonoscopy Coding Error - Polyp Found, Code Not Updated",
+          "description": "When a polyp is found during a screening colonoscopy, the procedure code should be updated from screening (G0121/G0105) to therapeutic (45380-45385). Practice was not consistently making the conversion. Classic GI coding issue - 67% appeal rate, 71% overturn.",
+          "category": "coding-error",
+          "status": "resolved",
+          "tier": "critical",
+          "procedureCodes": [
+            "45378",
+            "45380",
+            "45381",
+            "45384",
+            "45385",
+            "G0105",
+            "G0121"
+          ],
+          "policies": [
+            {
+              "id": "policy_17",
+              "triggerRate": 0.88
+            }
+          ],
+          "denialReason": "Screening colonoscopy code submitted with therapeutic intervention - code should reflect diagnostic/therapeutic procedure",
+          "claimDistribution": {
+            "total": 315,
+            "deniedBaseline": 78,
+            "deniedCurrent": 10,
+            "appealsFiled": 52,
+            "appealsOverturned": 37
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 57,
+              "deniedCount": 14,
+              "denialRate": 0.246,
+              "dollarsDenied": 16800
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 60,
+              "deniedCount": 2,
+              "denialRate": 0.033,
+              "dollarsDenied": 2400
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.25,
+                "dollarsDenied": 8500
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.242,
+                "dollarsDenied": 8228
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.21,
+                "dollarsDenied": 6930
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.105,
+                "dollarsDenied": 3570
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.058,
+                "dollarsDenied": 1856
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.04,
+                "dollarsDenied": 1120
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.035,
+                "dollarsDenied": 1120
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.033,
+                "dollarsDenied": 1056
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.031,
+                "dollarsDenied": 992
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-10-01",
+            "totalViews": 26,
+            "claimLabTests": 11,
+            "claimsExported": 8,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-10-15",
+                "description": "All GI physicians trained on screening-to-diagnostic code conversion"
+              },
+              {
+                "type": "workflow_update",
+                "date": "2025-10-20",
+                "description": "Polyp detection triggers automatic code conversion in endoscopy report"
+              },
+              {
+                "type": "sop_created",
+                "date": "2025-11-01",
+                "description": "Endoscopy coding quick-reference card created"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with corrected procedure codes reflecting therapeutic intervention",
+              "canResubmit": true,
+              "claimCount": 18,
+              "amount": 21600
+            },
+            "longTerm": {
+              "description": "Automate code conversion in endoscopy reporting system when findings indicate therapeutic procedure",
+              "steps": [
+                "Link pathology findings to automatic code conversion",
+                "Create endoscopy coding decision tree",
+                "Quarterly audit of screening vs diagnostic coding accuracy"
+              ]
+            }
+          }
+        },
+        {
+          "id": "GI-PTN-002",
+          "title": "Prior Authorization Missing for Upper Endoscopy (EGD)",
+          "description": "EGD procedures require prior auth. Scheduling workflow doesn't consistently verify PA before the procedure date.",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": [
+            "43239",
+            "43235",
+            "43236",
+            "43237",
+            "43238"
+          ],
+          "policies": [
+            {
+              "id": "policy_203",
+              "triggerRate": 0.78
+            }
+          ],
+          "denialReason": "Prior authorization required for upper endoscopy - no authorization on file at time of service",
+          "claimDistribution": {
+            "total": 230,
+            "deniedBaseline": 41,
+            "deniedCurrent": 18,
+            "appealsFiled": 18,
+            "appealsOverturned": 7
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 41,
+              "deniedCount": 7,
+              "denialRate": 0.171,
+              "dollarsDenied": 10500
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 43,
+              "deniedCount": 3,
+              "denialRate": 0.07,
+              "dollarsDenied": 4500
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.175,
+                "dollarsDenied": 5425
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.167,
+                "dollarsDenied": 5177
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.152,
+                "dollarsDenied": 4560
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.13,
+                "dollarsDenied": 3900
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.11,
+                "dollarsDenied": 3080
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.095,
+                "dollarsDenied": 2470
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.08,
+                "dollarsDenied": 2480
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.072,
+                "dollarsDenied": 2232
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.067,
+                "dollarsDenied": 2077
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-01",
+            "totalViews": 14,
+            "claimLabTests": 4,
+            "claimsExported": 6,
+            "actionsRecorded": [
+              {
+                "type": "workflow_update",
+                "date": "2025-10-01",
+                "description": "PA tracking added to endoscopy scheduling workflow"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Request retroactive PA for denied EGD claims with clinical documentation",
+              "canResubmit": true,
+              "claimCount": 5,
+              "amount": 7500
+            },
+            "longTerm": {
+              "description": "Require PA confirmation before any EGD is scheduled",
+              "steps": [
+                "Add PA verification to endoscopy scheduling checklist",
+                "Create PA tracking dashboard",
+                "Weekly report on upcoming procedures without PA"
+              ]
+            }
+          }
+        },
+        {
+          "id": "GI-PTN-003",
+          "title": "Anesthesia Service Bundling with Endoscopy - Separate Billing Denied",
+          "description": "Monitored anesthesia care (MAC) billed separately from endoscopy procedure triggering bundling denials. Specific modifier and documentation requirements apply.",
+          "category": "bundling",
+          "status": "improving",
+          "tier": "medium",
+          "procedureCodes": [
+            "00810",
+            "00811",
+            "00812",
+            "00813"
+          ],
+          "policies": [
+            {
+              "id": "policy_89",
+              "triggerRate": 0.82
+            }
+          ],
+          "denialReason": "Anesthesia service bundled with endoscopy procedure - separate billing requires appropriate modifier and documentation",
+          "claimDistribution": {
+            "total": 150,
+            "deniedBaseline": 34,
+            "deniedCurrent": 11,
+            "appealsFiled": 19,
+            "appealsOverturned": 11
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 27,
+              "deniedCount": 6,
+              "denialRate": 0.222,
+              "dollarsDenied": 3600
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 28,
+              "deniedCount": 2,
+              "denialRate": 0.071,
+              "dollarsDenied": 1200
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.226,
+                "dollarsDenied": 1808
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.219,
+                "dollarsDenied": 1752
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.2,
+                "dollarsDenied": 1520
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.167,
+                "dollarsDenied": 1269
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.133,
+                "dollarsDenied": 958
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.107,
+                "dollarsDenied": 695
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.088,
+                "dollarsDenied": 616
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.074,
+                "dollarsDenied": 518
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.069,
+                "dollarsDenied": 483
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-05",
+            "totalViews": 12,
+            "claimLabTests": 6,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "staff_training",
+                "date": "2025-11-20",
+                "description": "Anesthesia billing rules reviewed with CRNA team"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with appropriate anesthesia modifier and MAC documentation",
+              "canResubmit": true,
+              "claimCount": 5,
+              "amount": 3000
+            },
+            "longTerm": {
+              "description": "Standardize anesthesia coding for all endoscopy procedures",
+              "steps": [
+                "Create anesthesia billing template for endoscopy",
+                "Add MAC documentation checklist to anesthesia record",
+                "Quarterly audit of endoscopy + anesthesia claims"
+              ]
+            }
+          }
+        },
+        {
+          "id": "GI-PTN-004",
+          "title": "Surveillance Colonoscopy Scheduled Before Recommended Interval",
+          "description": "Patients scheduled for surveillance colonoscopy before guideline-recommended interval. Legitimate denials - plan follows established surveillance guidelines.",
+          "category": "frequency-limit",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": [
+            "45378",
+            "45380",
+            "45381"
+          ],
+          "policies": [
+            {
+              "id": "policy_312",
+              "triggerRate": 1.0
+            }
+          ],
+          "denialReason": "Surveillance colonoscopy frequency exceeds guideline-recommended interval for patient risk profile",
+          "claimDistribution": {
+            "total": 50,
+            "deniedBaseline": 45,
+            "deniedCurrent": 36,
+            "appealsFiled": 4,
+            "appealsOverturned": 0
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 10,
+              "deniedCount": 10,
+              "denialRate": 1.0,
+              "dollarsDenied": 8000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 8,
+              "deniedCount": 8,
+              "denialRate": 1.0,
+              "dollarsDenied": 6400
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 4000
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 4000
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 3200
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 3200
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 2400
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 3200
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 3200
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 3200
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-25",
+            "totalViews": 4,
+            "claimLabTests": 0,
+            "claimsExported": 1,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Cannot resubmit - guideline-based frequency limit",
+              "canResubmit": false,
+              "claimCount": 0,
+              "amount": 0
+            },
+            "longTerm": {
+              "description": "Check colonoscopy history and guideline interval at scheduling",
+              "steps": [
+                "Verify last colonoscopy date and findings before scheduling",
+                "Create surveillance interval reference based on polyp risk stratification",
+                "Alert scheduler when interval is shorter than recommended"
+              ]
+            }
+          }
+        },
+        {
+          "id": "GI-PTN-005",
+          "title": "Pathology Specimen Handling Codes Bundled with Endoscopy",
+          "description": "Pathology specimen handling and processing codes billed separately are being bundled with the endoscopy procedure code. Moderate churn - some are appropriately separate but documentation doesn't support it.",
+          "category": "bundling",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": [
+            "88305",
+            "88307",
+            "88312"
+          ],
+          "policies": [
+            {
+              "id": "policy_89",
+              "triggerRate": 0.7
+            }
+          ],
+          "denialReason": "Pathology specimen handling included in endoscopy procedure - separate billing not supported",
+          "claimDistribution": {
+            "total": 115,
+            "deniedBaseline": 30,
+            "deniedCurrent": 22,
+            "appealsFiled": 8,
+            "appealsOverturned": 4
+          },
+          "trajectory": {
+            "curve": "slight_decline",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 20,
+              "deniedCount": 5,
+              "denialRate": 0.25,
+              "dollarsDenied": 2000
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 21,
+              "deniedCount": 4,
+              "denialRate": 0.19,
+              "dollarsDenied": 1600
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.26,
+                "dollarsDenied": 1040
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.243,
+                "dollarsDenied": 972
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.235,
+                "dollarsDenied": 893
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.225,
+                "dollarsDenied": 855
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.218,
+                "dollarsDenied": 785
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.21,
+                "dollarsDenied": 714
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.2,
+                "dollarsDenied": 720
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.193,
+                "dollarsDenied": 695
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.186,
+                "dollarsDenied": 670
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2026-01-15",
+            "totalViews": 5,
+            "claimLabTests": 2,
+            "claimsExported": 1,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Review denied pathology claims and resubmit with documentation supporting separate service",
+              "canResubmit": true,
+              "claimCount": 3,
+              "amount": 1200
+            },
+            "longTerm": {
+              "description": "Clarify which pathology services can be billed separately from endoscopy",
+              "steps": [
+                "Create pathology billing reference for endoscopy procedures",
+                "Coordinate with pathology lab on bundling rules"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 32,
+          "claim_inspected": 36,
+          "claims_exported": 19,
+          "action_recorded": 8
+        },
+        "eventClustering": {
+          "GI-PTN-001": [
+            "2025-10-01",
+            "2025-10-05",
+            "2025-10-15",
+            "2025-10-20",
+            "2025-11-01"
+          ],
+          "GI-PTN-002": [
+            "2025-09-01",
+            "2025-10-01"
+          ],
+          "GI-PTN-003": [
+            "2025-11-05",
+            "2025-11-10",
+            "2025-11-20"
+          ],
+          "GI-PTN-004": [
+            "2025-11-25"
+          ],
+          "GI-PTN-005": [
+            "2026-01-15"
+          ]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 2520,
+        "totalDenied": 197,
+        "overallDenialRate": 0.078,
+        "totalDollarsDenied": 16100,
+        "totalAppeals": 29,
+        "appealSuccessRate": 0.41
+      }
+    },
+    {
+      "id": "upmc-behavioral-health-oakland",
+      "name": "Oakland Behavioral Health & Psychiatry Associates",
+      "description": "Behavioral health practice addressing telehealth POS coding (fastest fix - system config), session time documentation, IOP prior auth, and psychotherapy add-on coding. High telehealth mix (55%) makes POS pattern an easy win. Starting denial rate 12.6%, target 7.2%.",
+      "timeline": {
+        "startDate": "2025-07-01",
+        "endDate": "2026-03-28",
+        "periodDays": 270,
+        "keyEvents": [
+          {
+            "date": "2025-07-01",
+            "type": "baseline",
+            "description": "Baseline period - ~360 claims/month, 55% telehealth mix",
+            "impactedPatterns": []
+          },
+          {
+            "date": "2025-08-01",
+            "type": "detection",
+            "description": "Telehealth POS code errors - using POS 11 instead of POS 10/02",
+            "impactedPatterns": [
+              "BH-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-08-20",
+            "type": "detection",
+            "description": "Session time documentation insufficient for time-based psychotherapy billing",
+            "impactedPatterns": [
+              "BH-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-09-10",
+            "type": "detection",
+            "description": "Prior auth missing for intensive outpatient program (IOP) sessions",
+            "impactedPatterns": [
+              "BH-PTN-003"
+            ]
+          },
+          {
+            "date": "2025-09-25",
+            "type": "engagement",
+            "description": "Practice manager reviews telehealth POS requirements - quick fix identified",
+            "impactedPatterns": [
+              "BH-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-01",
+            "type": "system_change",
+            "description": "EHR telehealth templates updated with correct POS 10 and modifier 95",
+            "impactedPatterns": [
+              "BH-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-10-15",
+            "type": "resolution",
+            "description": "Telehealth POS pattern resolved - system configuration fix",
+            "impactedPatterns": [
+              "BH-PTN-001"
+            ]
+          },
+          {
+            "date": "2025-11-01",
+            "type": "detection",
+            "description": "Concurrent individual and group therapy same day - benefit limitation",
+            "impactedPatterns": [
+              "BH-PTN-004"
+            ]
+          },
+          {
+            "date": "2025-11-15",
+            "type": "engagement",
+            "description": "Psychiatrists review time-based documentation requirements",
+            "impactedPatterns": [
+              "BH-PTN-002"
+            ]
+          },
+          {
+            "date": "2025-12-01",
+            "type": "workflow",
+            "description": "Session time tracking template added to clinical notes",
+            "impactedPatterns": [
+              "BH-PTN-002"
+            ]
+          },
+          {
+            "date": "2026-01-10",
+            "type": "detection",
+            "description": "Psychotherapy add-on code (90833) denied without qualifying E/M",
+            "impactedPatterns": [
+              "BH-PTN-005"
+            ]
+          },
+          {
+            "date": "2026-02-01",
+            "type": "training",
+            "description": "IOP PA process improved - authorization secured before first session",
+            "impactedPatterns": [
+              "BH-PTN-003"
+            ]
+          },
+          {
+            "date": "2026-03-28",
+            "type": "milestone",
+            "description": "Current state - denial rate from 12.6% to 7.2%",
+            "impactedPatterns": []
+          }
+        ]
+      },
+      "practice": {
+        "id": "PRV-UPMC-OBHPA",
+        "name": "Oakland Behavioral Health & Psychiatry Associates",
+        "taxId": "25-5629471",
+        "address": {
+          "street": "3811 O'Hara Street, Suite 500",
+          "city": "Pittsburgh",
+          "state": "PA",
+          "zip": "15213"
+        },
+        "providers": [
+          {
+            "id": "DOC-BH-001",
+            "name": "Dr. Laura Steinberg",
+            "npi": "1851396001",
+            "specialty": "Psychiatry",
+            "taxonomy": "2084P0800X",
+            "claimWeight": 1.2
+          },
+          {
+            "id": "DOC-BH-002",
+            "name": "Dr. Michael Chang",
+            "npi": "1851396002",
+            "specialty": "Psychiatry",
+            "taxonomy": "2084P0800X",
+            "claimWeight": 1.1
+          },
+          {
+            "id": "DOC-BH-003",
+            "name": "Dr. Rachel Torres, PsyD",
+            "npi": "1851396003",
+            "specialty": "Clinical Psychology",
+            "taxonomy": "103T00000X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-BH-004",
+            "name": "Sarah Johnson, LCSW",
+            "npi": "1851396004",
+            "specialty": "Licensed Clinical Social Work",
+            "taxonomy": "1041C0700X",
+            "claimWeight": 0.8
+          },
+          {
+            "id": "DOC-BH-005",
+            "name": "Dr. David Kaplan",
+            "npi": "1851396005",
+            "specialty": "Psychiatry",
+            "taxonomy": "2084P0800X",
+            "claimWeight": 1.0
+          },
+          {
+            "id": "DOC-BH-006",
+            "name": "Emily Rodriguez, LCSW",
+            "npi": "1851396006",
+            "specialty": "Licensed Clinical Social Work",
+            "taxonomy": "1041C0700X",
+            "claimWeight": 0.8
+          }
+        ]
+      },
+      "volume": {
+        "totalClaims": 3240,
+        "monthlyVariation": {
+          "2025-07": 0.944,
+          "2025-08": 0.972,
+          "2025-09": 1.014,
+          "2025-10": 1.028,
+          "2025-11": 1.0,
+          "2025-12": 0.917,
+          "2026-01": 1.069,
+          "2026-02": 1.028,
+          "2026-03": 1.028
+        },
+        "claimLinesPerClaim": {
+          "min": 1,
+          "max": 3
+        },
+        "claimValueRanges": {
+          "low": {
+            "min": 60,
+            "max": 175
+          },
+          "medium": {
+            "min": 175,
+            "max": 450
+          },
+          "high": {
+            "min": 450,
+            "max": 1500
+          }
+        }
+      },
+      "patterns": [
+        {
+          "id": "BH-PTN-001",
+          "title": "Telehealth Place of Service Code Error - POS 11 Used Instead of POS 10/02",
+          "description": "With 55% of visits via telehealth, incorrect POS code generated significant denial volume. EHR templates defaulted to POS 11 (office). Simple system config fix resolved it almost immediately. 54% appeal rate, 70% overturn - clear administrative waste.",
+          "category": "administrative",
+          "status": "resolved",
+          "tier": "critical",
+          "procedureCodes": [
+            "90834",
+            "90837",
+            "90791",
+            "99213",
+            "99214"
+          ],
+          "policies": [],
+          "denialReason": "Place of service code does not match telehealth service - POS 10 or 02 required for telehealth encounters",
+          "claimDistribution": {
+            "total": 655,
+            "deniedBaseline": 131,
+            "deniedCurrent": 6,
+            "appealsFiled": 71,
+            "appealsOverturned": 50
+          },
+          "trajectory": {
+            "curve": "strong_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 123,
+              "deniedCount": 25,
+              "denialRate": 0.203,
+              "dollarsDenied": 5500
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 130,
+              "deniedCount": 1,
+              "denialRate": 0.008,
+              "dollarsDenied": 220
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.207,
+                "dollarsDenied": 2760
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.2,
+                "dollarsDenied": 2666
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.155,
+                "dollarsDenied": 2077
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.02,
+                "dollarsDenied": 280
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.012,
+                "dollarsDenied": 168
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.01,
+                "dollarsDenied": 130
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.009,
+                "dollarsDenied": 135
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.008,
+                "dollarsDenied": 112
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.007,
+                "dollarsDenied": 105
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-25",
+            "totalViews": 18,
+            "claimLabTests": 5,
+            "claimsExported": 4,
+            "actionsRecorded": [
+              {
+                "type": "system_config",
+                "date": "2025-10-01",
+                "description": "EHR telehealth encounter templates updated with POS 10 and modifier 95"
+              },
+              {
+                "type": "workflow_update",
+                "date": "2025-10-05",
+                "description": "Telehealth appointment type auto-populates correct POS code"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit denied telehealth claims with corrected POS 10 and modifier 95",
+              "canResubmit": true,
+              "claimCount": 35,
+              "amount": 7700
+            },
+            "longTerm": {
+              "description": "Configure EHR to automatically set correct POS for telehealth encounters",
+              "steps": [
+                "Update all telehealth encounter templates with POS 10",
+                "Add modifier 95 auto-populate for synchronous telehealth",
+                "Create telehealth billing compliance checklist"
+              ]
+            }
+          }
+        },
+        {
+          "id": "BH-PTN-002",
+          "title": "Session Time Documentation Insufficient for Time-Based Psychotherapy Billing",
+          "description": "Time-based psychotherapy codes (90834 = 38-52 min, 90837 = 53+ min) require documentation of actual session time. Many notes lack specific start/stop times, triggering denials. Requires physician behavior change.",
+          "category": "documentation",
+          "status": "improving",
+          "tier": "high",
+          "procedureCodes": [
+            "90834",
+            "90837",
+            "90832"
+          ],
+          "policies": [
+            {
+              "id": "policy_45",
+              "triggerRate": 0.74
+            }
+          ],
+          "denialReason": "Session time documentation does not support the level of psychotherapy service billed",
+          "claimDistribution": {
+            "total": 420,
+            "deniedBaseline": 59,
+            "deniedCurrent": 34,
+            "appealsFiled": 24,
+            "appealsOverturned": 10
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 78,
+              "deniedCount": 11,
+              "denialRate": 0.141,
+              "dollarsDenied": 3300
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 82,
+              "deniedCount": 6,
+              "denialRate": 0.073,
+              "dollarsDenied": 1800
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.144,
+                "dollarsDenied": 1670
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.138,
+                "dollarsDenied": 1601
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.133,
+                "dollarsDenied": 1529
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.128,
+                "dollarsDenied": 1472
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.118,
+                "dollarsDenied": 1298
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.105,
+                "dollarsDenied": 1050
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.088,
+                "dollarsDenied": 1056
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.076,
+                "dollarsDenied": 912
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.07,
+                "dollarsDenied": 840
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-15",
+            "totalViews": 14,
+            "claimLabTests": 4,
+            "claimsExported": 3,
+            "actionsRecorded": [
+              {
+                "type": "workflow_update",
+                "date": "2025-12-01",
+                "description": "Session time tracking template added to clinical notes"
+              },
+              {
+                "type": "staff_training",
+                "date": "2026-01-10",
+                "description": "All providers trained on time-based documentation requirements"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Addend notes with session times and resubmit",
+              "canResubmit": true,
+              "claimCount": 10,
+              "amount": 3000
+            },
+            "longTerm": {
+              "description": "Add mandatory time fields to psychotherapy note templates",
+              "steps": [
+                "Add session start/stop time fields to all therapy note templates",
+                "Create documentation guide for time-based psychotherapy coding",
+                "Implement monthly chart audit for session time documentation"
+              ]
+            }
+          }
+        },
+        {
+          "id": "BH-PTN-003",
+          "title": "Prior Authorization Missing for Intensive Outpatient Program (IOP)",
+          "description": "IOP sessions require prior authorization. New IOP patients sometimes started treatment before PA was secured.",
+          "category": "authorization",
+          "status": "improving",
+          "tier": "medium",
+          "procedureCodes": [
+            "90853",
+            "H0015",
+            "S9480"
+          ],
+          "policies": [
+            {
+              "id": "policy_203",
+              "triggerRate": 0.8
+            }
+          ],
+          "denialReason": "Prior authorization required for intensive outpatient program - no authorization on file",
+          "claimDistribution": {
+            "total": 160,
+            "deniedBaseline": 35,
+            "deniedCurrent": 14,
+            "appealsFiled": 15,
+            "appealsOverturned": 6
+          },
+          "trajectory": {
+            "curve": "gradual_improvement",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 30,
+              "deniedCount": 6,
+              "denialRate": 0.2,
+              "dollarsDenied": 3600
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 32,
+              "deniedCount": 3,
+              "denialRate": 0.094,
+              "dollarsDenied": 1800
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.207,
+                "dollarsDenied": 1863
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.194,
+                "dollarsDenied": 1746
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.179,
+                "dollarsDenied": 1539
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.161,
+                "dollarsDenied": 1385
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.147,
+                "dollarsDenied": 1176
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.13,
+                "dollarsDenied": 936
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.111,
+                "dollarsDenied": 888
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.097,
+                "dollarsDenied": 776
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.091,
+                "dollarsDenied": 728
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-09-15",
+            "totalViews": 10,
+            "claimLabTests": 3,
+            "claimsExported": 2,
+            "actionsRecorded": [
+              {
+                "type": "workflow_update",
+                "date": "2025-10-15",
+                "description": "IOP intake process updated to require PA before first session"
+              },
+              {
+                "type": "staff_training",
+                "date": "2026-02-01",
+                "description": "Admissions team trained on PA timeline requirements"
+              }
+            ]
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Request retroactive PA for IOP sessions with clinical documentation",
+              "canResubmit": true,
+              "claimCount": 5,
+              "amount": 3000
+            },
+            "longTerm": {
+              "description": "Require PA confirmation before first IOP session",
+              "steps": [
+                "Add PA hold to IOP admission workflow",
+                "Create PA tracking for all IOP patients",
+                "Weekly PA status review for active IOP participants"
+              ]
+            }
+          }
+        },
+        {
+          "id": "BH-PTN-004",
+          "title": "Concurrent Individual and Group Therapy Same Day - Benefit Limitation",
+          "description": "Some patients receiving both individual and group therapy on the same day. Plan policy limits coverage to one therapy type per day. Legitimate denials - rarely appealed.",
+          "category": "frequency-limit",
+          "status": "active",
+          "tier": "low",
+          "procedureCodes": [
+            "90834",
+            "90837",
+            "90853"
+          ],
+          "policies": [
+            {
+              "id": "policy_156",
+              "triggerRate": 1.0
+            }
+          ],
+          "denialReason": "Benefit limitation - individual and group therapy not covered on same date of service",
+          "claimDistribution": {
+            "total": 68,
+            "deniedBaseline": 62,
+            "deniedCurrent": 50,
+            "appealsFiled": 3,
+            "appealsOverturned": 0
+          },
+          "trajectory": {
+            "curve": "flat",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 13,
+              "deniedCount": 13,
+              "denialRate": 1.0,
+              "dollarsDenied": 2600
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 10,
+              "deniedCount": 10,
+              "denialRate": 1.0,
+              "dollarsDenied": 2000
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 1.0,
+                "dollarsDenied": 1400
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 1.0,
+                "dollarsDenied": 1200
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 1.0,
+                "dollarsDenied": 1200
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 1.0,
+                "dollarsDenied": 1200
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 1.0,
+                "dollarsDenied": 1000
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 1.0,
+                "dollarsDenied": 800
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 1.0,
+                "dollarsDenied": 1000
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 1.0,
+                "dollarsDenied": 1000
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 1.0,
+                "dollarsDenied": 1000
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2025-11-05",
+            "totalViews": 3,
+            "claimLabTests": 0,
+            "claimsExported": 0,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Cannot resubmit - legitimate benefit limitation",
+              "canResubmit": false,
+              "claimCount": 0,
+              "amount": 0
+            },
+            "longTerm": {
+              "description": "Schedule individual and group therapy on different days",
+              "steps": [
+                "Update scheduling to prevent same-day individual + group therapy",
+                "Educate therapists on benefit limitations for concurrent services"
+              ]
+            }
+          }
+        },
+        {
+          "id": "BH-PTN-005",
+          "title": "Psychotherapy Add-On Code (90833) Denied Without Qualifying E/M Service",
+          "description": "The add-on psychotherapy code 90833 must be billed with a qualifying primary E/M service (99213-99215). Some claims submitted 90833 alone or with non-qualifying primary codes.",
+          "category": "coding-error",
+          "status": "active",
+          "tier": "medium",
+          "procedureCodes": [
+            "90833",
+            "99213",
+            "99214"
+          ],
+          "policies": [
+            {
+              "id": "policy_26",
+              "triggerRate": 0.82
+            }
+          ],
+          "denialReason": "Psychotherapy add-on code 90833 requires a qualifying primary E/M service on the same date",
+          "claimDistribution": {
+            "total": 95,
+            "deniedBaseline": 22,
+            "deniedCurrent": 13,
+            "appealsFiled": 9,
+            "appealsOverturned": 5
+          },
+          "trajectory": {
+            "curve": "slight_decline",
+            "baseline": {
+              "periodStart": "2025-07-01",
+              "periodEnd": "2025-08-31",
+              "claimCount": 18,
+              "deniedCount": 4,
+              "denialRate": 0.222,
+              "dollarsDenied": 1200
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 19,
+              "deniedCount": 3,
+              "denialRate": 0.158,
+              "dollarsDenied": 900
+            },
+            "snapshots": [
+              {
+                "month": "2025-07",
+                "denialRate": 0.227,
+                "dollarsDenied": 613
+              },
+              {
+                "month": "2025-08",
+                "denialRate": 0.217,
+                "dollarsDenied": 587
+              },
+              {
+                "month": "2025-09",
+                "denialRate": 0.21,
+                "dollarsDenied": 546
+              },
+              {
+                "month": "2025-10",
+                "denialRate": 0.2,
+                "dollarsDenied": 520
+              },
+              {
+                "month": "2025-11",
+                "denialRate": 0.19,
+                "dollarsDenied": 475
+              },
+              {
+                "month": "2025-12",
+                "denialRate": 0.182,
+                "dollarsDenied": 419
+              },
+              {
+                "month": "2026-01",
+                "denialRate": 0.17,
+                "dollarsDenied": 442
+              },
+              {
+                "month": "2026-02",
+                "denialRate": 0.16,
+                "dollarsDenied": 416
+              },
+              {
+                "month": "2026-03",
+                "denialRate": 0.155,
+                "dollarsDenied": 403
+              }
+            ]
+          },
+          "engagement": {
+            "firstViewedDate": "2026-01-15",
+            "totalViews": 6,
+            "claimLabTests": 3,
+            "claimsExported": 1,
+            "actionsRecorded": []
+          },
+          "remediation": {
+            "shortTerm": {
+              "description": "Resubmit with qualifying primary E/M code",
+              "canResubmit": true,
+              "claimCount": 4,
+              "amount": 1200
+            },
+            "longTerm": {
+              "description": "Educate psychiatrists on add-on code requirements and billing pairs",
+              "steps": [
+                "Create add-on code quick-reference for psychiatry billing",
+                "Add validation rule preventing 90833 submission without qualifying E/M"
+              ]
+            }
+          }
+        }
+      ],
+      "learningEvents": {
+        "eventDistribution": {
+          "pattern_viewed": 28,
+          "claim_inspected": 32,
+          "claims_exported": 10,
+          "action_recorded": 10
+        },
+        "eventClustering": {
+          "BH-PTN-001": [
+            "2025-09-25",
+            "2025-09-28",
+            "2025-10-01",
+            "2025-10-05"
+          ],
+          "BH-PTN-002": [
+            "2025-11-15",
+            "2025-11-20",
+            "2025-12-01",
+            "2026-01-10"
+          ],
+          "BH-PTN-003": [
+            "2025-09-15",
+            "2025-10-15",
+            "2026-02-01"
+          ],
+          "BH-PTN-004": [
+            "2025-11-05"
+          ],
+          "BH-PTN-005": [
+            "2026-01-15",
+            "2026-01-20"
+          ]
+        }
+      },
+      "targetMetrics": {
+        "totalClaims": 3240,
+        "totalDenied": 233,
+        "overallDenialRate": 0.072,
+        "totalDollarsDenied": 16780,
+        "totalAppeals": 44,
+        "appealSuccessRate": 0.34
+      }
+    }
+  ]
+}

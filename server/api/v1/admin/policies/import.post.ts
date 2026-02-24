@@ -28,18 +28,17 @@ import {
 interface PolicyImport {
   id: string
   name: string
-  mode: 'Edit' | 'Informational' | 'Pay & Advise'
+  // Mode is deprecated from UI but kept in DB for backwards compatibility
+  // Defaults to 'Edit' if not provided
+  mode?: 'Edit' | 'Informational' | 'Pay & Advise'
   effectiveDate: string
   description?: string
   clinicalRationale?: string
   topic?: string
   logicType?: string
   source?: string
-  hitRate?: number
-  denialRate?: number
-  appealRate?: number
-  overturnRate?: number
-  impact?: number
+  // Note: hitRate, denialRate, appealRate, overturnRate, and impact are computed
+  // dynamically from claim_line_policies data and should not be imported
   insightCount?: number
   providersImpacted?: number
   trend?: 'up' | 'down' | 'stable'
@@ -60,6 +59,60 @@ interface ImportRequest {
   mode?: 'replace' | 'merge'
 }
 
+/**
+ * Validate a single policy and return a list of field-level issues.
+ * Returns an empty array if the policy is valid.
+ */
+function validatePolicy(policy: PolicyImport, index: number): string[] {
+  const issues: string[] = []
+
+  if (!policy || typeof policy !== 'object') {
+    issues.push(`Policy at index ${index} is not an object (got ${typeof policy})`)
+    return issues
+  }
+
+  // Required fields
+  if (!policy.id) {
+    issues.push('missing required field "id"')
+  } else if (typeof policy.id !== 'string') {
+    issues.push(`"id" must be a string (got ${typeof policy.id})`)
+  }
+
+  if (!policy.name) {
+    issues.push('missing required field "name"')
+  } else if (typeof policy.name !== 'string') {
+    issues.push(`"name" must be a string (got ${typeof policy.name})`)
+  }
+
+  if (!policy.effectiveDate) {
+    issues.push('missing required field "effectiveDate"')
+  } else if (typeof policy.effectiveDate !== 'string') {
+    issues.push(`"effectiveDate" must be a string (got ${typeof policy.effectiveDate})`)
+  }
+
+  // Optional array fields — check types if present
+  if (policy.procedureCodes !== undefined && policy.procedureCodes !== null && !Array.isArray(policy.procedureCodes)) {
+    issues.push(`"procedureCodes" must be an array (got ${typeof policy.procedureCodes})`)
+  }
+  if (policy.diagnosisCodes !== undefined && policy.diagnosisCodes !== null && !Array.isArray(policy.diagnosisCodes)) {
+    issues.push(`"diagnosisCodes" must be an array (got ${typeof policy.diagnosisCodes})`)
+  }
+  if (policy.modifiers !== undefined && policy.modifiers !== null && !Array.isArray(policy.modifiers)) {
+    issues.push(`"modifiers" must be an array (got ${typeof policy.modifiers})`)
+  }
+  if (policy.placeOfService !== undefined && policy.placeOfService !== null && !Array.isArray(policy.placeOfService)) {
+    issues.push(`"placeOfService" must be an array (got ${typeof policy.placeOfService})`)
+  }
+  if (policy.relatedPolicies !== undefined && policy.relatedPolicies !== null && !Array.isArray(policy.relatedPolicies)) {
+    issues.push(`"relatedPolicies" must be an array (got ${typeof policy.relatedPolicies})`)
+  }
+  if (policy.referenceDocs !== undefined && policy.referenceDocs !== null && !Array.isArray(policy.referenceDocs)) {
+    issues.push(`"referenceDocs" must be an array (got ${typeof policy.referenceDocs})`)
+  }
+
+  return issues
+}
+
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody<ImportRequest>(event)
@@ -68,6 +121,8 @@ export default defineEventHandler(async (event) => {
     // Normalize to array
     const policiesToImport = Array.isArray(body.policies) ? body.policies : [body.policies]
 
+    console.log(`[Policy Import] Received ${policiesToImport.length} policies, mode=${importMode}`)
+
     if (policiesToImport.length === 0) {
       throw createError({
         statusCode: 400,
@@ -75,25 +130,43 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Validate required fields
-    for (const policy of policiesToImport) {
-      if (!policy.id || !policy.name || !policy.mode || !policy.effectiveDate) {
-        throw createError({
-          statusCode: 400,
-          message: `Policy ${policy.id || 'unknown'} missing required fields (id, name, mode, effectiveDate)`,
-        })
+    // Validate all policies up front, collecting per-policy issues
+    const validationErrors: { index: number; id: string; errors: string[] }[] = []
+
+    for (let i = 0; i < policiesToImport.length; i++) {
+      const policy = policiesToImport[i]!
+      const issues = validatePolicy(policy, i)
+      if (issues.length > 0) {
+        const policyId = policy.id || 'unknown'
+        validationErrors.push({ index: i, id: policyId, errors: issues })
+        console.error(`[Policy Import] Validation failed for policy ${i} (${policyId}): ${issues.join('; ')}`)
       }
     }
+
+    if (validationErrors.length > 0) {
+      console.error(`[Policy Import] ${validationErrors.length} of ${policiesToImport.length} policies failed validation`)
+      return {
+        success: false,
+        totalProcessed: 0,
+        totalFailed: validationErrors.length,
+        totalValid: policiesToImport.length - validationErrors.length,
+        validationErrors: validationErrors.slice(0, 50),
+        message: `${validationErrors.length} policies failed validation. First: policy ${validationErrors[0]!.index} (${validationErrors[0]!.id}): ${validationErrors[0]!.errors.join('; ')}`,
+      }
+    }
+
+    console.log(`[Policy Import] All ${policiesToImport.length} policies passed validation`)
 
     const results = {
       inserted: 0,
       updated: 0,
       failed: 0,
-      errors: [] as Array<{ id: string; error: string }>,
+      errors: [] as Array<{ index: number; id: string; error: string }>,
     }
 
     // If replace mode, clear all policy data first
     if (importMode === 'replace') {
+      console.log('[Policy Import] Replace mode — clearing existing policy data')
       await db.delete(policyProcedureCodes)
       await db.delete(policyDiagnosisCodes)
       await db.delete(policyModifiers)
@@ -101,10 +174,20 @@ export default defineEventHandler(async (event) => {
       await db.delete(policyReferenceDocs)
       await db.delete(policyRelatedPolicies)
       await db.delete(policies)
+      console.log('[Policy Import] Existing policy data cleared')
     }
 
+    const total = policiesToImport.length
+
     // Process each policy
-    for (const policyData of policiesToImport) {
+    for (let i = 0; i < total; i++) {
+      const policyData = policiesToImport[i]!
+
+      // Log progress every 100 policies
+      if (i % 100 === 0) {
+        console.log(`[Policy Import] Processing policy ${i}/${total}: ${policyData.id}`)
+      }
+
       try {
         // Check if policy exists
         const existing = await db.query.policies.findFirst({
@@ -112,21 +195,20 @@ export default defineEventHandler(async (event) => {
         })
 
         // Build policy record
+        // Note: hitRate, denialRate, appealRate, overturnRate, and impact are
+        // computed dynamically from claim_line_policies data - not stored on import
+        // Mode defaults to 'Edit' if not provided (deprecated from UI)
         const policyRecord = {
           id: policyData.id,
           name: policyData.name,
-          mode: policyData.mode,
+          mode: policyData.mode || 'Edit',
           effectiveDate: policyData.effectiveDate,
           description: policyData.description || null,
           clinicalRationale: policyData.clinicalRationale || null,
           topic: policyData.topic || null,
           logicType: policyData.logicType || null,
           source: policyData.source || null,
-          hitRate: policyData.hitRate ?? 0,
-          denialRate: policyData.denialRate ?? 0,
-          appealRate: policyData.appealRate ?? 0,
-          overturnRate: policyData.overturnRate ?? 0,
-          impact: policyData.impact ?? 0,
+          // Computed metrics are left at default (0) - computed dynamically by API
           insightCount: policyData.insightCount ?? 0,
           providersImpacted: policyData.providersImpacted ?? 0,
           trend: policyData.trend || null,
@@ -215,24 +297,44 @@ export default defineEventHandler(async (event) => {
         }
       } catch (policyError) {
         results.failed++
+        const errorMessage = policyError instanceof Error ? policyError.message : 'Unknown error'
         results.errors.push({
+          index: i,
           id: policyData.id,
-          error: policyError instanceof Error ? policyError.message : 'Unknown error',
+          error: errorMessage,
         })
+        console.error(`[Policy Import] FAILED on policy ${i}/${total} (${policyData.id}): ${errorMessage}`)
+      }
+    }
+
+    const succeeded = results.inserted + results.updated
+    console.log(`[Policy Import] Complete: ${succeeded} succeeded (${results.inserted} inserted, ${results.updated} updated), ${results.failed} failed`)
+
+    if (results.failed > 0) {
+      console.error(`[Policy Import] ${results.failed} failures. First error: ${results.errors[0]?.error}`)
+      return {
+        success: false,
+        mode: importMode,
+        total,
+        totalProcessed: succeeded,
+        totalFailed: results.failed,
+        ...results,
+        errors: results.errors.slice(0, 50),
+        message: `${succeeded} imported, ${results.failed} failed. First error: policy ${results.errors[0]?.index} (${results.errors[0]?.id}): ${results.errors[0]?.error}`,
       }
     }
 
     return {
-      success: results.failed === 0,
+      success: true,
       mode: importMode,
-      total: policiesToImport.length,
+      total,
       ...results,
     }
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
-    console.error('Policy import error:', error)
+    console.error('[Policy Import] Unhandled error:', error)
     throw createError({
       statusCode: 500,
       message: error instanceof Error ? error.message : 'Failed to import policies',

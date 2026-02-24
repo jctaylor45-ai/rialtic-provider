@@ -337,7 +337,7 @@ const handleViewClaims = (pattern: Pattern) => {
   closeDrawer()
   // Navigate to claims page with filter for this pattern's affected claims
   const claimIds = pattern.affectedClaims.join(',')
-  navigateTo(`/claims?ids=${claimIds}`)
+  navigateTo(`/provider-portal/claims?ids=${claimIds}`)
 }
 
 const handleOpenRecordAction = (pattern: Pattern) => {
@@ -349,7 +349,7 @@ const handleOpenRecordAction = (pattern: Pattern) => {
 const handleViewClaimsFromCard = (pattern: Pattern) => {
   // Navigate to claims page with filter for this pattern's affected claims
   const claimIds = pattern.affectedClaims.join(',')
-  navigateTo(`/claims?ids=${claimIds}`)
+  navigateTo(`/provider-portal/claims?ids=${claimIds}`)
 }
 
 const refreshPatterns = async () => {
