@@ -273,6 +273,34 @@ function initializeContext(scenario: ScenarioDefinition): GenerationContext {
   }
 }
 
+function computeAveragePatternDenialCurve(
+  scenario: ScenarioDefinition,
+  monthCount: number
+): number[] {
+  let totalWeight = 0
+  const weightedRates = new Array(monthCount).fill(0) as number[]
+
+  for (const pattern of scenario.patterns) {
+    const baselineRate = normalizeDenialRate(pattern.trajectory.baseline.denialRate)
+    const currentRate = normalizeDenialRate(pattern.trajectory.current.denialRate)
+    const curve = calculateDenialCurve(
+      baselineRate,
+      currentRate,
+      monthCount,
+      pattern.trajectory.curve
+    )
+    const weight = pattern.claimDistribution.total
+
+    for (let i = 0; i < monthCount; i++) {
+      weightedRates[i] = (weightedRates[i] ?? 0) + (curve[i] ?? 0) * weight
+    }
+    totalWeight += weight
+  }
+
+  if (totalWeight === 0) return new Array(monthCount).fill(0.03) as number[]
+  return weightedRates.map(r => r / totalWeight)
+}
+
 function generateBaseClaims(ctx: GenerationContext): void {
   _verbose('Generating base claims...')
 
@@ -294,15 +322,43 @@ function generateBaseClaims(ctx: GenerationContext): void {
     scenario.volume.monthlyVariation
   )
 
-  const baseDenialRate = 0.03
+  // Compute a base denial curve that mirrors the scenario's improvement trajectory.
+  // Instead of a flat 3%, scale proportionally with the weighted average pattern denial curve.
+  const BASE_RATE_CENTER = 0.03
+  const avgCurve = computeAveragePatternDenialCurve(scenario, months.length)
+  const startAvg = avgCurve[0] ?? 0.10
+  const baseDenialRates = startAvg > 0
+    ? avgCurve.map(avgRate => BASE_RATE_CENTER * (avgRate / startAvg))
+    : new Array(months.length).fill(BASE_RATE_CENTER) as number[]
+
+  _verbose(`Base denial rates: ${baseDenialRates.map(r => (r * 100).toFixed(1) + '%').join(', ')}`)
+
+  // Pre-compute denied counts and enforce monotonic decrease.
+  // Volume variation can cause count*rate to increase even when rate decreases,
+  // so we clamp to ensure denied counts never rise month-over-month.
+  const baseDeniedCounts = claimsPerMonth.map((count, idx) => {
+    const rate = baseDenialRates[idx] ?? BASE_RATE_CENTER
+    return Math.round(count * rate)
+  })
+  for (let i = 1; i < baseDeniedCounts.length; i++) {
+    if ((baseDeniedCounts[i] ?? 0) > (baseDeniedCounts[i - 1] ?? 0)) {
+      baseDeniedCounts[i] = baseDeniedCounts[i - 1] ?? 0
+    }
+  }
 
   for (let monthIdx = 0; monthIdx < months.length; monthIdx++) {
     const month = months[monthIdx]
     const count = claimsPerMonth[monthIdx] ?? 0
     if (!month) continue
 
+    const deniedCount = baseDeniedCounts[monthIdx] ?? 0
+    // Denied claims use a stable amount (medium range midpoint ±10%) so that
+    // total denied dollars track proportionally with denied counts across months.
+    const medMid = (scenario.volume.claimValueRanges.medium.min + scenario.volume.claimValueRanges.medium.max) / 2
     for (let i = 0; i < count; i++) {
-      const claim = generateSingleClaim(ctx, month, undefined, baseDenialRate)
+      const forcedRate = i < deniedCount ? 1.0 : 0.0
+      const stableAmt = i < deniedCount ? roundToDecimal(medMid * randomFloat(0.9, 1.1), 2) : undefined
+      const claim = generateSingleClaim(ctx, month, undefined, forcedRate, stableAmt)
       ctx.claims.push(claim.summary)
       ctx.claimDetails.push(claim.detail)
     }
@@ -335,23 +391,50 @@ function generatePatternClaims(ctx: GenerationContext): void {
       pattern.trajectory.curve
     )
 
-    const denialRates = addCurveVariation(denialCurve, 3)
+    const avgMonthlyClaimCount = Math.round(pattern.claimDistribution.total / months.length)
+    const direction: 'improving' | 'worsening' | 'flat' =
+      baselineRate > currentRate ? 'improving'
+        : baselineRate < currentRate ? 'worsening'
+          : 'flat'
+    const denialRates = addCurveVariation(denialCurve, 3, {
+      monthlyClaimCount: avgMonthlyClaimCount,
+      direction,
+    })
 
+    // Flat-rate patterns (100%→100%) deny everything, so volume variation = denial variation.
+    // Use perfectly even distribution (dampening=0) to eliminate noise entirely.
+    const volumeDampening = direction === 'flat' ? 0 : 1.0
     const claimsPerMonth = distributeClaimsAcrossMonths(
       pattern.claimDistribution.total,
       months,
-      scenario.volume.monthlyVariation
+      scenario.volume.monthlyVariation,
+      volumeDampening
     )
+
+    // Pre-compute denied counts per month; enforce monotonic decrease for improving patterns
+    const patternDeniedCounts = claimsPerMonth.map((monthCount, idx) => {
+      const rate = denialRates[idx] ?? 0
+      return Math.round(monthCount * rate)
+    })
+    if (direction === 'improving') {
+      for (let i = 1; i < patternDeniedCounts.length; i++) {
+        if ((patternDeniedCounts[i] ?? 0) > (patternDeniedCounts[i - 1] ?? 0)) {
+          patternDeniedCounts[i] = patternDeniedCounts[i - 1] ?? 0
+        }
+      }
+    }
 
     for (let monthIdx = 0; monthIdx < months.length; monthIdx++) {
       const month = months[monthIdx]
       if (!month) continue
 
       const count = claimsPerMonth[monthIdx] ?? 0
-      const denialRate = denialRates[monthIdx] ?? 0
-
+      const deniedCount = patternDeniedCounts[monthIdx] ?? 0
+      const patMedMid = (scenario.volume.claimValueRanges.medium.min + scenario.volume.claimValueRanges.medium.max) / 2
       for (let i = 0; i < count; i++) {
-        const claim = generateSingleClaim(ctx, month, pattern, denialRate)
+        const forcedRate = i < deniedCount ? 1.0 : 0.0
+        const stableAmt = i < deniedCount ? roundToDecimal(patMedMid * randomFloat(0.9, 1.1), 2) : undefined
+        const claim = generateSingleClaim(ctx, month, pattern, forcedRate, stableAmt)
         ctx.claims.push(claim.summary)
         ctx.claimDetails.push(claim.detail)
       }
@@ -365,7 +448,8 @@ function generateSingleClaim(
   ctx: GenerationContext,
   month: MonthRange,
   pattern: PatternDefinition | undefined,
-  denialRate: number
+  denialRate: number,
+  overrideAmount?: number
 ): { summary: GeneratedClaimSummary; detail: ClaimDetail } {
   const { scenario } = ctx
 
@@ -398,7 +482,7 @@ function generateSingleClaim(
   const isDenied = Math.random() < denialRate
   const status = isDenied ? 'denied' : 'approved'
 
-  const billedAmount = randomClaimAmount(scenario.volume.claimValueRanges)
+  const billedAmount = overrideAmount ?? randomClaimAmount(scenario.volume.claimValueRanges)
   const paidAmount =
     status === 'approved' ? roundToDecimal(billedAmount * randomFloat(0.7, 0.95), 2) : 0
 
@@ -965,8 +1049,8 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         })
       }
 
-      // Link policies to denied lines
-      if (claim.status === 'denied' && claim.policyIds.length > 0 && lineItemIds.length > 0) {
+      // Link policies to denied lines (include 'appealed' — originally denied)
+      if ((claim.status === 'denied' || claim.status === 'appealed') && claim.policyIds.length > 0 && lineItemIds.length > 0) {
         claim.policyIds.forEach((policyId, idx) => {
           const lineItemId = lineItemIds[idx % lineItemIds.length]
           const lineItem = claim.lineItems[idx % claim.lineItems.length]
@@ -982,8 +1066,9 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         })
       }
 
-      // Link patterns to denied lines
-      if (claim.status === 'denied' && claim.patternId && lineItemIds.length > 0) {
+      // Link patterns to denied lines (include 'appealed' — these were originally denied
+      // but had their status changed by generateAppeals before DB write)
+      if ((claim.status === 'denied' || claim.status === 'appealed') && claim.patternId && lineItemIds.length > 0) {
         lineItemIds.forEach((lineItemId, idx) => {
           const lineItem = claim.lineItems[idx]
           if (lineItem && lineItem.status === 'denied') {

@@ -174,19 +174,46 @@ export function calculateDenialCurve(
 
 /**
  * Add realistic variation to a denial rate curve (values in 0-1 decimal range).
- * Noise is proportional to the value: ±10% relative variation with a floor of ±0.005
- * (0.5 percentage points) so very small rates still get some jitter.
+ * Noise scales inversely with monthly claim count (less noise for small samples).
+ * For improving/worsening patterns, monotonic dampening prevents noise from
+ * reversing the trajectory direction.
  */
-export function addCurveVariation(rates: number[], _variationPercent: number = 5): number[] {
-  return rates.map((rate, i) => {
+export function addCurveVariation(
+  rates: number[],
+  _variationPercent: number = 5,
+  options?: { monthlyClaimCount?: number; direction?: 'improving' | 'worsening' | 'flat' }
+): number[] {
+  const monthlyCount = options?.monthlyClaimCount ?? 100
+  const direction = options?.direction ?? 'flat'
+
+  // Scale noise inversely with claim count: 3% for tiny samples, up to 10% for large
+  const baseNoisePercent = Math.min(0.10, 0.03 + 0.07 * Math.min(1, monthlyCount / 100))
+
+  const noisyRates = rates.map((rate, i) => {
     // Less variation at the edges of the time series
     const edgeFactor = Math.min(i, rates.length - 1 - i) / (rates.length / 2)
     const dampening = Math.min(1, edgeFactor + 0.3)
-    // Noise proportional to value (±10% relative) with a floor of ±0.005
-    const noiseAmplitude = Math.max(rate * 0.10, 0.005)
+    const noiseAmplitude = Math.max(rate * baseNoisePercent, 0.002)
     const variation = (Math.random() - 0.5) * 2 * noiseAmplitude * dampening
     return Math.max(0, Math.min(1, rate + variation))
   })
+
+  // Monotonic dampening: prevent noise from reversing the trajectory direction
+  if (direction === 'improving') {
+    for (let i = 1; i < noisyRates.length; i++) {
+      if ((noisyRates[i] ?? 0) > (noisyRates[i - 1] ?? 0)) {
+        noisyRates[i] = noisyRates[i - 1] ?? 0
+      }
+    }
+  } else if (direction === 'worsening') {
+    for (let i = 1; i < noisyRates.length; i++) {
+      if ((noisyRates[i] ?? 0) < (noisyRates[i - 1] ?? 0)) {
+        noisyRates[i] = noisyRates[i - 1] ?? 0
+      }
+    }
+  }
+
+  return noisyRates
 }
 
 // =============================================================================
@@ -204,10 +231,18 @@ export function addCurveVariation(rates: number[], _variationPercent: number = 5
 export function distributeClaimsAcrossMonths(
   total: number,
   months: MonthRange[],
-  variation: Record<string, number>
+  variation: Record<string, number>,
+  variationDampening: number = 1.0 // 1.0 = full variation, 0.0 = even distribution
 ): number[] {
-  // Calculate weights for each month
-  const weights = months.map(m => variation[m.key] || 1.0)
+  // Weight by days in month so shorter months (Feb=28) get proportionally fewer claims.
+  // This ensures consistent daily claim volume, which matters when the summary API
+  // compares arbitrary date ranges (30d/60d/90d windows that span month boundaries).
+  const weights = months.map(m => {
+    const v = variation[m.key] || 1.0
+    const dampened = 1.0 + (v - 1.0) * variationDampening
+    const daysInMonth = Math.round((m.end.getTime() - m.start.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    return dampened * (daysInMonth / 30)
+  })
   const totalWeight = weights.reduce((a, b) => a + b, 0)
 
   // Distribute proportionally
@@ -432,13 +467,14 @@ export function randomFloat(min: number, max: number): number {
  * Generate a random amount based on claim value ranges
  */
 export function randomClaimAmount(ranges: VolumeDefinition['claimValueRanges']): number {
-  // 20% low, 60% medium, 20% high
+  // 10% low, 80% medium, 10% high — tighter distribution for more predictable
+  // per-month totals so denied dollar trends track with denied count trends
   const rand = Math.random()
   let range: { min: number; max: number }
 
-  if (rand < 0.2) {
+  if (rand < 0.1) {
     range = ranges.low
-  } else if (rand < 0.8) {
+  } else if (rand < 0.9) {
     range = ranges.medium
   } else {
     range = ranges.high

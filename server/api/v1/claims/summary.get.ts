@@ -70,12 +70,12 @@ async function computePeriodSummary(startDateStr: string, endDateStr: string, da
   ] = await Promise.all([
     db.select({ count: count() }).from(claims).where(dateFilter),
     db.select({ count: count() }).from(claims).where(and(dateFilter, inArray(claims.status, ['approved', 'paid']))),
-    db.select({ count: count() }).from(claims).where(and(dateFilter, eq(claims.status, 'denied'))),
+    db.select({ count: count() }).from(claims).where(and(dateFilter, inArray(claims.status, ['denied', 'appealed']))),
     db.select({ count: count() }).from(claims).where(and(dateFilter, eq(claims.status, 'pending'))),
     db.select({ count: count() }).from(claims).where(and(dateFilter, eq(claims.status, 'appealed'))),
     db.select({ total: sum(claims.billedAmount) }).from(claims).where(dateFilter),
     db.select({ total: sum(claims.paidAmount) }).from(claims).where(dateFilter),
-    db.select({ total: sum(claims.billedAmount) }).from(claims).where(and(dateFilter, eq(claims.status, 'denied'))),
+    db.select({ total: sum(claims.billedAmount) }).from(claims).where(and(dateFilter, inArray(claims.status, ['denied', 'appealed']))),
     db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealFiled, true), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
     db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealOutcome, 'overturned'), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
   ])
