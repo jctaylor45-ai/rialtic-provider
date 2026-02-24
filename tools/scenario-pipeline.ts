@@ -776,6 +776,55 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
       )
     }
 
+    // Derive recovery status and action category from pattern characteristics
+    function deriveRecoveryClassification(pattern: {
+      category: string
+      title: string
+      denialReason?: string
+      description?: string
+      remediation?: { shortTerm?: { description?: string }; longTerm?: { description?: string } }
+    }): { actionCategory: string; recoveryStatus: string } {
+      const cat = pattern.category.toLowerCase()
+      const title = pattern.title.toLowerCase()
+      const reason = (pattern.denialReason || '').toLowerCase()
+      const shortTerm = (pattern.remediation?.shortTerm?.description || '').toLowerCase()
+      const desc = (pattern.description || '').toLowerCase()
+      const allText = `${title} ${reason} ${shortTerm} ${desc}`
+
+      // Derive action_category from category and denial reason
+      let actionCategory = 'coding_knowledge'
+      if (cat.includes('modifier') || reason.includes('modifier')) {
+        actionCategory = 'coding_knowledge'
+      } else if (cat.includes('documentation') || reason.includes('documentation') || reason.includes('medical necessity')) {
+        actionCategory = 'documentation'
+      } else if (cat.includes('authorization') || reason.includes('prior auth') || reason.includes('authorization')) {
+        actionCategory = 'operational_system'
+      } else if (cat.includes('frequency') || cat.includes('coverage') || reason.includes('benefit limit') || reason.includes('not covered') || reason.includes('non-covered') || reason.includes('experimental')) {
+        actionCategory = 'coverage_blindspot'
+      } else if (cat.includes('bundling') || cat.includes('coding') || cat.includes('global')) {
+        actionCategory = 'coding_knowledge'
+      }
+
+      // Derive recovery_status from action_category
+      const categoryToRecovery: Record<string, string> = {
+        coding_knowledge: 'recoverable',
+        documentation: 'partial',
+        operational_system: 'partial',
+        coverage_blindspot: 'not_recoverable',
+        payer_specific: 'partial',
+      }
+      let recoveryStatus = categoryToRecovery[actionCategory] || 'recoverable'
+
+      // Override with strong text signals
+      if (allText.includes('cannot resubmit') || allText.includes('legitimate') || allText.includes('not a covered benefit') || allText.includes('benefit limit exceeded') || allText.includes('benefit limitation')) {
+        recoveryStatus = 'not_recoverable'
+      } else if (allText.includes('resubmit with') || allText.includes('add modifier') || allText.includes('correct code') || allText.includes('append')) {
+        recoveryStatus = 'recoverable'
+      }
+
+      return { actionCategory, recoveryStatus }
+    }
+
     // Insert patterns
     const insertPattern = db.prepare(`
       INSERT OR REPLACE INTO patterns (
@@ -785,8 +834,9 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         baseline_start, baseline_end, baseline_claim_count, baseline_denied_count,
         baseline_denial_rate, baseline_dollars_denied,
         current_start, current_end, current_claim_count, current_denied_count,
-        current_denial_rate, current_dollars_denied
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        current_denial_rate, current_dollars_denied,
+        recovery_status, action_category
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const pattern of scenario.patterns) {
       // Derive score columns from trajectory data
@@ -820,6 +870,8 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         : 0
       const totalAtRisk = pattern.trajectory.current.dollarsDenied || 0
 
+      const { actionCategory, recoveryStatus } = deriveRecoveryClassification(pattern)
+
       insertPattern.run(
         pattern.id,
         pattern.title,
@@ -847,7 +899,9 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         pattern.trajectory.current.claimCount,
         pattern.trajectory.current.deniedCount,
         pattern.trajectory.current.denialRate,
-        pattern.trajectory.current.dollarsDenied
+        pattern.trajectory.current.dollarsDenied,
+        recoveryStatus,
+        actionCategory
       )
     }
 

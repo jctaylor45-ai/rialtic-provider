@@ -66,6 +66,8 @@ export default defineEventHandler(async (event) => {
         currentDenialRate: patterns.currentDenialRate,
         currentClaimCount: patterns.currentClaimCount,
         currentDollarsDenied: patterns.currentDollarsDenied,
+        recoveryStatus: patterns.recoveryStatus,
+        actionCategory: patterns.actionCategory,
       })
       .from(patterns)
       .where(where)

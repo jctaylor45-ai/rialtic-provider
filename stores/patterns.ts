@@ -47,6 +47,8 @@ interface DbPattern {
     logicType?: string
   }>
   affectedClaims?: string[]
+  recoveryStatus?: string
+  actionCategory?: string
 }
 
 interface PatternApiResponse {
@@ -360,8 +362,8 @@ export const usePatternsStore = defineStore('patterns', () => {
       firstDetected: dbPattern.baselineStart || now,
       lastUpdated: now,
       lastSeen: now,
-      actionCategory: 'coding_knowledge' as ActionCategory,
-      recoveryStatus: 'recoverable' as RecoveryStatus,
+      actionCategory: (dbPattern.actionCategory || 'coding_knowledge') as ActionCategory,
+      recoveryStatus: (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus,
       recoverableAmount: liveTotalAtRisk,
       recoverableClaimCount: liveClaimCount,
       possibleRootCauses: dbPattern.relatedPolicies?.filter(p => p.commonMistake).map(p => ({
