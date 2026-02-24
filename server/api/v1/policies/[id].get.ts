@@ -64,6 +64,7 @@ export default defineEventHandler(async (event) => {
       referenceDocs,
       relatedPoliciesData,
       relatedPatterns,
+      claimDerivedCodes,
     ] = await Promise.all([
       db
         .select({ code: policyProcedureCodes.code })
@@ -102,6 +103,13 @@ export default defineEventHandler(async (event) => {
         .from(patternPolicies)
         .innerJoin(patterns, eq(patternPolicies.patternId, patterns.id))
         .where(eq(patternPolicies.policyId, id)),
+      // Fallback: derive procedure codes from linked claim lines
+      db.selectDistinct({
+        procedureCode: claimLineItems.procedureCode,
+      })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .where(eq(claimLinePolicies.policyId, id)),
     ])
 
     // Get full related policy details
@@ -139,10 +147,14 @@ export default defineEventHandler(async (event) => {
       .from(claimLinePolicies)
       .where(eq(claimLinePolicies.policyId, id))
 
+    // Use junction table codes, falling back to claim-derived codes
+    const junctionCodes = procedureCodes.map(c => c.code)
+    const procCodes = junctionCodes.length > 0 ? junctionCodes : claimDerivedCodes.map(c => c.procedureCode)
+
     // Transform to PaAPI format using the adapter
     const basePolicy = policyDetailAdapter(
       policy as unknown as DbPolicy,
-      procedureCodes.map(c => c.code),
+      procCodes,
       diagnosisCodes.map(c => c.code),
       modifiers.map(m => m.modifier),
       placesOfService.map(p => p.placeOfService),
@@ -150,6 +162,11 @@ export default defineEventHandler(async (event) => {
       relatedPoliciesFull.filter(Boolean) as DbRelatedPolicy[],
       relatedPatterns as DbRelatedPattern[],
     )
+
+    // Fix generic common_mistake for scenario stubs
+    if (basePolicy.common_mistake && /^Common in .+ patterns$/.test(basePolicy.common_mistake)) {
+      basePolicy.common_mistake = `Submitting claims that do not meet this policy's requirements: ${policy.name.toLowerCase()}.`
+    }
 
     // Merge computed metrics if available
     // Rates are stored as whole number percentages (3 = 3%) for consistency with rest of app

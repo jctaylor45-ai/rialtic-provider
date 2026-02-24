@@ -228,13 +228,14 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult?.count || 0
 
-    // Bulk-fetch all related data in parallel (5 queries total instead of 5 * N)
+    // Bulk-fetch all related data in parallel (6 queries total instead of 6 * N)
     const [
       allProcedureCodes,
       allDiagnosisCodes,
       allModifiers,
       allPlacesOfService,
       allReferenceDocs,
+      claimDerivedCodes,
     ] = await Promise.all([
       db.select({ policyId: policyProcedureCodes.policyId, code: policyProcedureCodes.code })
         .from(policyProcedureCodes),
@@ -246,6 +247,13 @@ export default defineEventHandler(async (event) => {
         .from(policyPlacesOfService),
       db.select()
         .from(policyReferenceDocs),
+      // Fallback: derive procedure codes from linked claim lines for policies without junction table codes
+      db.selectDistinct({
+        policyId: claimLinePolicies.policyId,
+        procedureCode: claimLineItems.procedureCode,
+      })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id)),
     ])
 
     // Group related data by policyId for O(1) lookup
@@ -284,16 +292,33 @@ export default defineEventHandler(async (event) => {
       refDocsByPolicy.set(row.policyId, arr)
     }
 
+    // Claim-derived procedure codes as fallback for policies without junction table codes
+    const claimCodesByPolicy = new Map<string, string[]>()
+    for (const row of claimDerivedCodes) {
+      const arr = claimCodesByPolicy.get(row.policyId) || []
+      arr.push(row.procedureCode)
+      claimCodesByPolicy.set(row.policyId, arr)
+    }
+
     // Transform policies using bulk-fetched related data
     const transformedPolicies = policiesList.map((policy) => {
+      // Use junction table codes, falling back to claim-derived codes
+      const junctionCodes = procedureCodesByPolicy.get(policy.id) || []
+      const procCodes = junctionCodes.length > 0 ? junctionCodes : (claimCodesByPolicy.get(policy.id) || [])
+
       const basePolicy = policyListAdapter(
         policy as unknown as DbPolicy,
-        procedureCodesByPolicy.get(policy.id) || [],
+        procCodes,
         diagnosisCodesByPolicy.get(policy.id) || [],
         modifiersByPolicy.get(policy.id) || [],
         placesByPolicy.get(policy.id) || [],
         (refDocsByPolicy.get(policy.id) || []) as DbReferenceDoc[],
       )
+
+      // Fix generic common_mistake for scenario stubs (e.g. "Common in modifier missing patterns")
+      if (basePolicy.common_mistake && /^Common in .+ patterns$/.test(basePolicy.common_mistake)) {
+        basePolicy.common_mistake = `Submitting claims that do not meet this policy's requirements: ${policy.name.toLowerCase()}.`
+      }
 
       // Merge computed metrics from claim data
       const metrics = metricsMap.get(policy.id)

@@ -72,7 +72,8 @@ interface PolicyMetricsResponse {
   deniedClaims: number
   appealedClaims: number
   deniedLines: number
-  totalBilled: number
+  estimatedTotalBilled: number
+  deniedBilledAmount: number
   deniedAmount: number
   paidAmount: number
   denialRate: number
@@ -103,7 +104,7 @@ const policyClaimsData = computed(() => {
   return {
     claims: [] as DisplayClaim[],
     totalCount: m?.totalClaims || 0,
-    totalBilled: m?.totalBilled || 0,
+    estimatedTotalBilled: m?.estimatedTotalBilled || 0,
     deniedCount: m?.deniedClaims || 0,
     deniedAmount: m?.deniedAmount || 0,
   }
@@ -136,25 +137,6 @@ const getPatternBadgeClass = (tier: string) => {
     low: 'bg-secondary-100 text-secondary-700 border-secondary-300',
   }
   return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
-}
-
-// Trend icon
-const getTrendIcon = (trend: string) => {
-  const icons = {
-    up: 'heroicons:arrow-trending-up',
-    down: 'heroicons:arrow-trending-down',
-    stable: 'heroicons:minus',
-  }
-  return icons[trend as keyof typeof icons] || 'heroicons:minus'
-}
-
-const getTrendClass = (trend: string) => {
-  const classes = {
-    up: 'text-error-600',
-    down: 'text-success-600',
-    stable: 'text-neutral-600',
-  }
-  return classes[trend as keyof typeof classes] || 'text-neutral-600'
 }
 
 // Navigate to pattern details
@@ -204,13 +186,6 @@ const showCodeIntelligence = (code: string) => {
         <div class="flex-1 pr-4">
           <div class="flex items-center gap-3 mb-2">
             <h1 class="text-xl font-semibold text-neutral-900">{{ policy.name }}</h1>
-            <Icon
-              v-if="policy.trend"
-              :name="getTrendIcon(policy.trend)"
-              class="w-4 h-4"
-              :class="getTrendClass(policy.trend)"
-              :title="`Trend: ${policy.trend}`"
-            />
           </div>
           <p class="text-sm text-neutral-500">{{ policy.id }}</p>
         </div>
@@ -320,13 +295,6 @@ const showCodeIntelligence = (code: string) => {
           <div>
             <div class="text-neutral-500 text-xs mb-1">Effective Date</div>
             <div class="text-neutral-900 font-medium">{{ formatDateLong(displayPolicy.effectiveDate) }}</div>
-          </div>
-          <div>
-            <div class="text-neutral-500 text-xs mb-1">Trend</div>
-            <div class="flex items-center gap-1">
-              <Icon :name="getTrendIcon(displayPolicy.trend || '')" class="w-4 h-4" :class="getTrendClass(displayPolicy.trend || '')" />
-              <span class="text-neutral-900 font-medium capitalize">{{ displayPolicy.trend || '–' }}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -513,8 +481,8 @@ const showCodeIntelligence = (code: string) => {
             <div class="text-lg font-semibold text-neutral-900">{{ policyClaimsData.totalCount }}</div>
           </div>
           <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-xs text-neutral-600 mb-1">Total Billed</div>
-            <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(policyClaimsData.totalBilled) }}</div>
+            <div class="text-xs text-neutral-600 mb-1">Est. Total Billed</div>
+            <div class="text-lg font-semibold text-neutral-900" title="Estimated from denial rate">~{{ formatCurrency(policyClaimsData.estimatedTotalBilled) }}</div>
           </div>
           <div class="bg-error-50 rounded-lg p-3">
             <div class="text-xs text-error-600 mb-1">Denied Claims</div>

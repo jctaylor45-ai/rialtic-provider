@@ -114,7 +114,7 @@ export function policyAdapter(
   const policy_details: PolicyDetails = {
     geography: [],
     specialty_codes: [],
-    cpt_codes: procedureCodes.filter(c => c.length === 5 && /^\d+$/.test(c)),
+    cpt_codes: procedureCodes.filter(c => c.length === 5 && /^\d{4}[\dA-Z]$/.test(c)),
     hcpcs_codes: procedureCodes.filter(c => /^[A-Z]\d{4}$/.test(c)),
     icd_codes: diagnosisCodes,
     modifiers,

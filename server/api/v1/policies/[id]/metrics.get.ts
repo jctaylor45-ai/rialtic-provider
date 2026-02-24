@@ -122,6 +122,14 @@ export default defineEventHandler(async (event) => {
       ? Math.round((overturnedCount / appealCount) * 10000) / 100
       : 0
 
+    const deniedAmount = Math.round((Number(stats?.deniedAmount) || 0) * 100) / 100
+
+    // Estimate total billed from denial rate: if denialRate is 2.8% and denied is $37K,
+    // total billed ≈ $37K / 0.028 ≈ $1.35M. Falls back to deniedAmount if no rate.
+    const estimatedTotalBilled = avgDenialRate > 0
+      ? Math.round((deniedAmount / avgDenialRate) * 100) / 100
+      : deniedAmount
+
     return {
       policyId,
       totalClaims: estimatedTotalClaims,
@@ -129,8 +137,9 @@ export default defineEventHandler(async (event) => {
       deniedClaims,
       appealedClaims,
       deniedLines: totalLines,
-      totalBilled: Math.round((Number(stats?.totalBilled) || 0) * 100) / 100,
-      deniedAmount: Math.round((Number(stats?.deniedAmount) || 0) * 100) / 100,
+      estimatedTotalBilled,
+      deniedBilledAmount: Math.round((Number(stats?.totalBilled) || 0) * 100) / 100,
+      deniedAmount,
       paidAmount: Math.round((Number(stats?.paidAmount) || 0) * 100) / 100,
       denialRate,
       appealCount,
