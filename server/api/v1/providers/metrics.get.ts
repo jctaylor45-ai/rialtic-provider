@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const days = parseInt(query.days as string) || 90
     const includePrevious = query.includePrevious === 'true' || query.includePrevious === '1'
+    const scenarioId = query.scenario_id as string | undefined
 
     const now = new Date()
     const endDateStr = now.toISOString().split('T')[0] as string
@@ -42,8 +43,8 @@ export default defineEventHandler(async (event) => {
     const startDateStr = startDate.toISOString().split('T')[0] as string
 
     async function getProviderMetrics(periodStart: string, periodEnd: string): Promise<ProviderMetrics[]> {
-      // Get all providers
-      const providersList = await db
+      // Get providers (filtered by scenario when applicable)
+      const providersQuery = db
         .select({
           id: providers.id,
           name: providers.name,
@@ -52,6 +53,22 @@ export default defineEventHandler(async (event) => {
         })
         .from(providers)
         .orderBy(providers.name)
+        .$dynamic()
+
+      if (scenarioId) {
+        providersQuery.where(eq(providers.scenarioId, scenarioId))
+      }
+
+      const providersList = await providersQuery
+
+      // Build claim date conditions with optional scenario filter
+      const claimConditions = [
+        gte(claims.dateOfService, periodStart),
+        lte(claims.dateOfService, periodEnd),
+      ]
+      if (scenarioId) {
+        claimConditions.push(eq(claims.scenarioId, scenarioId))
+      }
 
       // Get per-provider claim aggregates in a single query
       const claimStats = await db
@@ -64,11 +81,18 @@ export default defineEventHandler(async (event) => {
           deniedDollars: sql<number>`SUM(CASE WHEN ${claims.status} = 'denied' THEN ${claims.billedAmount} ELSE 0 END)`,
         })
         .from(claims)
-        .where(and(
-          gte(claims.dateOfService, periodStart),
-          lte(claims.dateOfService, periodEnd)
-        ))
+        .where(and(...claimConditions))
         .groupBy(claims.providerId)
+
+      // Build appeal conditions with optional scenario filter
+      const appealConditions = [
+        eq(claimAppeals.appealFiled, true),
+        gte(claimAppeals.appealDate, periodStart),
+        lte(claimAppeals.appealDate, periodEnd),
+      ]
+      if (scenarioId) {
+        appealConditions.push(eq(claims.scenarioId, scenarioId))
+      }
 
       // Get per-provider appeal counts
       const appealStats = await db
@@ -79,11 +103,7 @@ export default defineEventHandler(async (event) => {
         })
         .from(claimAppeals)
         .innerJoin(claims, eq(claimAppeals.claimId, claims.id))
-        .where(and(
-          eq(claimAppeals.appealFiled, true),
-          gte(claimAppeals.appealDate, periodStart),
-          lte(claimAppeals.appealDate, periodEnd)
-        ))
+        .where(and(...appealConditions))
         .groupBy(claims.providerId)
 
       const claimStatsMap = new Map(claimStats.map(s => [s.providerId, s]))

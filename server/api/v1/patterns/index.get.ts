@@ -22,9 +22,14 @@ export default defineEventHandler(async (event) => {
     const category = query.category as string | undefined
     const status = query.status as string | undefined
     const tier = query.tier as string | undefined
+    const scenarioId = query.scenario_id as string | undefined
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
+
+    if (scenarioId) {
+      whereConditions.push(eq(patterns.scenarioId, scenarioId))
+    }
 
     if (category) {
       whereConditions.push(eq(patterns.category, category as typeof patterns.category.enumValues[number]))

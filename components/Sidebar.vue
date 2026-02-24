@@ -60,10 +60,18 @@
     <!-- Practice Selector -->
     <div class="p-4">
       <select
-        v-model="selectedPractice"
+        :value="appStore.selectedPracticeId || ''"
         class="w-full px-3 py-2 bg-neutral-800 border border-neutral-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary-500 text-sm"
+        @change="onPracticeChange"
       >
-        <option value="practice-1">Main Practice</option>
+        <option value="">All Practices</option>
+        <option
+          v-for="practice in appStore.practices"
+          :key="practice.id"
+          :value="practice.id"
+        >
+          {{ practice.name }}
+        </option>
       </select>
     </div>
 
@@ -110,10 +118,17 @@
 <script setup lang="ts">
 const route = useRoute()
 const { prototypes, activePrototype, activeNav, navigateToPrototype } = usePrototypes()
+const appStore = useAppStore()
+const patternsStore = usePatternsStore()
 
-const selectedPractice = ref('practice-1')
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+
+async function onPracticeChange(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  await appStore.setSelectedPractice(value || null)
+  await patternsStore.loadPatterns()
+}
 
 function selectPrototype(proto: { id: string; enabled: boolean }) {
   if (!proto.enabled) return

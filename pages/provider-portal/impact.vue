@@ -1009,12 +1009,18 @@ const impactSummary = ref<SummaryPeriod | null>(null)
 const impactPreviousSummary = ref<SummaryPeriod | null>(null)
 const impactLoading = ref(false)
 
+const appStore = useAppStore()
+
 async function fetchImpactSummary(days: number) {
   impactLoading.value = true
   try {
+    const params: Record<string, string | number> = { days, includePrevious: 'true' }
+    if (appStore.selectedPracticeId) {
+      params.scenario_id = appStore.selectedPracticeId
+    }
     const response = await $fetch<SummaryPeriod & { previousPeriod?: SummaryPeriod }>(
       '/api/v1/claims/summary',
-      { params: { days, includePrevious: 'true' } }
+      { params }
     )
     impactSummary.value = response
     impactPreviousSummary.value = response.previousPeriod || null
@@ -1346,9 +1352,13 @@ const serverPreviousProviderMetrics = ref<ServerProviderMetrics[]>([])
 
 async function fetchProviderMetrics(days: number) {
   try {
+    const params: Record<string, string | number> = { days, includePrevious: 'true' }
+    if (appStore.selectedPracticeId) {
+      params.scenario_id = appStore.selectedPracticeId
+    }
     const response = await $fetch<{ data: ServerProviderMetrics[]; previousPeriod?: ServerProviderMetrics[] }>(
       '/api/v1/providers/metrics',
-      { params: { days, includePrevious: 'true' } }
+      { params }
     )
     serverProviderMetrics.value = response.data
     serverPreviousProviderMetrics.value = response.previousPeriod || []

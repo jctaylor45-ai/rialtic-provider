@@ -49,11 +49,15 @@ interface PeriodSummary {
 /**
  * Compute aggregate claim metrics for a date range.
  */
-async function computePeriodSummary(startDateStr: string, endDateStr: string, days: number): Promise<PeriodSummary> {
-  const dateFilter = and(
+async function computePeriodSummary(startDateStr: string, endDateStr: string, days: number, scenarioId?: string): Promise<PeriodSummary> {
+  const conditions = [
     gte(claims.dateOfService, startDateStr),
-    lte(claims.dateOfService, endDateStr)
-  )!
+    lte(claims.dateOfService, endDateStr),
+  ]
+  if (scenarioId) {
+    conditions.push(eq(claims.scenarioId, scenarioId))
+  }
+  const dateFilter = and(...conditions)!
 
   // Run all queries in parallel
   const [
@@ -76,8 +80,12 @@ async function computePeriodSummary(startDateStr: string, endDateStr: string, da
     db.select({ total: sum(claims.billedAmount) }).from(claims).where(dateFilter),
     db.select({ total: sum(claims.paidAmount) }).from(claims).where(dateFilter),
     db.select({ total: sum(claims.billedAmount) }).from(claims).where(and(dateFilter, inArray(claims.status, ['denied', 'appealed']))),
-    db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealFiled, true), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
-    db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealOutcome, 'overturned'), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
+    scenarioId
+      ? db.select({ count: count() }).from(claimAppeals).innerJoin(claims, eq(claimAppeals.claimId, claims.id)).where(and(eq(claimAppeals.appealFiled, true), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr), eq(claims.scenarioId, scenarioId)))
+      : db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealFiled, true), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
+    scenarioId
+      ? db.select({ count: count() }).from(claimAppeals).innerJoin(claims, eq(claimAppeals.claimId, claims.id)).where(and(eq(claimAppeals.appealOutcome, 'overturned'), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr), eq(claims.scenarioId, scenarioId)))
+      : db.select({ count: count() }).from(claimAppeals).where(and(eq(claimAppeals.appealOutcome, 'overturned'), gte(claimAppeals.appealDate, startDateStr), lte(claimAppeals.appealDate, endDateStr))),
   ])
 
   const totalClaims = totalResult[0]?.count || 0
@@ -156,7 +164,9 @@ export default defineEventHandler(async (event) => {
     startDate.setDate(startDate.getDate() - days)
     const startDateStr = startDate.toISOString().split('T')[0] as string
 
-    const currentSummary = await computePeriodSummary(startDateStr, endDateStr, days)
+    const scenarioId = query.scenario_id as string | undefined
+
+    const currentSummary = await computePeriodSummary(startDateStr, endDateStr, days, scenarioId)
 
     if (!includePrevious) {
       return currentSummary
@@ -169,7 +179,7 @@ export default defineEventHandler(async (event) => {
     // Previous period ends where current period starts
     const prevEndStr = startDateStr
 
-    const previousSummary = await computePeriodSummary(prevStartStr, prevEndStr, days)
+    const previousSummary = await computePeriodSummary(prevStartStr, prevEndStr, days, scenarioId)
 
     return {
       ...currentSummary,

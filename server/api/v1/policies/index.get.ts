@@ -23,7 +23,7 @@ import {
   patternClaimLines,
   patterns,
 } from '~/server/database/schema'
-import { eq, desc, and, like, sql, count } from 'drizzle-orm'
+import { eq, desc, and, like, sql, count, inArray } from 'drizzle-orm'
 import { policyListAdapter, type DbPolicy, type DbReferenceDoc } from '~/server/utils/policyAdapter'
 import { getDataSourceConfig, fetchFromPaAPI } from '~/server/utils/dataSource'
 
@@ -47,6 +47,7 @@ export default defineEventHandler(async (event) => {
     const mode = query.mode as string | undefined
     const topic = query.topic as string | undefined
     const search = query.search as string | undefined
+    const scenarioId = query.scenario_id as string | undefined
 
     // Check data source configuration
     const dataSourceConfig = await getDataSourceConfig()
@@ -76,51 +77,63 @@ export default defineEventHandler(async (event) => {
     // claim_line_policies only contains denied claim lines, so we derive the
     // true denial rate from the linked patterns' current_denial_rate.
 
+    // When filtering by scenario, scope total claims and metrics to that scenario
+    const claimsCountWhere = scenarioId ? eq(claims.scenarioId, scenarioId) : undefined
     const [totalClaimsResult] = await db
       .select({ count: count() })
       .from(claims)
+      .where(claimsCountWhere)
 
     const totalClaimsCount = totalClaimsResult?.count || 1
 
+    // Build scenario filter for metrics queries (joins through claims)
+    const scenarioClaimFilter = scenarioId ? eq(claims.scenarioId, scenarioId) : undefined
+
     // Run 3 targeted queries in parallel to avoid cross-join inflation
+    const coreMetricsQuery = db
+      .select({
+        policyId: claimLinePolicies.policyId,
+        deniedLines: count(),
+        totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+        deniedClaims: sql<number>`COUNT(DISTINCT ${claims.id})`,
+        providersImpacted: sql<number>`COUNT(DISTINCT ${claims.providerId})`,
+      })
+      .from(claimLinePolicies)
+      .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+      .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+      .where(scenarioClaimFilter)
+      .groupBy(claimLinePolicies.policyId)
+
+    const appealMetricsQuery = db
+      .select({
+        policyId: claimLinePolicies.policyId,
+        appealsFiled: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealFiled} = 1 THEN ${claimAppeals.claimId} END)`,
+        overturned: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealOutcome} = 'overturned' THEN ${claimAppeals.claimId} END)`,
+      })
+      .from(claimLinePolicies)
+      .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+      .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+      .innerJoin(claimAppeals, eq(claims.id, claimAppeals.claimId))
+      .where(scenarioClaimFilter)
+      .groupBy(claimLinePolicies.policyId)
+
+    const patternMetricsQuery = db
+      .selectDistinct({
+        policyId: claimLinePolicies.policyId,
+        patternId: patternClaimLines.patternId,
+        currentDenialRate: patterns.currentDenialRate,
+      })
+      .from(claimLinePolicies)
+      .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+      .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+      .innerJoin(patternClaimLines, eq(claimLineItems.id, patternClaimLines.lineItemId))
+      .innerJoin(patterns, eq(patternClaimLines.patternId, patterns.id))
+      .where(scenarioClaimFilter)
+
     const [coreMetrics, appealMetrics, patternMetrics] = await Promise.all([
-      // Query A: Core metrics per policy (denied counts, impact, providers)
-      db
-        .select({
-          policyId: claimLinePolicies.policyId,
-          deniedLines: count(),
-          totalImpact: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
-          deniedClaims: sql<number>`COUNT(DISTINCT ${claims.id})`,
-          providersImpacted: sql<number>`COUNT(DISTINCT ${claims.providerId})`,
-        })
-        .from(claimLinePolicies)
-        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
-        .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
-        .groupBy(claimLinePolicies.policyId),
-
-      // Query B: Appeal metrics per policy
-      db
-        .select({
-          policyId: claimLinePolicies.policyId,
-          appealsFiled: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealFiled} = 1 THEN ${claimAppeals.claimId} END)`,
-          overturned: sql<number>`COUNT(DISTINCT CASE WHEN ${claimAppeals.appealOutcome} = 'overturned' THEN ${claimAppeals.claimId} END)`,
-        })
-        .from(claimLinePolicies)
-        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
-        .innerJoin(claimAppeals, eq(claimLineItems.claimId, claimAppeals.claimId))
-        .groupBy(claimLinePolicies.policyId),
-
-      // Query C: Distinct (policy, pattern, denialRate) triples via claim chain
-      db
-        .selectDistinct({
-          policyId: claimLinePolicies.policyId,
-          patternId: patternClaimLines.patternId,
-          currentDenialRate: patterns.currentDenialRate,
-        })
-        .from(claimLinePolicies)
-        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
-        .innerJoin(patternClaimLines, eq(claimLineItems.id, patternClaimLines.lineItemId))
-        .innerJoin(patterns, eq(patternClaimLines.patternId, patterns.id)),
+      coreMetricsQuery,
+      appealMetricsQuery,
+      patternMetricsQuery,
     ])
 
     // Build lookup maps
@@ -192,6 +205,26 @@ export default defineEventHandler(async (event) => {
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
+
+    // When filtering by scenario, only include policies linked to claims in that scenario
+    if (scenarioId) {
+      const linkedPolicies = await db
+        .selectDistinct({ policyId: claimLinePolicies.policyId })
+        .from(claimLinePolicies)
+        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+        .where(eq(claims.scenarioId, scenarioId))
+      const policyIds = linkedPolicies.map(r => r.policyId)
+      if (policyIds.length > 0) {
+        whereConditions.push(inArray(policies.id, policyIds))
+      } else {
+        // No policies linked to this scenario — return empty result
+        return {
+          data: [],
+          pagination: { total: 0, limit, offset, hasMore: false },
+        }
+      }
+    }
 
     if (mode) {
       whereConditions.push(eq(policies.mode, mode as typeof policies.mode.enumValues[number]))

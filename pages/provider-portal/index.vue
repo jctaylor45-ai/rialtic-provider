@@ -437,9 +437,13 @@ const summaryLoading = ref(false)
 async function fetchDashboardSummary(days: number) {
   summaryLoading.value = true
   try {
+    const params: Record<string, string | number> = { days, includePrevious: 'true' }
+    if (appStore.selectedPracticeId) {
+      params.scenario_id = appStore.selectedPracticeId
+    }
     const response = await $fetch<SummaryPeriod & { previousPeriod?: SummaryPeriod }>(
       '/api/v1/claims/summary',
-      { params: { days, includePrevious: 'true' } }
+      { params }
     )
     dashboardSummary.value = response
     previousSummary.value = response.previousPeriod || null

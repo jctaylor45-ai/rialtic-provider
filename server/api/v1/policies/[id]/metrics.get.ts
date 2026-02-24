@@ -7,7 +7,7 @@
  * from claim_line_policies joins.
  */
 
-import { defineEventHandler, getRouterParam, createError } from 'h3'
+import { defineEventHandler, getRouterParam, getQuery, createError } from 'h3'
 import { db } from '~/server/database'
 import {
   claimLineItems,
@@ -22,24 +22,43 @@ import { eq, sql, count, sum, and } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   try {
     const policyId = getRouterParam(event, 'id')
+    const query = getQuery(event)
+    const scenarioId = query.scenario_id as string | undefined
 
     if (!policyId) {
       throw createError({ statusCode: 400, message: 'Policy ID is required' })
     }
 
+    // Build where conditions with optional scenario filter
+    const policyFilter = eq(claimLinePolicies.policyId, policyId)
+    const scenarioFilter = scenarioId ? eq(claims.scenarioId, scenarioId) : undefined
+    const combinedFilter = scenarioFilter ? and(policyFilter, scenarioFilter) : policyFilter
+
     // Run all queries in parallel
     const [statsResult, claimStatsResult, appealStatsResult, patternStatsResult] = await Promise.all([
-      // Line-level metrics
-      db
-        .select({
-          totalLines: count(),
-          totalBilled: sum(claimLineItems.billedAmount),
-          deniedAmount: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
-          paidAmount: sum(claimLineItems.paidAmount),
-        })
-        .from(claimLinePolicies)
-        .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
-        .where(eq(claimLinePolicies.policyId, policyId)),
+      // Line-level metrics (needs claim join when scenario filtered)
+      scenarioFilter
+        ? db
+          .select({
+            totalLines: count(),
+            totalBilled: sum(claimLineItems.billedAmount),
+            deniedAmount: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+            paidAmount: sum(claimLineItems.paidAmount),
+          })
+          .from(claimLinePolicies)
+          .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
+          .where(combinedFilter)
+        : db
+          .select({
+            totalLines: count(),
+            totalBilled: sum(claimLineItems.billedAmount),
+            deniedAmount: sql<number>`COALESCE(SUM(${claimLinePolicies.deniedAmount}), 0)`,
+            paidAmount: sum(claimLineItems.paidAmount),
+          })
+          .from(claimLinePolicies)
+          .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+          .where(policyFilter),
 
       // Claim-level metrics + providers
       db
@@ -51,7 +70,7 @@ export default defineEventHandler(async (event) => {
         .from(claimLinePolicies)
         .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
         .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
-        .where(eq(claimLinePolicies.policyId, policyId)),
+        .where(combinedFilter),
 
       // Appeal metrics
       db
@@ -64,8 +83,9 @@ export default defineEventHandler(async (event) => {
         .innerJoin(claimLineItems, eq(claimLineItems.claimId, claims.id))
         .innerJoin(claimLinePolicies, eq(claimLinePolicies.lineItemId, claimLineItems.id))
         .where(and(
-          eq(claimLinePolicies.policyId, policyId),
-          eq(claimAppeals.appealFiled, true)
+          policyFilter,
+          eq(claimAppeals.appealFiled, true),
+          scenarioFilter
         )),
 
       // Linked patterns → distinct (patternId, denialRate) triples via claim chain
@@ -76,9 +96,10 @@ export default defineEventHandler(async (event) => {
         })
         .from(claimLinePolicies)
         .innerJoin(claimLineItems, eq(claimLinePolicies.lineItemId, claimLineItems.id))
+        .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
         .innerJoin(patternClaimLines, eq(claimLineItems.id, patternClaimLines.lineItemId))
         .innerJoin(patterns, eq(patternClaimLines.patternId, patterns.id))
-        .where(eq(claimLinePolicies.policyId, policyId)),
+        .where(combinedFilter),
     ])
 
     const stats = statsResult[0]

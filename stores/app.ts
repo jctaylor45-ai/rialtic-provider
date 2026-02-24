@@ -69,6 +69,14 @@ function getPolicyMode(policy: Policy): string {
   return policy.connector_insight_mode?.[0]?.insight_mode || 'Active'
 }
 
+interface Practice {
+  id: string
+  name: string
+  claimCount: number
+  patternCount: number
+  providerCount: number
+}
+
 const PAGE_SIZE = 100
 
 export const useAppStore = defineStore('app', {
@@ -79,6 +87,10 @@ export const useAppStore = defineStore('app', {
     insights: [] as Insight[],
     learningMarkers: [] as LearningMarker[],
     claimsSummary: null as ClaimsSummaryResponse | null,
+
+    // Practice selector
+    practices: [] as Practice[],
+    selectedPracticeId: null as string | null,
 
     // Loading states
     isLoading: false,
@@ -131,6 +143,11 @@ export const useAppStore = defineStore('app', {
     async initialize() {
       this.isLoading = true
       this.error = null
+      // Restore practice selection from localStorage
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('selectedPracticeId')
+        if (saved) this.selectedPracticeId = saved
+      }
       try {
         if (this.useDatabase) {
           await this.initializeFromDatabase()
@@ -164,12 +181,23 @@ export const useAppStore = defineStore('app', {
       this.claimsFirstDataLoaded = false
       this.claims = []
 
-      // Fetch policies (all), summary, and first page of claims in parallel
-      const [policiesResponse, summaryResponse, claimsResponse] = await Promise.all([
-        $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 0 } }),
-        $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary'),
-        $fetch<ClaimsApiResponse>('/api/v1/claims', { params: { limit: PAGE_SIZE, offset: 0 } }),
+      // Build scenario filter params
+      const scenarioParams: Record<string, string | number> = {}
+      if (this.selectedPracticeId) {
+        scenarioParams.scenario_id = this.selectedPracticeId
+      }
+
+      // Fetch policies (all), summary, first page of claims, and practices in parallel
+      const [policiesResponse, summaryResponse, claimsResponse, practicesResponse] = await Promise.all([
+        $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 0, ...scenarioParams } }),
+        $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary', { params: scenarioParams }),
+        $fetch<ClaimsApiResponse>('/api/v1/claims', { params: { limit: PAGE_SIZE, offset: 0, ...scenarioParams } }),
+        this.practices.length === 0 ? $fetch<Practice[]>('/api/v1/practices') : Promise.resolve(null),
       ])
+
+      if (practicesResponse) {
+        this.practices = practicesResponse
+      }
 
       this.policies = policiesResponse.data
       this.pagination.policies = policiesResponse.pagination
@@ -220,8 +248,11 @@ export const useAppStore = defineStore('app', {
         this.claimsPage++
         const offset = (this.claimsPage - 1) * PAGE_SIZE
 
-        // Build params including any active filters
+        // Build params including any active filters and scenario
         const fetchParams: Record<string, string | number> = { limit: PAGE_SIZE, offset }
+        if (this.selectedPracticeId) {
+          fetchParams.scenario_id = this.selectedPracticeId
+        }
         for (const [key, value] of Object.entries(this.claimsFilterParams)) {
           if (value) fetchParams[key] = value
         }
@@ -268,6 +299,9 @@ export const useAppStore = defineStore('app', {
       try {
         // Build clean params (remove undefined values)
         const fetchParams: Record<string, string | number> = { limit: PAGE_SIZE, offset: 0 }
+        if (this.selectedPracticeId) {
+          fetchParams.scenario_id = this.selectedPracticeId
+        }
         for (const [key, value] of Object.entries(params)) {
           if (value) fetchParams[key] = value
         }
@@ -299,6 +333,19 @@ export const useAppStore = defineStore('app', {
       this.claims = claimsData.claims
       this.policies = policiesData
       this.insights = insightsData
+    },
+
+    async setSelectedPractice(id: string | null) {
+      this.selectedPracticeId = id
+      if (typeof window !== 'undefined') {
+        if (id) {
+          localStorage.setItem('selectedPracticeId', id)
+        } else {
+          localStorage.removeItem('selectedPracticeId')
+        }
+      }
+      // Re-fetch all data for the new practice
+      await this.initializeFromDatabase()
     },
 
     setUseDatabase(value: boolean) {

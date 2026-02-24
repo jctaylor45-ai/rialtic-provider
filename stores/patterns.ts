@@ -292,7 +292,12 @@ export const usePatternsStore = defineStore('patterns', () => {
   }
 
   async function loadFromDatabase() {
-    const response = await $fetch<PatternApiResponse>('/api/v1/patterns', { params: { limit: 0 } })
+    const params: Record<string, string | number> = { limit: 0 }
+    const appStore = useAppStore()
+    if (appStore.selectedPracticeId) {
+      params.scenario_id = appStore.selectedPracticeId
+    }
+    const response = await $fetch<PatternApiResponse>('/api/v1/patterns', { params })
     // Transform database patterns to match the frontend Pattern type
     patterns.value = response.data.map(transformDbPattern)
     pagination.value = response.pagination
@@ -443,8 +448,13 @@ export const usePatternsStore = defineStore('patterns', () => {
   async function refreshPatterns(apiFilters?: { category?: string; status?: string; tier?: string }) {
     isLoading.value = true
     try {
+      const params: Record<string, string | undefined> = { ...apiFilters }
+      const appStore = useAppStore()
+      if (appStore.selectedPracticeId) {
+        params.scenario_id = appStore.selectedPracticeId
+      }
       const response = await $fetch<PatternApiResponse>('/api/v1/patterns', {
-        params: apiFilters
+        params,
       })
       patterns.value = response.data.map(transformDbPattern)
       pagination.value = response.pagination

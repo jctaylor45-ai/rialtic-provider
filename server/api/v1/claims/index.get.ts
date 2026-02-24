@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
     const endDate = query.endDate as string | undefined
     const providerId = query.providerId as string | undefined
     const search = query.search as string | undefined
+    const scenarioId = query.scenario_id as string | undefined
     // Support filtering by specific claim IDs (comma-separated)
     const idsParam = query.ids as string | undefined
     const ids = idsParam ? idsParam.split(',').filter(id => id.trim()) : undefined
@@ -67,6 +68,10 @@ export default defineEventHandler(async (event) => {
     // Local database source
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
+
+    if (scenarioId) {
+      whereConditions.push(eq(claims.scenarioId, scenarioId))
+    }
 
     // If filtering by specific IDs, add that condition
     if (ids && ids.length > 0) {
