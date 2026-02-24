@@ -835,8 +835,9 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         baseline_denial_rate, baseline_dollars_denied,
         current_start, current_end, current_claim_count, current_denied_count,
         current_denial_rate, current_dollars_denied,
+        short_term_description, short_term_can_resubmit, long_term_description, long_term_steps,
         recovery_status, action_category
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const pattern of scenario.patterns) {
       // Derive score columns from trajectory data
@@ -900,6 +901,10 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         pattern.trajectory.current.deniedCount,
         pattern.trajectory.current.denialRate,
         pattern.trajectory.current.dollarsDenied,
+        pattern.remediation?.shortTerm?.description || null,
+        pattern.remediation?.shortTerm?.canResubmit ? 1 : 0,
+        pattern.remediation?.longTerm?.description || null,
+        JSON.stringify(pattern.remediation?.longTerm?.steps || []),
         recoveryStatus,
         actionCategory
       )

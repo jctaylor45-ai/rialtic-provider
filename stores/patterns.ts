@@ -49,6 +49,10 @@ interface DbPattern {
   affectedClaims?: string[]
   recoveryStatus?: string
   actionCategory?: string
+  shortTermDescription?: string
+  shortTermCanResubmit?: number
+  longTermDescription?: string
+  longTermSteps?: string
 }
 
 interface PatternApiResponse {
@@ -373,16 +377,21 @@ export const usePatternsStore = defineStore('patterns', () => {
         explanation: p.commonMistake || '',
       })) || [],
       shortTermAction: {
-        description: dbPattern.suggestedAction ||
+        description: dbPattern.shortTermDescription ||
+          dbPattern.suggestedAction ||
           dbPattern.relatedPolicies?.[0]?.fixGuidance ||
           'Review and correct the claim before resubmission',
-        canResubmit: true,
+        canResubmit: dbPattern.shortTermCanResubmit != null
+          ? Boolean(dbPattern.shortTermCanResubmit)
+          : true,
         claimCount: liveClaimCount,
         amount: liveTotalAtRisk,
       },
       longTermAction: {
-        description: 'Implement process improvements to prevent future denials',
-        steps: generateLongTermSteps(dbPattern.relatedPolicies || []),
+        description: dbPattern.longTermDescription || 'Implement process improvements to prevent future denials',
+        steps: dbPattern.longTermSteps
+          ? JSON.parse(dbPattern.longTermSteps) as string[]
+          : generateLongTermSteps(dbPattern.relatedPolicies || []),
       },
       detectionConfidence: dbPattern.scoreConfidence || 0.5,
     }

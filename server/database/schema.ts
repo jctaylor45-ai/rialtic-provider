@@ -466,6 +466,12 @@ export const patterns = sqliteTable('patterns', {
   currentDenialRate: real('current_denial_rate'),
   currentDollarsDenied: real('current_dollars_denied'),
 
+  // Remediation Data
+  shortTermDescription: text('short_term_description'),
+  shortTermCanResubmit: integer('short_term_can_resubmit'),
+  longTermDescription: text('long_term_description'),
+  longTermSteps: text('long_term_steps'),
+
   // Recovery & Action Classification
   recoveryStatus: text('recovery_status', {
     enum: ['recoverable', 'partial', 'not_recoverable']

@@ -68,6 +68,10 @@ export default defineEventHandler(async (event) => {
         currentDollarsDenied: patterns.currentDollarsDenied,
         recoveryStatus: patterns.recoveryStatus,
         actionCategory: patterns.actionCategory,
+        shortTermDescription: patterns.shortTermDescription,
+        shortTermCanResubmit: patterns.shortTermCanResubmit,
+        longTermDescription: patterns.longTermDescription,
+        longTermSteps: patterns.longTermSteps,
       })
       .from(patterns)
       .where(where)
