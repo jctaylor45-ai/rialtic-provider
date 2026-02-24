@@ -14,10 +14,9 @@ export function useTracking() {
     const path = route.path
     if (path === '/provider-portal' || path === '/provider-portal/') return 'dashboard'
     if (path.startsWith('/provider-portal/claims')) return 'claims'
-    if (path.startsWith('/provider-portal/insights')) return 'insights'
+    if (path.startsWith('/provider-portal/denial-intelligence')) return 'denial-intelligence'
     if (path.startsWith('/provider-portal/claim-lab')) return 'claim-lab'
     if (path.startsWith('/provider-portal/impact')) return 'impact'
-    if (path.startsWith('/provider-portal/policies')) return 'policies'
     return 'dashboard'
   }
 

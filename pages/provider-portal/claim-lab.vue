@@ -93,7 +93,7 @@
           </div>
         </div>
         <button
-          @click="navigateTo(`/provider-portal/insights?pattern=${contextPattern.id}`)"
+          @click="navigateTo(`/provider-portal/denial-intelligence?pattern=${contextPattern.id}`)"
           class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
         >
           View Pattern

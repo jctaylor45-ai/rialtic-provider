@@ -141,18 +141,12 @@ const getPatternBadgeClass = (tier: string) => {
 
 // Navigate to pattern details
 const viewPattern = (pattern: Pattern) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('openPatternId', pattern.id)
-  }
-  router.push('/provider-portal/insights')
+  navigateTo(`/provider-portal/denial-intelligence?pattern=${pattern.id}`)
 }
 
 // Navigate to related policy
 const viewRelatedPolicy = (policyId: string) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('openPolicyId', policyId)
-  }
-  router.push('/provider-portal/policies')
+  navigateTo(`/provider-portal/denial-intelligence?policy=${policyId}`)
 }
 
 // Navigate to claim details
@@ -272,7 +266,7 @@ const showCodeIntelligence = (code: string) => {
             <button
               v-if="relatedPatterns.length > 3"
               class="text-xs text-orange-700 hover:text-orange-800 font-medium"
-              @click="router.push('/provider-portal/insights')"
+              @click="navigateTo('/provider-portal/denial-intelligence')"
             >
               View all {{ relatedPatterns.length }} patterns →
             </button>

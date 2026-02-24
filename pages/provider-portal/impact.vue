@@ -1302,8 +1302,8 @@ function togglePatternExpand(patternId: string) {
 }
 
 function navigateToPattern(patternId: string) {
-  trackEvent('impact-pattern-navigate', { patternId, destination: 'insights' })
-  navigateTo(`/provider-portal/insights?pattern=${patternId}`)
+  trackEvent('impact-pattern-navigate', { patternId, destination: 'denial-intelligence' })
+  navigateTo(`/provider-portal/denial-intelligence?pattern=${patternId}`)
 }
 
 // Generate trend path for pattern detail

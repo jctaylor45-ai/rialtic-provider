@@ -185,7 +185,7 @@ export type EventType =
   | 'insight-root-cause-addressed'  // User clicked Mark Root Cause Addressed button
   | 'claim-lab-test'  // User ran a test in Claim Lab
 
-export type EventContext = 'dashboard' | 'claims' | 'insights' | 'claim-lab' | 'impact' | 'policies'
+export type EventContext = 'dashboard' | 'claims' | 'denial-intelligence' | 'claim-lab' | 'impact'
 
 export interface EventMetadata {
   // Common fields

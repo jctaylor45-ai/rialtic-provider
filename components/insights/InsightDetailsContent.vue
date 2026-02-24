@@ -155,7 +155,7 @@ const openRecordAction = () => {
 // Signal capture handlers per prompt spec
 const handleExportClaims = () => {
   if (pattern.value) {
-    eventsStore.trackEvent('insight-export-claims', 'insights', {
+    eventsStore.trackEvent('insight-export-claims', 'denial-intelligence', {
       patternId: pattern.value.id,
       claimCount: pattern.value.shortTermAction.claimCount,
       amount: pattern.value.shortTermAction.amount,
@@ -166,7 +166,7 @@ const handleExportClaims = () => {
 
 const handleMarkClaimsFix = () => {
   if (pattern.value) {
-    eventsStore.trackEvent('insight-claims-fixed', 'insights', {
+    eventsStore.trackEvent('insight-claims-fixed', 'denial-intelligence', {
       patternId: pattern.value.id,
     })
     // TODO: Update pattern status or create action record
@@ -175,7 +175,7 @@ const handleMarkClaimsFix = () => {
 
 const handleMarkRootCauseAddressed = () => {
   if (pattern.value) {
-    eventsStore.trackEvent('insight-root-cause-addressed', 'insights', {
+    eventsStore.trackEvent('insight-root-cause-addressed', 'denial-intelligence', {
       patternId: pattern.value.id,
       actionCategory: pattern.value.actionCategory,
     })
@@ -456,7 +456,7 @@ onMounted(() => {
           <NuxtLink
             v-for="policyId in pattern.relatedPolicies"
             :key="policyId"
-            :to="`/provider-portal/policies?policy=${policyId}`"
+            :to="`/provider-portal/denial-intelligence?policy=${policyId}`"
             class="px-3 py-1.5 bg-white border border-neutral-300 rounded-lg text-sm font-mono text-neutral-700 hover:bg-neutral-50 hover:border-primary-300 transition-colors"
           >
             {{ policyId }}

@@ -235,7 +235,7 @@
             </div>
           </div>
           <NuxtLink
-            to="/provider-portal/insights"
+            to="/provider-portal/denial-intelligence"
             class="inline-flex items-center gap-2 text-sm font-medium text-error-700 hover:text-error-800 no-underline"
           >
             View all critical patterns
@@ -286,7 +286,7 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-neutral-900">Recent Issues</h2>
           <NuxtLink
-            to="/provider-portal/insights"
+            to="/provider-portal/denial-intelligence"
             class="text-sm text-primary-600 hover:text-primary-700 font-medium no-underline"
           >
             View all insights
@@ -369,7 +369,7 @@ const handlePatternClick = (pattern: Pattern) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     patternId: pattern.id,
   })
-  navigateTo(`/provider-portal/insights?pattern=${pattern.id}`)
+  navigateTo(`/provider-portal/denial-intelligence?pattern=${pattern.id}`)
 }
 
 const handleClaimClick = (claim: ProcessedClaim) => {
@@ -383,7 +383,7 @@ const handleIssueClick = (pattern: Pattern) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     patternId: pattern.id,
   })
-  navigateTo(`/provider-portal/insights?pattern=${pattern.id}`)
+  navigateTo(`/provider-portal/denial-intelligence?pattern=${pattern.id}`)
 }
 
 // =============================================================================
@@ -400,7 +400,7 @@ const drillDown = (page: string, status?: string) => {
     }
     navigateTo({ path: '/provider-portal/claims', query })
   } else if (page === 'insights') {
-    navigateTo('/provider-portal/insights')
+    navigateTo('/provider-portal/denial-intelligence')
   } else if (page === 'impact') {
     navigateTo('/provider-portal/impact')
   }

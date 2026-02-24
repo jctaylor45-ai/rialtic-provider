@@ -42,9 +42,8 @@ const navigationByPrototype: Record<string, PrototypeNav> = {
   'provider-portal': {
     main: [
       { id: 'dashboard', label: 'Dashboard', icon: 'heroicons:squares-2x2', path: '/provider-portal' },
-      { id: 'policies', label: 'Policies', icon: 'heroicons:document-text', path: '/provider-portal/policies' },
+      { id: 'denial-intelligence', label: 'Denial Intelligence', icon: 'heroicons:shield-exclamation', path: '/provider-portal/denial-intelligence' },
       { id: 'claims', label: 'Claims', icon: 'heroicons:clipboard-document-list', path: '/provider-portal/claims' },
-      { id: 'insights', label: 'Insights', icon: 'heroicons:light-bulb', path: '/provider-portal/insights' },
       { id: 'impact', label: 'Impact', icon: 'heroicons:chart-bar', path: '/provider-portal/impact' },
       { id: 'claim-lab', label: 'Claim Lab', icon: 'heroicons:beaker', path: '/provider-portal/claim-lab' },
     ],

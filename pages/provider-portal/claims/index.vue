@@ -542,12 +542,9 @@ const getPatternBadgeClass = (tier: string) => {
   return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
 }
 
-// Navigate to pattern details in insights page
+// Navigate to pattern details
 const viewPattern = (pattern: Pattern) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem('openPatternId', pattern.id)
-  }
-  router.push('/provider-portal/insights')
+  navigateTo(`/provider-portal/denial-intelligence?pattern=${pattern.id}`)
 }
 
 // Column definitions for TanStack Table
