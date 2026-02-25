@@ -300,7 +300,9 @@ export const usePatternsStore = defineStore('patterns', () => {
     }
     const response = await $fetch<PatternApiResponse>('/api/v1/patterns', { params })
     // Transform database patterns to match the frontend Pattern type
-    patterns.value = response.data.map(transformDbPattern)
+    const transformed = response.data.map(transformDbPattern)
+    assignTiersByPercentile(transformed)
+    patterns.value = transformed
     pagination.value = response.pagination
   }
 
@@ -496,28 +498,53 @@ export const usePatternsStore = defineStore('patterns', () => {
   }
 
   /**
-   * Assign tiers by percentile rank of totalAtRisk (live impact).
-   * Critical = top 25%, High = 25-50%, Medium = 50-75%, Low = bottom 25%
+   * Assign tiers by percentile cutoffs of totalAtRisk (live impact).
+   * Sorts all values descending, computes p75/p50/p25 cutoffs, assigns:
+   *   >= p75 → critical, >= p50 → high, >= p25 → medium, < p25 → low
+   * Edge cases: all equal → medium, fewer than 4 → rank, totalAtRisk=0 → low
    */
   function assignTiersByPercentile(items: Pattern[]): void {
     if (items.length === 0) return
 
-    // Sort indices by totalAtRisk descending
-    const ranked = items
-      .map((p, i) => ({ index: i, impact: p.totalAtRisk }))
-      .sort((a, b) => b.impact - a.impact)
+    // Edge case: fewer than 4 patterns — just rank them
+    if (items.length < 4) {
+      const ranked = [...items].sort((a, b) => b.totalAtRisk - a.totalAtRisk)
+      const tierOrder: PatternTier[] = ['critical', 'high', 'medium', 'low']
+      for (let i = 0; i < ranked.length; i++) {
+        ranked[i]!.tier = ranked[i]!.totalAtRisk === 0 ? 'low' : tierOrder[i]!
+      }
+      return
+    }
 
-    const n = ranked.length
-    const tiers: PatternTier[] = ['critical', 'high', 'medium', 'low']
-    for (let rank = 0; rank < n; rank++) {
-      const percentile = rank / n
-      let tier: PatternTier
-      if (percentile < 0.25) tier = tiers[0]!
-      else if (percentile < 0.50) tier = tiers[1]!
-      else if (percentile < 0.75) tier = tiers[2]!
-      else tier = tiers[3]!
+    // Collect and sort values descending
+    const values = items.map(p => p.totalAtRisk).sort((a, b) => b - a)
 
-      items[ranked[rank]!.index]!.tier = tier
+    // Edge case: all values equal
+    if (values[0] === values[values.length - 1]) {
+      for (const item of items) {
+        item.tier = item.totalAtRisk === 0 ? 'low' : 'medium'
+      }
+      return
+    }
+
+    // Compute percentile cutoffs using the sorted values
+    const n = values.length
+    const p75 = values[Math.floor(n * 0.25)]!  // value at 25th rank position = top 25% cutoff
+    const p50 = values[Math.floor(n * 0.50)]!  // median
+    const p25 = values[Math.floor(n * 0.75)]!  // value at 75th rank position = bottom 25% cutoff
+
+    for (const item of items) {
+      if (item.totalAtRisk === 0) {
+        item.tier = 'low'
+      } else if (item.totalAtRisk >= p75) {
+        item.tier = 'critical'
+      } else if (item.totalAtRisk >= p50) {
+        item.tier = 'high'
+      } else if (item.totalAtRisk >= p25) {
+        item.tier = 'medium'
+      } else {
+        item.tier = 'low'
+      }
     }
   }
 
@@ -637,7 +664,9 @@ export const usePatternsStore = defineStore('patterns', () => {
       const saved = localStorage.getItem('patterns')
       if (saved) {
         try {
-          patterns.value = JSON.parse(saved)
+          const parsed: Pattern[] = JSON.parse(saved)
+          assignTiersByPercentile(parsed)
+          patterns.value = parsed
         } catch (e) {
           console.error('Failed to load saved patterns:', e)
         }
