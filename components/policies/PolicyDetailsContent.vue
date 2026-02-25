@@ -6,9 +6,7 @@
  */
 import { format, parseISO } from 'date-fns'
 import type { Policy } from '~/types'
-import type { Pattern } from '~/types/enhancements'
 import { normalizePolicyForDisplay, type DisplayPolicy } from '~/composables/usePolicyDisplay'
-import { type DisplayClaim } from '~/composables/useClaimDisplay'
 import { renderMarkdown } from '~/utils/markdown'
 
 const props = defineProps<{
@@ -19,8 +17,6 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const appStore = useAppStore()
-const patternsStore = usePatternsStore()
 const analyticsStore = useAnalyticsStore()
 const router = useRouter()
 
@@ -30,7 +26,6 @@ const displayPolicy = computed<DisplayPolicy>(() => {
 })
 
 // Composables
-const { getPatternCategoryIcon } = usePatterns()
 const {
   isModalOpen: isCodeIntelModalOpen,
   selectedCode,
@@ -52,118 +47,15 @@ const formatDateLong = (dateStr: string | undefined | null): string => {
   }
 }
 
-// Get patterns related to this policy
-const relatedPatterns = computed(() => {
-  return patternsStore.patterns.filter(pattern =>
-    pattern.relatedPolicies?.some(rp => rp === props.policy.id)
-  )
-})
-
 // Get related policies (other policies this one references) - empty for PaAPI format
 const linkedPolicies = computed<Policy[]>(() => {
   return []
 })
 
-// Server-side policy metrics (replaces client-side filtering of 100 claims)
-interface PolicyMetricsResponse {
-  policyId: string
-  totalClaims: number
-  totalLines: number
-  deniedClaims: number
-  appealedClaims: number
-  deniedLines: number
-  estimatedTotalBilled: number
-  deniedBilledAmount: number
-  deniedAmount: number
-  paidAmount: number
-  denialRate: number
-  appealCount: number
-  overturnedCount: number
-}
-
-const policyMetrics = ref<PolicyMetricsResponse | null>(null)
-
-async function fetchPolicyMetrics(policyId: string) {
-  try {
-    policyMetrics.value = await $fetch<PolicyMetricsResponse>(
-      `/api/v1/policies/${policyId}/metrics`
-    )
-  } catch (err) {
-    console.error('Failed to fetch policy metrics:', err)
-  }
-}
-
-// Fetch when policy changes
-watch(() => props.policy.id, (newId) => {
-  fetchPolicyMetrics(newId)
-}, { immediate: true })
-
-// Backward-compatible computed that uses server metrics
-const policyClaimsData = computed(() => {
-  const m = policyMetrics.value
-  return {
-    claims: [] as DisplayClaim[],
-    totalCount: m?.totalClaims || 0,
-    estimatedTotalBilled: m?.estimatedTotalBilled || 0,
-    deniedCount: m?.deniedClaims || 0,
-    deniedAmount: m?.deniedAmount || 0,
-  }
-})
-
-// How many claims to show initially
-const showAllClaims = ref(false)
-const displayedClaims = computed(() => {
-  if (showAllClaims.value) return policyClaimsData.value.claims
-  return policyClaimsData.value.claims.slice(0, 5)
-})
-
-// Claim type icons
-const getClaimTypeIcon = (claimType: string) => {
-  const icons: Record<string, string> = {
-    'Professional': 'heroicons:user',
-    'Institutional': 'heroicons:building-office-2',
-    'Dental': 'heroicons:face-smile',
-    'Pharmacy': 'heroicons:beaker',
-  }
-  return icons[claimType] || 'heroicons:document-text'
-}
-
-// Get pattern tier badge class
-const getPatternBadgeClass = (tier: string) => {
-  const classes = {
-    critical: 'bg-error-100 text-error-700 border-error-300',
-    high: 'bg-orange-100 text-orange-700 border-orange-300',
-    medium: 'bg-warning-100 text-warning-700 border-warning-300',
-    low: 'bg-secondary-100 text-secondary-700 border-secondary-300',
-  }
-  return classes[tier as keyof typeof classes] || 'bg-neutral-100 text-neutral-700 border-neutral-300'
-}
-
-// Navigate to pattern details
-const viewPattern = (pattern: Pattern) => {
-  navigateTo(`/provider-portal/denial-intelligence?pattern=${pattern.id}`)
-}
 
 // Navigate to related policy
 const viewRelatedPolicy = (policyId: string) => {
   navigateTo(`/provider-portal/denial-intelligence?policy=${policyId}`)
-}
-
-// Navigate to claim details
-const viewClaim = (claimId: string) => {
-  router.push({ path: '/provider-portal/claims', query: { claim: claimId } })
-}
-
-// Get status badge class
-const getStatusClass = (status: string) => {
-  const classes = {
-    approved: 'bg-success-100 text-success-700',
-    paid: 'bg-success-100 text-success-700',
-    denied: 'bg-error-100 text-error-700',
-    pending: 'bg-warning-100 text-warning-700',
-    appealed: 'bg-secondary-100 text-secondary-700',
-  }
-  return classes[status as keyof typeof classes] || 'bg-neutral-100 text-neutral-700'
 }
 
 // Show code intelligence
@@ -191,89 +83,17 @@ const showCodeIntelligence = (code: string) => {
         </button>
       </div>
 
-      <!-- Key Metrics Grid -->
-      <div class="grid grid-cols-4 gap-3 mt-4">
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Hit Rate</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ formatPercentage(displayPolicy.hitRate) }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Denial Rate</div>
-          <div class="text-lg font-semibold text-error-700">{{ formatPercentage(displayPolicy.denialRate) }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Appeal Rate</div>
-          <div class="text-lg font-semibold text-warning-700">{{ formatPercentage(displayPolicy.appealRate) }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Overturn Rate</div>
-          <div class="text-lg font-semibold text-success-700">{{ formatPercentage(displayPolicy.overturnRate) }}</div>
-        </div>
-      </div>
-
-      <!-- Secondary Metrics -->
-      <div class="grid grid-cols-3 gap-3 mt-3">
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Total Impact</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ formatCurrency(displayPolicy.impact) }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Insight Count</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.insightCount }}</div>
-        </div>
-        <div class="bg-neutral-50 rounded-lg p-3">
-          <div class="text-xs text-neutral-600 mb-1">Providers Impacted</div>
-          <div class="text-lg font-semibold text-neutral-900">{{ displayPolicy.providersImpacted }}</div>
-        </div>
+      <!-- Source Badge -->
+      <div v-if="policy.source" class="mt-3">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 text-neutral-700 text-sm font-medium rounded-lg border border-neutral-200">
+          <Icon name="heroicons:building-office" class="w-4 h-4 text-neutral-500" />
+          {{ policy.source }}
+        </span>
       </div>
     </div>
 
     <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto">
-      <!-- Related Patterns Alert -->
-      <div v-if="relatedPatterns.length > 0" class="p-6 border-b border-neutral-200">
-        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <div class="flex items-start gap-3 mb-3">
-            <Icon name="heroicons:exclamation-triangle" class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-            <div class="flex-1">
-              <h3 class="text-sm font-semibold text-orange-900">
-                {{ relatedPatterns.length }} Related Pattern{{ relatedPatterns.length > 1 ? 's' : '' }}
-              </h3>
-              <p class="text-xs text-orange-700 mt-1">
-                Denial patterns detected that relate to this policy
-              </p>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <div
-              v-for="pattern in relatedPatterns.slice(0, 3)"
-              :key="pattern.id"
-              class="flex items-center justify-between bg-white rounded p-2 text-sm cursor-pointer hover:bg-orange-50 transition-colors"
-              @click="viewPattern(pattern)"
-            >
-              <div class="flex items-center gap-2">
-                <Icon :name="getPatternCategoryIcon(pattern.category)" class="w-4 h-4 text-orange-600" />
-                <span class="text-neutral-900">{{ pattern.title }}</span>
-              </div>
-              <span
-                class="px-2 py-0.5 text-xs font-medium rounded border"
-                :class="getPatternBadgeClass(pattern.tier)"
-              >
-                {{ pattern.tier.toUpperCase() }}
-              </span>
-            </div>
-            <button
-              v-if="relatedPatterns.length > 3"
-              class="text-xs text-orange-700 hover:text-orange-800 font-medium"
-              @click="navigateTo('/provider-portal/denial-intelligence')"
-            >
-              View all {{ relatedPatterns.length }} patterns →
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- Policy Details Grid -->
       <div class="p-6 border-b border-neutral-200">
         <h3 class="text-sm font-semibold text-neutral-900 mb-4">Policy Details</h3>
@@ -461,82 +281,6 @@ const showCodeIntelligence = (code: string) => {
         </div>
       </div>
 
-      <!-- Claims Hitting This Policy -->
-      <div class="p-6 border-b border-neutral-200">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-semibold text-neutral-900">Claims Hitting This Policy</h3>
-          <span class="text-xs text-neutral-500">{{ policyClaimsData.totalCount }} total</span>
-        </div>
-
-        <!-- Summary Stats -->
-        <div v-if="policyClaimsData.totalCount > 0" class="grid grid-cols-4 gap-3 mb-4">
-          <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-xs text-neutral-600 mb-1">Total Claims</div>
-            <div class="text-lg font-semibold text-neutral-900">{{ policyClaimsData.totalCount }}</div>
-          </div>
-          <div class="bg-neutral-50 rounded-lg p-3">
-            <div class="text-xs text-neutral-600 mb-1">Est. Total Billed</div>
-            <div class="text-lg font-semibold text-neutral-900" title="Estimated from denial rate">~{{ formatCurrency(policyClaimsData.estimatedTotalBilled) }}</div>
-          </div>
-          <div class="bg-error-50 rounded-lg p-3">
-            <div class="text-xs text-error-600 mb-1">Denied Claims</div>
-            <div class="text-lg font-semibold text-error-700">{{ policyClaimsData.deniedCount }}</div>
-          </div>
-          <div class="bg-error-50 rounded-lg p-3">
-            <div class="text-xs text-error-600 mb-1">Denied Amount</div>
-            <div class="text-lg font-semibold text-error-700">{{ formatCurrency(policyClaimsData.deniedAmount) }}</div>
-          </div>
-        </div>
-
-        <!-- Claims List -->
-        <div v-if="policyClaimsData.totalCount > 0" class="space-y-2">
-          <div
-            v-for="claim in displayedClaims"
-            :key="claim.id"
-            class="flex items-center justify-between p-3 bg-white border border-neutral-200 rounded-lg cursor-pointer hover:bg-primary-50 hover:border-primary-200 transition-colors"
-            @click="viewClaim(claim.id)"
-          >
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-mono text-sm font-medium text-primary-600">{{ claim.id }}</span>
-                <span
-                  class="px-2 py-0.5 text-xs font-medium rounded"
-                  :class="getStatusClass(claim.status)"
-                >
-                  {{ claim.status.charAt(0).toUpperCase() + claim.status.slice(1) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-4 text-xs text-neutral-600">
-                <span>{{ claim.patientName }}</span>
-                <span>{{ formatDateLong(claim.dateOfService) }}</span>
-                <span v-if="claim.denialReason" class="text-error-600 truncate max-w-48" :title="claim.denialReason">
-                  {{ claim.denialReason }}
-                </span>
-              </div>
-            </div>
-            <div class="text-right pl-4">
-              <div class="text-sm font-semibold text-neutral-900">{{ formatCurrency(claim.billedAmount) }}</div>
-              <div v-if="claim.paidAmount" class="text-xs text-success-600">Paid: {{ formatCurrency(claim.paidAmount) }}</div>
-            </div>
-          </div>
-
-          <!-- Show More/Less Button -->
-          <div v-if="policyClaimsData.totalCount > 5" class="pt-2">
-            <button
-              class="w-full py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
-              @click="showAllClaims = !showAllClaims"
-            >
-              {{ showAllClaims ? 'Show Less' : `Show All ${policyClaimsData.totalCount} Claims` }}
-            </button>
-          </div>
-        </div>
-
-        <!-- No Claims Message -->
-        <div v-else class="text-center py-8">
-          <Icon name="heroicons:document-magnifying-glass" class="w-12 h-12 text-neutral-300 mx-auto mb-3" />
-          <p class="text-sm text-neutral-500">No claims have hit this policy yet.</p>
-        </div>
-      </div>
     </div>
 
     <!-- Footer Actions -->

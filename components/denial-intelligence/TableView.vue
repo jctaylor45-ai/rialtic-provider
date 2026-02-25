@@ -226,10 +226,10 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
     id: 'impact',
     header: 'Impact',
     size: 120,
-    accessorFn: (row) => row.type === 'active' ? row.pattern.score.impact : (row.policy?.impact || 0),
+    accessorFn: (row) => row.type === 'active' ? row.pattern.totalAtRisk : (row.policy?.impact || 0),
     cell: ({ row }) => {
       const val = row.original.type === 'active'
-        ? row.original.pattern.score.impact
+        ? row.original.pattern.totalAtRisk
         : (row.original.policy.impact || 0)
       if (!val) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
       return h('span', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(val))

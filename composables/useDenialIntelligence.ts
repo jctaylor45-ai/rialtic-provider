@@ -263,7 +263,7 @@ export function useDenialIntelligence() {
     items.sort((a, b) => {
       switch (col) {
         case 'impact':
-          return (a.pattern.score.impact - b.pattern.score.impact) * mult
+          return (a.pattern.totalAtRisk - b.pattern.totalAtRisk) * mult
         case 'denialRate':
           return ((a.pattern.currentDenialRate || 0) - (b.pattern.currentDenialRate || 0)) * mult
         case 'frequency':
@@ -271,7 +271,7 @@ export function useDenialIntelligence() {
         case 'recent':
           return (new Date(a.pattern.lastUpdated).getTime() - new Date(b.pattern.lastUpdated).getTime()) * mult
         default:
-          return (a.pattern.score.impact - b.pattern.score.impact) * mult
+          return (a.pattern.totalAtRisk - b.pattern.totalAtRisk) * mult
       }
     })
 

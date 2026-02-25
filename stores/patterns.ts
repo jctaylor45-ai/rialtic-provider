@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction, ActionCategory, RecoveryStatus } from '~/types/enhancements'
 import { getAppConfig } from '~/config/appConfig'
+import { calculatePatternTier } from '~/utils/analytics'
 
 // Types for API response
 interface DbPattern {
@@ -361,21 +362,25 @@ export const usePatternsStore = defineStore('patterns', () => {
     const patternActionCategory = (dbPattern.actionCategory || 'coding_knowledge') as ActionCategory
     const patternRecoveryStatus = (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus
 
+    // Compute score with live data, then derive tier from it
+    const score = {
+      frequency: dbPattern.liveLineCount || 0,
+      impact: liveTotalAtRisk,
+      trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
+      velocity: dbPattern.scoreVelocity || 0,
+      confidence: dbPattern.scoreConfidence || 0,
+      recency: dbPattern.scoreRecency || 0,
+    }
+    const tier = calculatePatternTier(score, dbPattern.avgDenialAmount || 0)
+
     return {
       id: dbPattern.id,
       title: dbPattern.title,
       description: dbPattern.description || '',
       category: dbPattern.category as PatternCategory,
       status: dbPattern.status as 'active' | 'improving' | 'resolved' | 'archived',
-      tier: dbPattern.tier as 'critical' | 'high' | 'medium' | 'low',
-      score: {
-        frequency: dbPattern.liveLineCount || 0,
-        impact: dbPattern.scoreImpact || liveTotalAtRisk,
-        trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
-        velocity: dbPattern.scoreVelocity || 0,
-        confidence: dbPattern.scoreConfidence || 0,
-        recency: dbPattern.scoreRecency || 0,
-      },
+      tier,
+      score,
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
       totalAtRisk: liveTotalAtRisk,
       baselineDenialRate: dbPattern.baselineDenialRate,
