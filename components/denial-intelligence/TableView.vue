@@ -153,6 +153,16 @@ const tierBadgeClass = (tier: string) => {
   return classes[tier] || 'bg-neutral-100 text-neutral-600'
 }
 
+const tierTooltip = (tier: string) => {
+  const tooltips: Record<string, string> = {
+    critical: 'Top 25% by denied dollars at risk',
+    high: 'Top 25-50% by denied dollars at risk',
+    medium: 'Bottom 25-50% by denied dollars at risk',
+    low: 'Bottom 25% by denied dollars at risk',
+  }
+  return tooltips[tier] || ''
+}
+
 const columns: ColumnDef<DenialIntelligenceItem>[] = [
   {
     id: 'type',
@@ -162,7 +172,8 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
     cell: ({ row }) => {
       if (row.original.type === 'active') {
         return h('span', {
-          class: `px-2 py-0.5 text-xs font-medium rounded-full ${tierBadgeClass(row.original.tier)}`,
+          class: `px-2 py-0.5 text-xs font-medium rounded-full cursor-help ${tierBadgeClass(row.original.tier)}`,
+          title: tierTooltip(row.original.tier),
         }, row.original.tier.toUpperCase())
       }
       return h('span', {

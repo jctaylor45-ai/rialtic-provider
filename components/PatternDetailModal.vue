@@ -31,8 +31,9 @@
                     </h2>
                     <div class="flex items-center gap-2 mt-1">
                       <span
-                        class="px-2 py-0.5 text-xs font-medium rounded-full border"
+                        class="px-2 py-0.5 text-xs font-medium rounded-full border cursor-help"
                         :class="tierBadgeClass"
+                        :title="tierTooltip"
                       >
                         {{ pattern.tier.toUpperCase() }}
                       </span>
@@ -314,6 +315,7 @@ const { getActionTypeLabel, getActionTypeIcon } = useActions()
 const {
   getPatternTierColor,
   getPatternTierBadgeClass,
+  getPatternTierTooltip,
   getPatternStatusBadgeClass,
   getPatternCategoryIcon,
 } = usePatterns()
@@ -324,6 +326,7 @@ const { openCodeIntelligence } = useCodeIntelligence()
 // Computed properties
 const tierColor = computed(() => props.pattern ? getPatternTierColor(props.pattern.tier) : 'gray')
 const tierBadgeClass = computed(() => props.pattern ? getPatternTierBadgeClass(props.pattern.tier) : '')
+const tierTooltip = computed(() => props.pattern ? getPatternTierTooltip(props.pattern.tier) : '')
 const statusBadgeClass = computed(() => props.pattern ? getPatternStatusBadgeClass(props.pattern.status) : '')
 const categoryIcon = computed(() => props.pattern ? getPatternCategoryIcon(props.pattern.category) : 'heroicons:light-bulb')
 

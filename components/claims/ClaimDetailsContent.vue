@@ -34,7 +34,7 @@ const {
 } = useClaimRecovery()
 
 // Composables
-const { getPatternCategoryIcon, getPatternTierBadgeClass, startPracticeSession } = usePatterns()
+const { getPatternCategoryIcon, getPatternTierBadgeClass, getPatternTierTooltip, startPracticeSession } = usePatterns()
 const { formatCurrency } = useAnalytics()
 const { trackClaimReview } = useTracking()
 const {
@@ -410,8 +410,9 @@ onMounted(() => {
                   </div>
                 </div>
                 <span
-                  class="px-2 py-1 text-xs font-medium rounded border"
+                  class="px-2 py-1 text-xs font-medium rounded border cursor-help"
                   :class="getPatternTierBadgeClass(pattern.tier)"
+                  :title="getPatternTierTooltip(pattern.tier)"
                 >
                   {{ pattern.tier.toUpperCase() }}
                 </span>

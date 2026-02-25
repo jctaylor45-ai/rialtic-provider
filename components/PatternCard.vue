@@ -26,8 +26,9 @@
 
       <div class="flex flex-col items-end gap-2 ml-4">
         <span
-          class="px-2.5 py-1 text-xs font-medium rounded-full border"
+          class="px-2.5 py-1 text-xs font-medium rounded-full border cursor-help"
           :class="tierBadgeClass"
+          :title="tierTooltip"
         >
           {{ pattern.tier.toUpperCase() }}
         </span>
@@ -185,6 +186,7 @@ defineEmits<{
 const {
   getPatternTierColor,
   getPatternTierBadgeClass,
+  getPatternTierTooltip,
   getPatternStatusBadgeClass,
   getPatternCategoryIcon,
 } = usePatterns()
@@ -196,6 +198,7 @@ const { openCodeIntelligence } = useCodeIntelligence()
 // Computed properties
 const tierColor = computed(() => getPatternTierColor(props.pattern.tier))
 const tierBadgeClass = computed(() => getPatternTierBadgeClass(props.pattern.tier))
+const tierTooltip = computed(() => getPatternTierTooltip(props.pattern.tier))
 const statusBadgeClass = computed(() => getPatternStatusBadgeClass(props.pattern.status))
 const categoryIcon = computed(() => getPatternCategoryIcon(props.pattern.category))
 

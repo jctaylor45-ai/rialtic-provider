@@ -27,6 +27,7 @@ const { getActionTypeLabel, getActionTypeIcon } = useActions()
 const {
   getPatternTierColor,
   getPatternTierBadgeClass,
+  getPatternTierTooltip,
   getPatternCategoryIcon,
 } = usePatterns()
 const { openCodeIntelligence } = useCodeIntelligence()
@@ -40,6 +41,7 @@ const pattern = computed(() => {
 // Computed properties
 const tierColor = computed(() => pattern.value ? getPatternTierColor(pattern.value.tier) : 'gray')
 const tierBadgeClass = computed(() => pattern.value ? getPatternTierBadgeClass(pattern.value.tier) : '')
+const tierTooltip = computed(() => pattern.value ? getPatternTierTooltip(pattern.value.tier) : '')
 const categoryIcon = computed(() => pattern.value ? getPatternCategoryIcon(pattern.value.category) : 'heroicons:light-bulb')
 
 const trendIcon = computed(() => {
@@ -287,8 +289,9 @@ onMounted(() => {
             </h1>
             <div class="flex items-center gap-2 mt-1 flex-wrap">
               <span
-                class="px-2 py-0.5 text-xs font-medium rounded-full border"
+                class="px-2 py-0.5 text-xs font-medium rounded-full border cursor-help"
                 :class="tierBadgeClass"
+                :title="tierTooltip"
               >
                 {{ pattern.tier.toUpperCase() }}
               </span>

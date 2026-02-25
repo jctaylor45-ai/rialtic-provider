@@ -33,6 +33,16 @@ export function usePatterns() {
     return classes[tier]
   }
 
+  const getPatternTierTooltip = (tier: PatternTier): string => {
+    const tooltips = {
+      critical: 'Top 25% by denied dollars at risk',
+      high: 'Top 25-50% by denied dollars at risk',
+      medium: 'Bottom 25-50% by denied dollars at risk',
+      low: 'Bottom 25% by denied dollars at risk',
+    }
+    return tooltips[tier]
+  }
+
   // Get pattern status color
   const getPatternStatusColor = (status: PatternStatus): string => {
     const colors = {
@@ -161,6 +171,7 @@ export function usePatterns() {
     // UI helpers
     getPatternTierColor,
     getPatternTierBadgeClass,
+    getPatternTierTooltip,
     getPatternStatusColor,
     getPatternStatusBadgeClass,
     getPatternCategoryIcon,
