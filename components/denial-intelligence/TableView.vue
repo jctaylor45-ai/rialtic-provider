@@ -202,14 +202,6 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
     cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, row.original.topic || '\u2014'),
   },
   {
-    id: 'source',
-    accessorKey: 'source',
-    header: 'Source',
-    size: 120,
-    enableSorting: false,
-    cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, row.original.source || '\u2014'),
-  },
-  {
     id: 'frequency',
     header: 'Frequency',
     size: 100,

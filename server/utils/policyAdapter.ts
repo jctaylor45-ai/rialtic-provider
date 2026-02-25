@@ -69,6 +69,27 @@ export interface DbRelatedPattern {
 }
 
 /**
+ * Resolve policy source — scenario stubs use "Scenario Import" as a placeholder.
+ * Map to a meaningful regulatory source based on the policy's logic_type.
+ */
+const logicTypeSourceMap: Record<string, string> = {
+  'Modifier Validation': 'NCCI (National Correct Coding Initiative)',
+  'Bundling Edit': 'NCCI (National Correct Coding Initiative)',
+  'Documentation Review': 'Medicare Policy',
+  'Frequency Limit': 'Medicare Policy',
+  'Global Period Check': 'Medicare Policy',
+  'Authorization Check': 'Payer Medical Policy',
+  'Coverage Determination': 'Payer Medical Policy',
+  'Code Validation': 'CPT Guidelines',
+}
+
+function resolveSource(source: string | null, logicType: string | null): string | undefined {
+  if (source && source !== 'Scenario Import') return source
+  if (logicType && logicTypeSourceMap[logicType]) return logicTypeSourceMap[logicType]
+  return source || undefined
+}
+
+/**
  * Map database mode to PaAPI InsightMode format using dynamic configuration
  */
 function mapModeToInsightMode(dbMode: string): InsightMode {
@@ -178,8 +199,8 @@ export function policyAdapter(
     learning_markers_count: policy.learningMarkersCount || undefined,
     recent_tests: policy.recentTests || undefined,
 
-    // Source
-    source: policy.source || undefined,
+    // Source — resolve "Scenario Import" stubs to a real source via logic_type
+    source: resolveSource(policy.source, policy.logicType),
 
     // Dates
     effective_date: policy.effectiveDate,
