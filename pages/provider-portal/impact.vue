@@ -1244,8 +1244,9 @@ const patternPerformance = computed(() => {
       claimsReductionPercent: null as number | null,
       firstImprovementDate,
       trendData: {
-        denialRate: sortedSnapshots.map(s => s.denialRate ?? 0),
-        deniedDollars: sortedSnapshots.map(s => s.dollarsDenied ?? 0),
+        // Prepend baseline as first point so sparkline starts at the label's "from" value
+        denialRate: [baselineDenialRate, ...sortedSnapshots.map(s => s.denialRate ?? 0)],
+        deniedDollars: [baselineDeniedDollars, ...sortedSnapshots.map(s => s.dollarsDenied ?? 0)],
       },
     }
   }).sort((a, b) => b.current.deniedDollars - a.current.deniedDollars)
