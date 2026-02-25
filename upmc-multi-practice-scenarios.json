@@ -723,7 +723,7 @@
           },
           "remediation": {
             "shortTerm": {
-              "description": "No resubmission needed - these are true duplicates. Write off denied duplicates.",
+              "description": "Cannot resubmit - these are true duplicates. Write off denied duplicates.",
               "canResubmit": false,
               "claimCount": 0,
               "amount": 0
@@ -1660,10 +1660,10 @@
           ],
           "denialReason": "Physical therapy visit frequency exceeds plan benefit limit for current benefit period",
           "claimDistribution": {
-            "total": 135,
-            "deniedBaseline": 120,
-            "deniedCurrent": 105,
-            "appealsFiled": 6,
+            "total": 90,
+            "deniedBaseline": 80,
+            "deniedCurrent": 55,
+            "appealsFiled": 4,
             "appealsOverturned": 0
           },
           "trajectory": {
@@ -1671,18 +1671,18 @@
             "baseline": {
               "periodStart": "2025-07-01",
               "periodEnd": "2025-08-31",
-              "claimCount": 27,
-              "deniedCount": 27,
+              "claimCount": 20,
+              "deniedCount": 20,
               "denialRate": 1.0,
-              "dollarsDenied": 4050
+              "dollarsDenied": 3000
             },
             "current": {
               "periodStart": "2026-02-01",
               "periodEnd": "2026-03-28",
-              "claimCount": 23,
-              "deniedCount": 23,
+              "claimCount": 10,
+              "deniedCount": 10,
               "denialRate": 1.0,
-              "dollarsDenied": 3450
+              "dollarsDenied": 1500
             },
             "snapshots": [
               {
@@ -1698,37 +1698,37 @@
               {
                 "month": "2025-09",
                 "denialRate": 1.0,
-                "dollarsDenied": 1800
+                "dollarsDenied": 1650
               },
               {
                 "month": "2025-10",
                 "denialRate": 1.0,
-                "dollarsDenied": 1800
+                "dollarsDenied": 1500
               },
               {
                 "month": "2025-11",
                 "denialRate": 1.0,
-                "dollarsDenied": 1650
+                "dollarsDenied": 1350
               },
               {
                 "month": "2025-12",
                 "denialRate": 1.0,
-                "dollarsDenied": 1500
+                "dollarsDenied": 1200
               },
               {
                 "month": "2026-01",
                 "denialRate": 1.0,
-                "dollarsDenied": 1800
+                "dollarsDenied": 1050
               },
               {
                 "month": "2026-02",
                 "denialRate": 1.0,
-                "dollarsDenied": 1725
+                "dollarsDenied": 900
               },
               {
                 "month": "2026-03",
                 "denialRate": 1.0,
-                "dollarsDenied": 1725
+                "dollarsDenied": 750
               }
             ]
           },
@@ -1759,7 +1759,8 @@
         {
           "id": "ORT-PTN-006",
           "title": "E/M Visit During Global Surgery Post-Operative Period",
-          "description": "E/M visits billed during the global surgery period (10 or 90 day post-op window) are denied because follow-up care is included in the surgical fee. Some visits are legitimately separate (new problem, modifier 24).",
+          "description": "E/M visits billed during the global surgery period (10 or 90 day post-op window) are denied because follow-up care is included in the surgical fee. Some visits are genuinely separate (new problem, modifier 24).",
+          "recoveryStatusOverride": "partial",
           "category": "global-period",
           "status": "active",
           "tier": "medium",
@@ -1777,8 +1778,8 @@
           "denialReason": "E/M service billed during global surgery post-operative period - included in surgical package",
           "claimDistribution": {
             "total": 92,
-            "deniedBaseline": 84,
-            "deniedCurrent": 61,
+            "deniedBaseline": 50,
+            "deniedCurrent": 30,
             "appealsFiled": 15,
             "appealsOverturned": 6
           },
@@ -1788,63 +1789,63 @@
               "periodStart": "2025-07-01",
               "periodEnd": "2025-08-31",
               "claimCount": 19,
-              "deniedCount": 19,
-              "denialRate": 1.0,
-              "dollarsDenied": 5700
+              "deniedCount": 10,
+              "denialRate": 0.55,
+              "dollarsDenied": 3000
             },
             "current": {
               "periodStart": "2026-02-01",
               "periodEnd": "2026-03-28",
               "claimCount": 15,
-              "deniedCount": 13,
-              "denialRate": 0.867,
-              "dollarsDenied": 3900
+              "deniedCount": 5,
+              "denialRate": 0.35,
+              "dollarsDenied": 1500
             },
             "snapshots": [
               {
                 "month": "2025-07",
-                "denialRate": 1.0,
-                "dollarsDenied": 3000
+                "denialRate": 0.55,
+                "dollarsDenied": 1650
               },
               {
                 "month": "2025-08",
-                "denialRate": 1.0,
-                "dollarsDenied": 2700
+                "denialRate": 0.52,
+                "dollarsDenied": 1560
               },
               {
                 "month": "2025-09",
-                "denialRate": 1.0,
-                "dollarsDenied": 2700
+                "denialRate": 0.50,
+                "dollarsDenied": 1500
               },
               {
                 "month": "2025-10",
-                "denialRate": 0.95,
-                "dollarsDenied": 2565
+                "denialRate": 0.47,
+                "dollarsDenied": 1410
               },
               {
                 "month": "2025-11",
-                "denialRate": 0.941,
-                "dollarsDenied": 2400
+                "denialRate": 0.44,
+                "dollarsDenied": 1320
               },
               {
                 "month": "2025-12",
-                "denialRate": 0.923,
-                "dollarsDenied": 2160
+                "denialRate": 0.42,
+                "dollarsDenied": 1260
               },
               {
                 "month": "2026-01",
-                "denialRate": 0.9,
-                "dollarsDenied": 2430
+                "denialRate": 0.39,
+                "dollarsDenied": 1170
               },
               {
                 "month": "2026-02",
-                "denialRate": 0.875,
-                "dollarsDenied": 2100
+                "denialRate": 0.37,
+                "dollarsDenied": 1110
               },
               {
                 "month": "2026-03",
-                "denialRate": 0.857,
-                "dollarsDenied": 1800
+                "denialRate": 0.35,
+                "dollarsDenied": 1050
               }
             ]
           },
@@ -2112,7 +2113,7 @@
         {
           "id": "CAR-PTN-001",
           "title": "Cardiac Diagnostic Test Bundling - Echo + EKG + Stress Test Same Day",
-          "description": "Multiple cardiac diagnostic tests performed same day triggering CCI bundling edits. Practice was billing echo, EKG, and stress test components separately without proper modifier usage. 61% appeal rate, 68% overturn - legitimate services just incorrectly unbundled.",
+          "description": "Multiple cardiac diagnostic tests performed same day triggering CCI bundling edits. Practice was billing echo, EKG, and stress test components separately without proper modifier usage. 61% appeal rate, 68% overturn - valid services just incorrectly unbundled.",
           "category": "bundling",
           "status": "resolved",
           "tier": "critical",
@@ -2517,8 +2518,8 @@
           "denialReason": "Place of service does not match expected setting for billed procedure",
           "claimDistribution": {
             "total": 72,
-            "deniedBaseline": 66,
-            "deniedCurrent": 18,
+            "deniedBaseline": 25,
+            "deniedCurrent": 4,
             "appealsFiled": 24,
             "appealsOverturned": 18
           },
@@ -2528,63 +2529,63 @@
               "periodStart": "2025-07-01",
               "periodEnd": "2025-08-31",
               "claimCount": 15,
-              "deniedCount": 15,
-              "denialRate": 1.0,
-              "dollarsDenied": 4500
+              "deniedCount": 5,
+              "denialRate": 0.35,
+              "dollarsDenied": 1500
             },
             "current": {
               "periodStart": "2026-02-01",
               "periodEnd": "2026-03-28",
-              "claimCount": 4,
-              "deniedCount": 4,
-              "denialRate": 1.0,
-              "dollarsDenied": 1200
+              "claimCount": 8,
+              "deniedCount": 0,
+              "denialRate": 0.05,
+              "dollarsDenied": 120
             },
             "snapshots": [
               {
                 "month": "2025-07",
-                "denialRate": 1.0,
-                "dollarsDenied": 2400
+                "denialRate": 0.35,
+                "dollarsDenied": 840
               },
               {
                 "month": "2025-08",
-                "denialRate": 1.0,
-                "dollarsDenied": 2100
+                "denialRate": 0.30,
+                "dollarsDenied": 720
               },
               {
                 "month": "2025-09",
-                "denialRate": 1.0,
-                "dollarsDenied": 2100
+                "denialRate": 0.22,
+                "dollarsDenied": 528
               },
               {
                 "month": "2025-10",
-                "denialRate": 1.0,
-                "dollarsDenied": 1800
+                "denialRate": 0.15,
+                "dollarsDenied": 360
               },
               {
                 "month": "2025-11",
-                "denialRate": 1.0,
-                "dollarsDenied": 1500
+                "denialRate": 0.10,
+                "dollarsDenied": 240
               },
               {
                 "month": "2025-12",
-                "denialRate": 1.0,
-                "dollarsDenied": 900
+                "denialRate": 0.08,
+                "dollarsDenied": 192
               },
               {
                 "month": "2026-01",
-                "denialRate": 1.0,
-                "dollarsDenied": 600
+                "denialRate": 0.06,
+                "dollarsDenied": 144
               },
               {
                 "month": "2026-02",
-                "denialRate": 1.0,
-                "dollarsDenied": 600
+                "denialRate": 0.05,
+                "dollarsDenied": 60
               },
               {
                 "month": "2026-03",
-                "denialRate": 1.0,
-                "dollarsDenied": 600
+                "denialRate": 0.05,
+                "dollarsDenied": 60
               }
             ]
           },
@@ -2622,6 +2623,7 @@
           "id": "CAR-PTN-005",
           "title": "Experimental/Investigational Denial on Newer Cardiac Device Procedures",
           "description": "Newer cardiac devices (leadless pacemakers, subcutaneous ICDs) occasionally denied as experimental/investigational despite FDA approval. Sticky denial - plan policy is clear.",
+          "recoveryStatusOverride": "partial",
           "category": "coverage-exclusion",
           "status": "active",
           "tier": "medium",

@@ -120,6 +120,12 @@ export interface PatternDefinition {
 
   /** Remediation guidance */
   remediation: RemediationInfo
+
+  /** Override derived recovery_status (recoverable | partial | not_recoverable) */
+  recoveryStatusOverride?: string
+
+  /** Override derived action_category */
+  actionCategoryOverride?: string
 }
 
 export type PatternCategory =

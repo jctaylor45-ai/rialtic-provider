@@ -872,7 +872,9 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         : 0
       const totalAtRisk = pattern.trajectory.current.dollarsDenied || 0
 
-      const { actionCategory, recoveryStatus } = deriveRecoveryClassification(pattern)
+      const derived = deriveRecoveryClassification(pattern)
+      const actionCategory = pattern.actionCategoryOverride || derived.actionCategory
+      const recoveryStatus = pattern.recoveryStatusOverride || derived.recoveryStatus
 
       insertPattern.run(
         pattern.id,
