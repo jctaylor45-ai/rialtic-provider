@@ -77,6 +77,7 @@ export default defineEventHandler(async (event) => {
         currentDenialRate: patterns.currentDenialRate,
         currentClaimCount: patterns.currentClaimCount,
         currentDollarsDenied: patterns.currentDollarsDenied,
+        baselineDollarsDenied: patterns.baselineDollarsDenied,
         recoveryStatus: patterns.recoveryStatus,
         actionCategory: patterns.actionCategory,
         shortTermDescription: patterns.shortTermDescription,
@@ -240,6 +241,8 @@ export default defineEventHandler(async (event) => {
             dollarsDenied: patternSnapshots.dollarsDenied,
             claimCount: patternSnapshots.claimCount,
             deniedCount: patternSnapshots.deniedCount,
+            appealCount: patternSnapshots.appealCount,
+            appealRate: patternSnapshots.appealRate,
           })
           .from(patternSnapshots)
           .where(eq(patternSnapshots.patternId, pattern.id))

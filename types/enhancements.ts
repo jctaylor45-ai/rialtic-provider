@@ -108,6 +108,7 @@ export interface Pattern {
   avgDenialAmount: number
   totalAtRisk: number
   baselineDenialRate?: number
+  baselineDollarsDenied?: number
   currentDenialRate?: number
   currentDollarsDenied?: number
   appealCount?: number
@@ -154,6 +155,8 @@ export interface Pattern {
     dollarsDenied?: number
     claimCount?: number
     deniedCount?: number
+    appealCount?: number
+    appealRate?: number
   }>
 
   // AI metadata
