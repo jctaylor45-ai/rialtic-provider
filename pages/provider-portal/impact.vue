@@ -260,38 +260,76 @@
           </div>
         </div>
 
-        <!-- Recovered Revenue Banner -->
-        <div
-          v-if="hasClaimsData"
-          class="rounded-lg p-6 mb-8"
-          :class="recoveredRevenue >= 0
-            ? 'bg-success-50 border border-success-200'
-            : 'bg-error-light border border-error-300'"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-lg font-semibold mb-1"
-                :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
-              >
-                Recovered Revenue
-              </h3>
-              <p class="text-sm" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
-                Additional approved revenue vs. baseline
-              </p>
-            </div>
-            <div class="text-right">
-              <div
-                class="text-4xl font-bold"
-                :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
-              >
-                {{ recoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrency(recoveredRevenue) }}
+        <!-- Revenue & Appeals Banners -->
+        <div v-if="hasClaimsData" class="grid gap-6 mb-8" :class="hasAppealSnapshotData ? 'grid-cols-2' : 'grid-cols-1'">
+          <!-- Recovered Revenue Banner -->
+          <div
+            class="rounded-lg p-6"
+            :class="recoveredRevenue >= 0
+              ? 'bg-success-50 border border-success-200'
+              : 'bg-error-light border border-error-300'"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold mb-1"
+                  :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+                >
+                  Recovered Revenue
+                </h3>
+                <p class="text-sm" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                  Additional approved revenue vs. baseline
+                </p>
               </div>
-              <p class="text-sm mt-1" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
-                {{ recoveredRevenue >= 0
-                  ? "This is money you're now collecting that was previously denied."
-                  : "Denied dollars have increased compared to baseline."
-                }}
-              </p>
+              <div class="text-right">
+                <div
+                  class="text-4xl font-bold"
+                  :class="recoveredRevenue >= 0 ? 'text-success-700' : 'text-error-700'"
+                >
+                  {{ recoveredRevenue >= 0 ? '+' : '' }}{{ formatCurrency(recoveredRevenue) }}
+                </div>
+                <p class="text-sm mt-1" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
+                  {{ recoveredRevenue >= 0
+                    ? "This is money you're now collecting that was previously denied."
+                    : "Denied dollars have increased compared to baseline."
+                  }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Appeals Avoided Banner -->
+          <div
+            v-if="hasAppealSnapshotData"
+            class="rounded-lg p-6"
+            :class="practiceAppealsAvoided >= 0
+              ? 'bg-success-50 border border-success-200'
+              : 'bg-error-light border border-error-300'"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-semibold mb-1"
+                  :class="practiceAppealsAvoided >= 0 ? 'text-success-700' : 'text-error-700'"
+                >
+                  Appeals Avoided
+                </h3>
+                <p class="text-sm" :class="practiceAppealsAvoided >= 0 ? 'text-success-600' : 'text-error-600'">
+                  Reduction in appeals filed vs. earlier period
+                </p>
+              </div>
+              <div class="text-right">
+                <div
+                  class="text-4xl font-bold"
+                  :class="practiceAppealsAvoided >= 0 ? 'text-success-700' : 'text-error-700'"
+                >
+                  {{ practiceAppealsAvoided >= 0 ? '+' : '' }}{{ practiceAppealsAvoided }}
+                </div>
+                <p class="text-sm mt-1" :class="practiceAppealsAvoided >= 0 ? 'text-success-600' : 'text-error-600'">
+                  {{ practiceAppealsAvoided >= 0
+                    ? "Fewer appeals means less administrative burden and faster resolution."
+                    : "Appeal volume has increased compared to earlier period."
+                  }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -1152,6 +1190,23 @@ const recoveredRevenue = computed(() => {
   return baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
 })
 
+// Practice-level appeals avoided: first-half vs second-half average monthly appeal counts
+const practiceAppealsAvoided = computed(() => {
+  const months = practiceMonthlySnapshots.value
+  if (months.length < 2) return 0
+  const midpoint = Math.floor(months.length / 2)
+  const firstHalf = months.slice(0, midpoint)
+  const secondHalf = months.slice(midpoint)
+  const firstHalfAvg = firstHalf.reduce((s, m) => s + m.appealCount, 0) / firstHalf.length
+  const secondHalfAvg = secondHalf.reduce((s, m) => s + m.appealCount, 0) / secondHalf.length
+  return Math.round((firstHalfAvg - secondHalfAvg) * secondHalf.length)
+})
+
+// Whether any appeal data exists in snapshots (to decide if banner should show)
+const hasAppealSnapshotData = computed(() => {
+  return practiceMonthlySnapshots.value.some(m => m.appealCount > 0)
+})
+
 // Aggregate pattern snapshots by month for practice-level sparklines
 const practiceMonthlySnapshots = computed(() => {
   const patterns = patternsStore.patterns
@@ -1177,6 +1232,7 @@ const practiceMonthlySnapshots = computed(() => {
       denialRate: data.totalClaims > 0 ? (data.totalDenied / data.totalClaims) * 100 : 0,
       deniedDollars: data.totalDollarsDenied,
       appealRate: data.totalDenied > 0 ? (data.totalAppeals / data.totalDenied) * 100 : 0,
+      appealCount: data.totalAppeals,
     }))
 })
 
