@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Pattern, PatternFilters, PatternCategory, ActionType, PatternAction, ActionCategory, RecoveryStatus } from '~/types/enhancements'
 import { getAppConfig } from '~/config/appConfig'
-import { calculatePatternTier } from '~/utils/analytics'
+import type { PatternTier } from '~/types/enhancements'
 
 // Types for API response
 interface DbPattern {
@@ -363,6 +363,7 @@ export const usePatternsStore = defineStore('patterns', () => {
     const patternRecoveryStatus = (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus
 
     // Compute trend, velocity, recency, and denial rate from snapshots
+    // Uses ALL available snapshots: compares avg of first third (baseline) vs last third (current)
     const snapshots = dbPattern.snapshots || []
     let liveTrend: 'up' | 'down' | 'stable' = 'stable'
     let liveVelocity = 0
@@ -370,40 +371,44 @@ export const usePatternsStore = defineStore('patterns', () => {
     let liveDenialRate = 0
 
     if (snapshots.length >= 2) {
-      // Snapshots are ordered ASC by date from API — take the last 3
-      const recent = snapshots.slice(-3)
-      const latest = recent[recent.length - 1]!
-      const earliest = recent[0]!
-      const latestRate = latest.denialRate ?? 0
-      const earliestRate = earliest.denialRate ?? 0
-      const rateDiff = latestRate - earliestRate
+      const latest = snapshots[snapshots.length - 1]!
 
-      // Denial rate: use the most recent snapshot's rate
-      liveDenialRate = Math.round(latestRate * 100) / 100
+      // Denial rate: most recent snapshot
+      liveDenialRate = Math.round((latest.denialRate ?? 0) * 100) / 100
 
-      // Trend: ±0.5 percentage points threshold for "stable"
+      // Recency: days since the most recent snapshot
+      if (latest.month) {
+        const snapshotDate = new Date(latest.month)
+        const nowDate = new Date()
+        liveRecency = Math.max(0, Math.round((nowDate.getTime() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24)))
+      }
+
+      // Split into thirds for trend: first third = baseline, last third = current
+      const thirdSize = Math.max(1, Math.floor(snapshots.length / 3))
+      const firstThird = snapshots.slice(0, thirdSize)
+      const lastThird = snapshots.slice(-thirdSize)
+
+      const avgFirst = firstThird.reduce((sum, s) => sum + (s.denialRate ?? 0), 0) / firstThird.length
+      const avgLast = lastThird.reduce((sum, s) => sum + (s.denialRate ?? 0), 0) / lastThird.length
+      const rateDiff = avgLast - avgFirst
+
+      // Trend: ±0.5pp threshold
       if (rateDiff > 0.5) {
         liveTrend = 'up'
       } else if (rateDiff < -0.5) {
         liveTrend = 'down'
       }
 
-      // Velocity: rate of change in pp/month
-      const monthSpan = recent.length - 1
-      liveVelocity = monthSpan > 0 ? Math.round((rateDiff / monthSpan) * 100) / 100 : 0
-
-      // Recency: days since the most recent snapshot
-      if (latest.month) {
-        const snapshotDate = new Date(latest.month)
-        const now = new Date()
-        liveRecency = Math.max(0, Math.round((now.getTime() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24)))
-      }
+      // Velocity: pp/month between midpoints of first and last thirds
+      const firstMidIdx = Math.floor(firstThird.length / 2)
+      const lastMidIdx = snapshots.length - thirdSize + Math.floor(lastThird.length / 2)
+      const monthsBetween = lastMidIdx - firstMidIdx
+      liveVelocity = monthsBetween > 0 ? Math.round((rateDiff / monthsBetween) * 100) / 100 : 0
     } else if (snapshots.length === 1) {
-      // Single snapshot: use its rate, can't compute trend
       liveDenialRate = Math.round((snapshots[0]!.denialRate ?? 0) * 100) / 100
     }
 
-    // Compute score with live data, then derive tier from it
+    // Compute score with live data (tier assigned later in batch by percentile)
     const score = {
       frequency: dbPattern.liveLineCount || 0,
       impact: liveTotalAtRisk,
@@ -412,7 +417,6 @@ export const usePatternsStore = defineStore('patterns', () => {
       confidence: dbPattern.scoreConfidence || 0,
       recency: liveRecency,
     }
-    const tier = calculatePatternTier(score, dbPattern.avgDenialAmount || 0)
 
     return {
       id: dbPattern.id,
@@ -420,7 +424,7 @@ export const usePatternsStore = defineStore('patterns', () => {
       description: dbPattern.description || '',
       category: dbPattern.category as PatternCategory,
       status: dbPattern.status as 'active' | 'improving' | 'resolved' | 'archived',
-      tier,
+      tier: 'medium' as const, // placeholder — reassigned by assignTiersByPercentile()
       score,
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
       totalAtRisk: liveTotalAtRisk,
@@ -491,6 +495,32 @@ export const usePatternsStore = defineStore('patterns', () => {
     }
   }
 
+  /**
+   * Assign tiers by percentile rank of totalAtRisk (live impact).
+   * Critical = top 25%, High = 25-50%, Medium = 50-75%, Low = bottom 25%
+   */
+  function assignTiersByPercentile(items: Pattern[]): void {
+    if (items.length === 0) return
+
+    // Sort indices by totalAtRisk descending
+    const ranked = items
+      .map((p, i) => ({ index: i, impact: p.totalAtRisk }))
+      .sort((a, b) => b.impact - a.impact)
+
+    const n = ranked.length
+    const tiers: PatternTier[] = ['critical', 'high', 'medium', 'low']
+    for (let rank = 0; rank < n; rank++) {
+      const percentile = rank / n
+      let tier: PatternTier
+      if (percentile < 0.25) tier = tiers[0]!
+      else if (percentile < 0.50) tier = tiers[1]!
+      else if (percentile < 0.75) tier = tiers[2]!
+      else tier = tiers[3]!
+
+      items[ranked[rank]!.index]!.tier = tier
+    }
+  }
+
   async function refreshPatterns(apiFilters?: { category?: string; status?: string; tier?: string }) {
     isLoading.value = true
     try {
@@ -502,7 +532,9 @@ export const usePatternsStore = defineStore('patterns', () => {
       const response = await $fetch<PatternApiResponse>('/api/v1/patterns', {
         params,
       })
-      patterns.value = response.data.map(transformDbPattern)
+      const transformed = response.data.map(transformDbPattern)
+      assignTiersByPercentile(transformed)
+      patterns.value = transformed
       pagination.value = response.pagination
     } catch (err) {
       console.error('Failed to refresh patterns:', err)
