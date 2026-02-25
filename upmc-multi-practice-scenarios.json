@@ -372,6 +372,7 @@
           "id": "PPC-PTN-002",
           "title": "Insufficient Medical Necessity Documentation for Extended E/M Visits",
           "description": "Extended office visits (99215, 99205) denied for insufficient medical necessity documentation. Visits are clinically appropriate but documentation doesn't clearly articulate why the higher-level service was required. Requires physician behavior change - improvement is gradual. 52% appeal rate, 48% overturn.",
+          "recoveryStatusOverride": "partial",
           "category": "documentation",
           "status": "improving",
           "tier": "high",
@@ -624,6 +625,7 @@
           "id": "PPC-PTN-004",
           "title": "Duplicate Claim Submissions from Clearinghouse Resubmission Logic",
           "description": "Practice management system was automatically resubmitting claims before receiving payer response, generating duplicate submissions. Pure system configuration fix - once the resubmission timer was adjusted and duplicate detection enabled, the problem nearly disappeared.",
+          "actionCategoryOverride": "operational_system",
           "category": "administrative",
           "status": "resolved",
           "tier": "medium",
@@ -631,29 +633,29 @@
           "policies": [],
           "denialReason": "Duplicate claim - previously submitted claim for same service, same date, same provider",
           "claimDistribution": {
-            "total": 174,
-            "deniedBaseline": 144,
-            "deniedCurrent": 9,
-            "appealsFiled": 5,
+            "total": 100,
+            "deniedBaseline": 90,
+            "deniedCurrent": 6,
+            "appealsFiled": 3,
             "appealsOverturned": 0
           },
           "trajectory": {
-            "curve": "strong_improvement",
+            "curve": "flat",
             "baseline": {
               "periodStart": "2025-07-01",
               "periodEnd": "2025-08-31",
-              "claimCount": 32,
-              "deniedCount": 32,
+              "claimCount": 28,
+              "deniedCount": 28,
               "denialRate": 1.0,
-              "dollarsDenied": 9600
+              "dollarsDenied": 8400
             },
             "current": {
               "periodStart": "2026-02-01",
               "periodEnd": "2026-03-28",
-              "claimCount": 2,
-              "deniedCount": 2,
+              "claimCount": 4,
+              "deniedCount": 4,
               "denialRate": 1.0,
-              "dollarsDenied": 600
+              "dollarsDenied": 1200
             },
             "snapshots": [
               {
@@ -664,17 +666,17 @@
               {
                 "month": "2025-08",
                 "denialRate": 1.0,
-                "dollarsDenied": 4800
+                "dollarsDenied": 4500
               },
               {
                 "month": "2025-09",
                 "denialRate": 1.0,
-                "dollarsDenied": 4500
+                "dollarsDenied": 3600
               },
               {
                 "month": "2025-10",
                 "denialRate": 1.0,
-                "dollarsDenied": 4200
+                "dollarsDenied": 2400
               },
               {
                 "month": "2025-11",
@@ -694,12 +696,12 @@
               {
                 "month": "2026-02",
                 "denialRate": 1.0,
-                "dollarsDenied": 300
+                "dollarsDenied": 600
               },
               {
                 "month": "2026-03",
                 "denialRate": 1.0,
-                "dollarsDenied": 300
+                "dollarsDenied": 600
               }
             ]
           },
@@ -2506,6 +2508,7 @@
           "id": "CAR-PTN-004",
           "title": "Incorrect Place of Service Code for Outpatient Cardiac Procedures",
           "description": "Some outpatient cardiac procedures billed with incorrect POS code. System configuration issue - once templates were corrected, volume dropped significantly.",
+          "actionCategoryOverride": "operational_system",
           "category": "administrative",
           "status": "improving",
           "tier": "low",
@@ -3365,10 +3368,10 @@
           ],
           "denialReason": "Surveillance colonoscopy frequency exceeds guideline-recommended interval for patient risk profile",
           "claimDistribution": {
-            "total": 50,
-            "deniedBaseline": 45,
-            "deniedCurrent": 36,
-            "appealsFiled": 4,
+            "total": 32,
+            "deniedBaseline": 28,
+            "deniedCurrent": 20,
+            "appealsFiled": 2,
             "appealsOverturned": 0
           },
           "trajectory": {
@@ -3376,18 +3379,18 @@
             "baseline": {
               "periodStart": "2025-07-01",
               "periodEnd": "2025-08-31",
-              "claimCount": 10,
-              "deniedCount": 10,
-              "denialRate": 1.0,
-              "dollarsDenied": 8000
-            },
-            "current": {
-              "periodStart": "2026-02-01",
-              "periodEnd": "2026-03-28",
               "claimCount": 8,
               "deniedCount": 8,
               "denialRate": 1.0,
               "dollarsDenied": 6400
+            },
+            "current": {
+              "periodStart": "2026-02-01",
+              "periodEnd": "2026-03-28",
+              "claimCount": 4,
+              "deniedCount": 4,
+              "denialRate": 1.0,
+              "dollarsDenied": 3200
             },
             "snapshots": [
               {
@@ -3398,42 +3401,42 @@
               {
                 "month": "2025-08",
                 "denialRate": 1.0,
-                "dollarsDenied": 4000
+                "dollarsDenied": 3200
               },
               {
                 "month": "2025-09",
                 "denialRate": 1.0,
-                "dollarsDenied": 3200
+                "dollarsDenied": 2800
               },
               {
                 "month": "2025-10",
                 "denialRate": 1.0,
-                "dollarsDenied": 3200
+                "dollarsDenied": 2400
               },
               {
                 "month": "2025-11",
                 "denialRate": 1.0,
-                "dollarsDenied": 2400
+                "dollarsDenied": 2000
               },
               {
                 "month": "2025-12",
                 "denialRate": 1.0,
-                "dollarsDenied": 2400
+                "dollarsDenied": 1600
               },
               {
                 "month": "2026-01",
                 "denialRate": 1.0,
-                "dollarsDenied": 3200
+                "dollarsDenied": 1600
               },
               {
                 "month": "2026-02",
                 "denialRate": 1.0,
-                "dollarsDenied": 3200
+                "dollarsDenied": 1600
               },
               {
                 "month": "2026-03",
                 "denialRate": 1.0,
-                "dollarsDenied": 3200
+                "dollarsDenied": 1600
               }
             ]
           },
@@ -3465,6 +3468,7 @@
           "id": "GI-PTN-005",
           "title": "Pathology Specimen Handling Codes Bundled with Endoscopy",
           "description": "Pathology specimen handling and processing codes billed separately are being bundled with the endoscopy procedure code. Moderate churn - some are appropriately separate but documentation doesn't support it.",
+          "recoveryStatusOverride": "partial",
           "category": "bundling",
           "status": "active",
           "tier": "low",
@@ -3827,6 +3831,7 @@
           "id": "BH-PTN-001",
           "title": "Telehealth Place of Service Code Error - POS 11 Used Instead of POS 10/02",
           "description": "With 55% of visits via telehealth, incorrect POS code generated significant denial volume. EHR templates defaulted to POS 11 (office). Simple system config fix resolved it almost immediately. 54% appeal rate, 70% overturn - clear administrative waste.",
+          "actionCategoryOverride": "operational_system",
           "category": "administrative",
           "status": "resolved",
           "tier": "critical",
