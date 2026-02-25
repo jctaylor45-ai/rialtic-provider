@@ -171,10 +171,12 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
     enableSorting: false,
     cell: ({ row }) => {
       if (row.original.type === 'active') {
-        return h('span', {
-          class: `px-2 py-0.5 text-xs font-medium rounded-full cursor-help ${tierBadgeClass(row.original.tier)}`,
-          title: tierTooltip(row.original.tier),
-        }, row.original.tier.toUpperCase())
+        const tier = row.original.tier
+        return h(resolveComponent('UiTooltip'), {
+          text: tierTooltip(tier),
+        }, () => h('span', {
+          class: `px-2 py-0.5 text-xs font-medium rounded-full cursor-help ${tierBadgeClass(tier)}`,
+        }, tier.toUpperCase()))
       }
       return h('span', {
         class: 'px-2 py-0.5 text-xs font-medium rounded-full bg-neutral-100 text-neutral-600',

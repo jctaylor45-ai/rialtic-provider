@@ -25,13 +25,14 @@
       </div>
 
       <div class="flex flex-col items-end gap-2 ml-4">
-        <span
-          class="px-2.5 py-1 text-xs font-medium rounded-full border cursor-help"
-          :class="tierBadgeClass"
-          :title="tierTooltip"
-        >
-          {{ pattern.tier.toUpperCase() }}
-        </span>
+        <UiTooltip :text="tierTooltip">
+          <span
+            class="px-2.5 py-1 text-xs font-medium rounded-full border cursor-help"
+            :class="tierBadgeClass"
+          >
+            {{ pattern.tier.toUpperCase() }}
+          </span>
+        </UiTooltip>
         <span
           class="px-2.5 py-1 text-xs font-medium rounded-full border"
           :class="recoveryStatusBadgeClass"

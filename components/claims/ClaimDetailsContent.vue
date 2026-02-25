@@ -409,13 +409,14 @@ onMounted(() => {
                     <p class="text-xs text-neutral-600 mt-0.5">{{ pattern.category }}</p>
                   </div>
                 </div>
-                <span
-                  class="px-2 py-1 text-xs font-medium rounded border cursor-help"
-                  :class="getPatternTierBadgeClass(pattern.tier)"
-                  :title="getPatternTierTooltip(pattern.tier)"
-                >
-                  {{ pattern.tier.toUpperCase() }}
-                </span>
+                <UiTooltip :text="getPatternTierTooltip(pattern.tier)">
+                  <span
+                    class="px-2 py-1 text-xs font-medium rounded border cursor-help"
+                    :class="getPatternTierBadgeClass(pattern.tier)"
+                  >
+                    {{ pattern.tier.toUpperCase() }}
+                  </span>
+                </UiTooltip>
               </div>
 
               <p class="text-sm text-neutral-700 mb-3">{{ pattern.description }}</p>

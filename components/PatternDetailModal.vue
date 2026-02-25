@@ -30,13 +30,14 @@
                       {{ pattern.title }}
                     </h2>
                     <div class="flex items-center gap-2 mt-1">
-                      <span
-                        class="px-2 py-0.5 text-xs font-medium rounded-full border cursor-help"
-                        :class="tierBadgeClass"
-                        :title="tierTooltip"
-                      >
-                        {{ pattern.tier.toUpperCase() }}
-                      </span>
+                      <UiTooltip :text="tierTooltip">
+                        <span
+                          class="px-2 py-0.5 text-xs font-medium rounded-full border cursor-help"
+                          :class="tierBadgeClass"
+                        >
+                          {{ pattern.tier.toUpperCase() }}
+                        </span>
+                      </UiTooltip>
                       <span
                         class="px-2 py-0.5 text-xs font-medium rounded-full border"
                         :class="statusBadgeClass"
