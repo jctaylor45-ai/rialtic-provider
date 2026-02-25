@@ -50,12 +50,12 @@
     <!-- Metrics Grid -->
     <div class="grid grid-cols-3 gap-4 mb-4">
       <div>
-        <div class="text-xs text-neutral-500 mb-1">Frequency</div>
+        <div class="text-xs text-neutral-500 mb-1">Claims</div>
         <div class="text-lg font-semibold text-neutral-900">
-          {{ pattern.score.frequency }}
+          {{ pattern.affectedClaims.length }}
         </div>
         <div class="text-xs text-neutral-500">
-          occurrences
+          affected
         </div>
       </div>
 

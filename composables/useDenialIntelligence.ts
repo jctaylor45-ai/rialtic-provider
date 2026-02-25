@@ -297,8 +297,8 @@ export function useDenialIntelligence() {
           return (a.pattern.totalAtRisk - b.pattern.totalAtRisk) * mult
         case 'denialRate':
           return ((a.pattern.currentDenialRate || 0) - (b.pattern.currentDenialRate || 0)) * mult
-        case 'frequency':
-          return (a.pattern.score.frequency - b.pattern.score.frequency) * mult
+        case 'claims':
+          return (a.pattern.affectedClaims.length - b.pattern.affectedClaims.length) * mult
         case 'recent':
           return (new Date(a.pattern.lastUpdated).getTime() - new Date(b.pattern.lastUpdated).getTime()) * mult
         default:

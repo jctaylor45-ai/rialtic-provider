@@ -70,8 +70,8 @@
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Key Metrics</h3>
                 <div class="grid grid-cols-4 gap-4">
                   <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-xs text-gray-600 mb-1">Frequency</div>
-                    <div class="text-2xl font-bold text-gray-900">{{ pattern.score.frequency }}</div>
+                    <div class="text-xs text-gray-600 mb-1">Claims</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ pattern.affectedClaims.length }}</div>
                     <div class="flex items-center gap-1 mt-1 text-xs" :class="trendColor">
                       <Icon :name="trendIcon" class="w-3 h-3" />
                       <span>{{ pattern.score.trend }}</span>

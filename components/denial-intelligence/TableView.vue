@@ -10,13 +10,13 @@
               class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 uppercase tracking-wider select-none"
               :class="{
                 'cursor-pointer hover:bg-neutral-100': header.column.getCanSort(),
-                'text-right': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(header.column.id),
+                'text-right': ['impact', 'denialRate', 'claims', 'appealRate', 'overturnRate'].includes(header.column.id),
               }"
               @click="header.column.getToggleSortingHandler()?.($event)"
             >
               <div
                 class="flex items-center gap-1"
-                :class="{ 'justify-end': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(header.column.id) }"
+                :class="{ 'justify-end': ['impact', 'denialRate', 'claims', 'appealRate', 'overturnRate'].includes(header.column.id) }"
               >
                 <FlexRender
                   v-if="!header.isPlaceholder"
@@ -44,7 +44,7 @@
               v-for="cell in row.getVisibleCells()"
               :key="cell.id"
               class="px-6 py-4"
-              :class="{ 'text-right': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(cell.column.id) }"
+              :class="{ 'text-right': ['impact', 'denialRate', 'claims', 'appealRate', 'overturnRate'].includes(cell.column.id) }"
             >
               <FlexRender
                 :render="cell.column.columnDef.cell"
@@ -202,28 +202,27 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
     cell: ({ row }) => h('span', { class: 'text-sm text-neutral-700' }, row.original.topic || '\u2014'),
   },
   {
-    id: 'frequency',
-    header: 'Frequency',
+    id: 'claims',
+    header: 'Claims',
     size: 100,
-    accessorFn: (row) => row.type === 'active' ? row.pattern.score.frequency : 0,
+    accessorFn: (row) => row.type === 'active' ? row.pattern.affectedClaims.length : 0,
     cell: ({ row }) => {
       if (row.original.type === 'inactive') return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
-      return h('span', { class: 'text-sm text-neutral-900' }, row.original.pattern.score.frequency.toString())
+      return h('span', { class: 'text-sm text-neutral-900' }, row.original.pattern.affectedClaims.length.toString())
     },
   },
   {
     id: 'denialRate',
     header: 'Denial Rate',
     size: 100,
-    accessorFn: (row) => row.type === 'active' ? (row.pattern.currentDenialRate || 0) : 0,
+    accessorFn: (row) => row.type === 'active' ? (row.pattern.currentDenialRate ?? 0) : 0,
     cell: ({ row }) => {
       if (row.original.type === 'inactive') {
         const rate = row.original.policy.denial_rate
-        if (!rate) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+        if (rate == null) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
         return h('span', { class: 'text-sm text-neutral-900' }, `${(rate * 100).toFixed(1)}%`)
       }
-      const rate = row.original.pattern.currentDenialRate
-      if (!rate) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+      const rate = row.original.pattern.currentDenialRate ?? 0
       return h('span', { class: 'text-sm text-neutral-900' }, `${rate.toFixed(1)}%`)
     },
   },

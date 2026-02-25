@@ -326,8 +326,8 @@ onMounted(() => {
       <section class="mb-6">
         <div class="flex items-center gap-6 text-sm">
           <div>
-            <span class="text-neutral-600">Frequency:</span>
-            <span class="font-semibold text-neutral-900 ml-1">{{ pattern.score.frequency }}</span>
+            <span class="text-neutral-600">Claims:</span>
+            <span class="font-semibold text-neutral-900 ml-1">{{ pattern.affectedClaims.length }}</span>
           </div>
           <div>
             <span class="text-neutral-600">Denied:</span>

@@ -77,7 +77,7 @@
           >
             <option value="impact">Impact</option>
             <option value="denialRate">Denial Rate</option>
-            <option value="frequency">Frequency</option>
+            <option value="claims">Claims</option>
             <option value="recent">Recent</option>
           </select>
           <div class="h-6 w-px bg-neutral-300 mx-1" />

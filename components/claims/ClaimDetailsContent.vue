@@ -423,7 +423,7 @@ onMounted(() => {
 
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 text-xs text-neutral-600">
-                  <span>{{ pattern.score.frequency }} occurrences</span>
+                  <span>{{ pattern.affectedClaims.length }} claims</span>
                   <span>{{ formatCurrency(pattern.avgDenialAmount) }} avg denial</span>
                   <span>{{ pattern.learningProgress }}% learned</span>
                 </div>

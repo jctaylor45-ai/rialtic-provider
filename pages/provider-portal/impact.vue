@@ -346,7 +346,7 @@
                         />
                         <div>
                           <div class="text-sm font-medium text-neutral-900">{{ pattern.title }}</div>
-                          <div v-if="pattern.hasClaimLinkage" class="text-xs text-neutral-500">{{ pattern.claimsCount }} claims affected</div>
+                          <div v-if="pattern.hasClaimLinkage" class="text-xs text-neutral-500">{{ pattern.claimsCount }} claims</div>
                           <div v-else class="text-xs text-warning-600 flex items-center gap-1">
                             <Icon name="heroicons:exclamation-triangle" class="w-3 h-3" />
                             No claim data — rates are configured estimates
@@ -465,7 +465,7 @@
                       <!-- Additional Info -->
                       <div class="flex items-center gap-6 text-sm text-neutral-600">
                         <span>
-                          <strong class="text-neutral-900">{{ pattern.claimsCount }}</strong> claims affected
+                          <strong class="text-neutral-900">{{ pattern.claimsCount }}</strong> claims
                         </span>
                         <span v-if="pattern.firstImprovementDate">
                           First improvement observed: <strong class="text-neutral-900">{{ formatDate(pattern.firstImprovementDate) }}</strong>
