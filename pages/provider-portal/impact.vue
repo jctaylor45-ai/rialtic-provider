@@ -366,13 +366,13 @@
                     <td class="px-6 py-4 text-right">
                       <div v-if="pattern.hasAppealSnapshots" class="flex items-center justify-end gap-2">
                         <span class="text-sm text-neutral-600">
-                          {{ formatPercentage(pattern.baseline.appealRate) }}
+                          {{ formatPercentage(capRate(pattern.baseline.appealRate)) }}
                         </span>
                         <Icon name="heroicons:arrow-right" class="w-3 h-3 text-neutral-400" />
                         <span class="text-sm font-medium text-neutral-900">
-                          {{ formatPercentage(pattern.current.appealRate) }}
+                          {{ formatPercentage(capRate(pattern.current.appealRate)) }}
                         </span>
-                        <span class="text-xs text-neutral-500">({{ pattern.appealCount }})</span>
+                        <span class="text-xs text-neutral-500">({{ pattern.snapshotAppealCount }})</span>
                         <Icon
                           :name="pattern.appealRateImproving ? 'heroicons:arrow-down' : pattern.appealRateWorsening ? 'heroicons:arrow-up' : 'heroicons:minus'"
                           class="w-4 h-4"
@@ -385,7 +385,7 @@
                       </div>
                       <div v-else-if="pattern.appealCount > 0" class="flex items-center justify-end gap-2">
                         <span class="text-sm font-medium text-neutral-900">
-                          {{ formatPercentage(pattern.current.appealRate) }}
+                          {{ formatPercentage(capRate(pattern.current.appealRate)) }}
                         </span>
                         <span class="text-xs text-neutral-500">({{ pattern.appealCount }})</span>
                       </div>
@@ -452,30 +452,28 @@
 
                         <div class="bg-white rounded-lg border border-neutral-200 p-4">
                           <div class="text-xs text-neutral-600 mb-2">Appeals</div>
-                          <template v-if="pattern.hasAppealSnapshots || pattern.appealCount > 0">
+                          <template v-if="pattern.hasAppealSnapshots && pattern.snapshotAppealCount > 0">
                             <div class="text-lg font-semibold text-neutral-900 mb-2">
-                              <template v-if="pattern.hasAppealSnapshots">
-                                {{ formatPercentage(pattern.baseline.appealRate) }} → {{ formatPercentage(pattern.current.appealRate) }}
-                              </template>
-                              <template v-else>
-                                {{ formatPercentage(pattern.current.appealRate) }} rate
-                              </template>
+                              {{ formatPercentage(capRate(pattern.baseline.appealRate)) }} → {{ formatPercentage(capRate(pattern.current.appealRate)) }}
                             </div>
-                            <div v-if="pattern.hasAppealSnapshots" class="h-16">
+                            <div class="h-16">
                               <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
                                 <path
                                   :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])"
                                   fill="none"
-                                  :stroke="pattern.current.appealRate < pattern.baseline.appealRate ? '#10B981' : '#EF4444'"
+                                  :stroke="capRate(pattern.current.appealRate) < capRate(pattern.baseline.appealRate) ? '#10B981' : '#EF4444'"
                                   stroke-width="2"
                                 />
                               </svg>
                             </div>
-                            <div class="flex items-center gap-4 text-sm text-neutral-600" :class="pattern.hasAppealSnapshots ? 'mt-2' : ''">
-                              <span>{{ pattern.appealCount }} filed</span>
-                              <span>{{ pattern.overturnedCount }} overturned</span>
+                            <div class="flex items-center gap-4 text-sm text-neutral-600 mt-2">
+                              <span>{{ pattern.snapshotAppealCount }} filed</span>
+                              <span>{{ pattern.overturnedCount }} overturned (total)</span>
                             </div>
-                            <div v-if="pattern.hasAppealSnapshots" class="text-xs text-neutral-500 mt-2">over {{ appStore.selectedTimeRange }} days</div>
+                            <div class="text-xs text-neutral-500 mt-2">over {{ appStore.selectedTimeRange }} days</div>
+                          </template>
+                          <template v-else-if="pattern.hasAppealSnapshots && pattern.snapshotAppealCount === 0 && pattern.appealCount > 0">
+                            <div class="text-sm text-neutral-400 text-center py-4">No appeals in current period</div>
                           </template>
                           <template v-else>
                             <div class="text-sm text-neutral-400 text-center py-4">No appeals filed</div>
@@ -511,7 +509,7 @@
                       >
                         <Icon name="heroicons:arrow-trending-down" class="w-5 h-5 text-success-600 flex-shrink-0" />
                         <span class="text-sm text-success-800">
-                          {{ pattern.appealsAvoided }} fewer appeals filed compared to baseline rate
+                          ~{{ pattern.appealsAvoided }} fewer appeals filed vs. earlier period
                         </span>
                       </div>
 
@@ -1236,12 +1234,12 @@ const denialRateSparklineData = computed(() =>
 const denialRateSparklinePath = computed(() => dataToSparklinePath(denialRateSparklineData.value))
 const denialRateSparklineFill = computed(() => dataToSparklineFill(denialRateSparklineData.value))
 
-// Appeal rate from aggregated snapshot data
+// Appeal rate from aggregated snapshot data (capped at 100% for display)
 const appealRateSparklineData = computed(() => {
   const snapData = practiceMonthlySnapshots.value
   const hasAppealSnapshots = snapData.some(s => s.appealRate > 0)
   if (hasAppealSnapshots) {
-    return snapData.map(s => s.appealRate)
+    return snapData.map(s => Math.min(s.appealRate, 100))
   }
   // Fallback: linear interpolation when no appeal data exists in snapshots
   const numPoints = snapData.length || 2
@@ -1285,20 +1283,27 @@ const patternPerformance = computed(() => {
     // Appeal rate from the patterns API (already computed server-side)
     const appealRate = pattern.appealRate ?? 0
 
-    // Appeal snapshot data for from→to display
-    const firstSnapshotAppealRate = sortedSnapshots.length > 0 ? (sortedSnapshots[0]!.appealRate ?? 0) : 0
-    const latestSnapshotAppealRate = latestSnapshot?.appealRate ?? 0
+    // Appeal snapshot data for from→to display (capped at 100% for display)
+    const firstSnapshotAppealRate = sortedSnapshots.length > 0 ? Math.min(sortedSnapshots[0]!.appealRate ?? 0, 100) : 0
+    const latestSnapshotAppealRate = latestSnapshot ? Math.min(latestSnapshot.appealRate ?? 0, 100) : 0
     const hasAppealSnapshots = sortedSnapshots.some(s => (s.appealCount ?? 0) > 0)
+
+    // Snapshot-period appeal counts (not cumulative lifetime)
+    const snapshotAppealCount = sortedSnapshots.reduce((sum, s) => sum + (s.appealCount ?? 0), 0)
 
     const denialRateChange = currentDenialRate - baselineDenialRate
     const deniedDollarsChange = currentDeniedDollars - baselineDeniedDollars
     const deniedDollarsChangePercent = baselineDeniedDollars > 0 ? Math.abs(deniedDollarsChange) / baselineDeniedDollars : 0
     const appealRateChange = latestSnapshotAppealRate - firstSnapshotAppealRate
 
-    // Appeals avoided calculation
-    const currentDeniedCount = latestSnapshot?.deniedCount ?? 0
-    const expectedAppeals = (firstSnapshotAppealRate / 100) * currentDeniedCount
-    const appealsAvoided = Math.round(expectedAppeals - (pattern.appealCount ?? 0))
+    // Appeals avoided: compare first-half vs second-half average monthly appeals
+    const midpoint = Math.floor(sortedSnapshots.length / 2)
+    const firstHalf = sortedSnapshots.slice(0, midpoint)
+    const secondHalf = sortedSnapshots.slice(midpoint)
+    const firstHalfAvg = firstHalf.length > 0 ? firstHalf.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / firstHalf.length : 0
+    const secondHalfAvg = secondHalf.length > 0 ? secondHalf.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / secondHalf.length : 0
+    const appealsAvoidedPerMonth = firstHalfAvg - secondHalfAvg
+    const appealsAvoided = Math.round(appealsAvoidedPerMonth * secondHalf.length)
 
     // Find first improvement date from pattern improvements
     const firstImprovement = pattern.improvements?.[0]
@@ -1334,6 +1339,7 @@ const patternPerformance = computed(() => {
       appealRateWorsening: appealRateChange > 1,
       hasAppealSnapshots,
       appealCount: pattern.appealCount ?? 0,
+      snapshotAppealCount,
       overturnedCount: pattern.overturnedCount ?? 0,
       appealsAvoided,
       firstImprovementDate,
@@ -1341,7 +1347,7 @@ const patternPerformance = computed(() => {
         // Prepend baseline as first point so sparkline starts at the label's "from" value
         denialRate: [baselineDenialRate, ...sortedSnapshots.map(s => s.denialRate ?? 0)],
         deniedDollars: [baselineDeniedDollars, ...sortedSnapshots.map(s => s.dollarsDenied ?? 0)],
-        appealRate: [firstSnapshotAppealRate, ...sortedSnapshots.map(s => s.appealRate ?? 0)],
+        appealRate: [firstSnapshotAppealRate, ...sortedSnapshots.map(s => Math.min(s.appealRate ?? 0, 100))],
       },
     }
   }).sort((a, b) => b.current.totalAtRisk - a.current.totalAtRisk)
@@ -1593,6 +1599,10 @@ function onPatternFilterChange() {
 }
 
 // Formatting helpers
+function capRate(value: number): number {
+  return Math.min(value, 100)
+}
+
 function formatPercentage(value: number): string {
   return `${value.toFixed(1)}%`
 }
