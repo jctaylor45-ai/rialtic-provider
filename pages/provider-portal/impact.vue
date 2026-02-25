@@ -932,6 +932,7 @@ interface Provider {
 }
 
 // Stores
+const appStore = useAppStore()
 const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
 
@@ -981,8 +982,6 @@ interface SummaryPeriod {
 const impactSummary = ref<SummaryPeriod | null>(null)
 const impactPreviousSummary = ref<SummaryPeriod | null>(null)
 const impactLoading = ref(false)
-
-const appStore = useAppStore()
 
 async function fetchImpactSummary(days: number) {
   impactLoading.value = true
