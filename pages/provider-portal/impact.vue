@@ -1090,46 +1090,31 @@ const recoveredRevenue = computed(() => {
   return baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
 })
 
-// Generate sparkline data that aligns with displayed baseline/current values
-// First point = baseline, last point = current, intermediate points interpolate with noise
-function generateSparklineData(
-  baselineVal: number,
-  currentVal: number
-): number[] {
-  const weeks = Math.ceil(appStore.selectedTimeRange / 7)
-  const numPoints = Math.max(Math.min(weeks, 12), 5)
-  const range = Math.abs(baselineVal - currentVal)
+// Aggregate pattern snapshots by month for practice-level sparklines
+const practiceMonthlySnapshots = computed(() => {
+  const patterns = patternsStore.patterns
+  if (patterns.length === 0) return []
 
-  return Array.from({ length: numPoints }, (_, i) => {
-    if (i === 0) return baselineVal
-    if (i === numPoints - 1) return currentVal
+  const byMonth = new Map<string, { totalClaims: number; totalDenied: number; totalDollarsDenied: number }>()
 
-    const progress = i / (numPoints - 1)
-    // No noise when values are effectively the same (flat line)
-    const noise = range < 0.5 ? 0 : (Math.random() - 0.5) * range * 0.15
-    return baselineVal + (currentVal - baselineVal) * progress + noise
-  })
-}
+  for (const pattern of patterns) {
+    for (const snap of (pattern.snapshots || [])) {
+      if (!snap.month) continue
+      const existing = byMonth.get(snap.month) || { totalClaims: 0, totalDenied: 0, totalDollarsDenied: 0 }
+      existing.totalClaims += snap.claimCount ?? 0
+      existing.totalDenied += snap.deniedCount ?? 0
+      existing.totalDollarsDenied += snap.dollarsDenied ?? 0
+      byMonth.set(snap.month, existing)
+    }
+  }
 
-// Generate pattern-specific sparkline data
-function generatePatternSparklineData(
-  baselineVal: number,
-  currentVal: number
-): number[] {
-  const weeks = Math.ceil(appStore.selectedTimeRange / 7)
-  const numPoints = Math.max(Math.min(weeks, 12), 5)
-  const range = Math.abs(baselineVal - currentVal)
-
-  return Array.from({ length: numPoints }, (_, i) => {
-    if (i === 0) return baselineVal
-    if (i === numPoints - 1) return currentVal
-
-    const progress = i / (numPoints - 1)
-    // No noise when values are effectively the same (flat line)
-    const noise = range < 0.5 ? 0 : (Math.random() - 0.5) * range * 0.2
-    return baselineVal + (currentVal - baselineVal) * progress + noise
-  })
-}
+  return [...byMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, data]) => ({
+      denialRate: data.totalClaims > 0 ? (data.totalDenied / data.totalClaims) * 100 : 0,
+      deniedDollars: data.totalDollarsDenied,
+    }))
+})
 
 // Convert data to SVG path
 function dataToSparklinePath(data: number[]): string {
@@ -1178,26 +1163,30 @@ function dataToSparklineFill(data: number[]): string {
     ` L ${lastX} ${height} Z`
 }
 
-// Sparkline paths - use actual baseline/current metrics for accurate visualization
-// Charts start at baseline value and end at current value
-const denialRateSparklineData = computed(() => generateSparklineData(
-  baselineMetrics.value.denialRate,
-  currentMetrics.value.denialRate
-))
+// Practice-level sparkline data from aggregated real snapshots
+const denialRateSparklineData = computed(() =>
+  practiceMonthlySnapshots.value.map(s => s.denialRate)
+)
 const denialRateSparklinePath = computed(() => dataToSparklinePath(denialRateSparklineData.value))
 const denialRateSparklineFill = computed(() => dataToSparklineFill(denialRateSparklineData.value))
 
-const appealRateSparklineData = computed(() => generateSparklineData(
-  baselineMetrics.value.appealRate,
-  currentMetrics.value.appealRate
-))
+// Appeal rate: snapshots don't include appeal metrics, so use linear interpolation
+// between baseline and current endpoints (no random noise)
+const appealRateSparklineData = computed(() => {
+  const numPoints = practiceMonthlySnapshots.value.length || 2
+  const baseline = baselineMetrics.value.appealRate
+  const current = currentMetrics.value.appealRate
+  return Array.from({ length: numPoints }, (_, i) => {
+    if (numPoints <= 1) return current
+    return baseline + (current - baseline) * (i / (numPoints - 1))
+  })
+})
 const appealRateSparklinePath = computed(() => dataToSparklinePath(appealRateSparklineData.value))
 const appealRateSparklineFill = computed(() => dataToSparklineFill(appealRateSparklineData.value))
 
-const deniedDollarsSparklineData = computed(() => generateSparklineData(
-  baselineMetrics.value.deniedDollars,
-  currentMetrics.value.deniedDollars
-))
+const deniedDollarsSparklineData = computed(() =>
+  practiceMonthlySnapshots.value.map(s => s.deniedDollars)
+)
 const deniedDollarsSparklinePath = computed(() => dataToSparklinePath(deniedDollarsSparklineData.value))
 const deniedDollarsSparklineFill = computed(() => dataToSparklineFill(deniedDollarsSparklineData.value))
 
@@ -1213,10 +1202,9 @@ const patternPerformance = computed(() => {
 
     // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines (absolute current value)
     const currentDeniedDollars = pattern.totalAtRisk
-    // Estimate baseline dollars using the ratio of denial rates
-    const baselineDeniedDollars = (currentDenialRate > 0 && baselineDenialRate > 0)
-      ? currentDeniedDollars * (baselineDenialRate / currentDenialRate)
-      : currentDeniedDollars
+    // Use actual first snapshot's dollars_denied as baseline instead of estimating
+    const sortedSnapshots = [...(pattern.snapshots || [])].sort((a, b) => (a.month || '').localeCompare(b.month || ''))
+    const baselineDeniedDollars = sortedSnapshots.length > 0 ? (sortedSnapshots[0]!.dollarsDenied ?? 0) : currentDeniedDollars
 
     // Claims count from affected claims (live from patterns API)
     const claimsCount = pattern.affectedClaims?.length || 0
@@ -1256,8 +1244,8 @@ const patternPerformance = computed(() => {
       claimsReductionPercent: null as number | null,
       firstImprovementDate,
       trendData: {
-        denialRate: generatePatternSparklineData(baselineDenialRate, currentDenialRate),
-        deniedDollars: generatePatternSparklineData(baselineDeniedDollars, currentDeniedDollars),
+        denialRate: sortedSnapshots.map(s => s.denialRate ?? 0),
+        deniedDollars: sortedSnapshots.map(s => s.dollarsDenied ?? 0),
       },
     }
   }).sort((a, b) => b.current.deniedDollars - a.current.deniedDollars)
