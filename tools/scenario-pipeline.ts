@@ -638,6 +638,13 @@ function generateAppeals(ctx: GenerationContext): void {
 
       if (isOverturned) {
         claim.status = 'appealed'
+        // Update line items: overturned means payer agreed to pay
+        for (const line of claim.lineItems) {
+          if (line.status === 'denied') {
+            line.status = 'approved'
+            line.paidAmount = roundToDecimal(line.billedAmount * randomFloat(0.7, 0.95), 2)
+          }
+        }
         const summary = ctx.claims.find(c => c.id === claim.id)
         if (summary) {
           summary.status = 'appealed'
@@ -659,10 +666,11 @@ function generatePatternSnapshots(ctx: GenerationContext): void {
       const monthClaims = claimDetails.filter(
         c => c.patternId === pattern.id && c.dateOfService.startsWith(month.key)
       )
-      const deniedClaims = monthClaims.filter(c => c.status === 'denied')
+      // "Ever denied" = claims that were denied, including those later overturned (status='appealed')
+      const everDeniedClaims = monthClaims.filter(c => c.status === 'denied' || c.status === 'appealed')
       const monthAppeals = appeals.filter(a => monthClaims.some(c => c.id === a.claimId))
 
-      const dollarsDenied = deniedClaims.reduce((sum, c) => sum + c.billedAmount, 0)
+      const dollarsDenied = everDeniedClaims.reduce((sum, c) => sum + c.billedAmount, 0)
       const dollarsAtRisk = monthClaims.reduce((sum, c) => sum + c.billedAmount, 0)
 
       ctx.patternSnapshots.push({
@@ -671,14 +679,14 @@ function generatePatternSnapshots(ctx: GenerationContext): void {
         periodStart: formatDateISO(month.start),
         periodEnd: formatDateISO(month.end),
         claimCount: monthClaims.length,
-        deniedCount: deniedClaims.length,
+        deniedCount: everDeniedClaims.length,
         denialRate:
-          monthClaims.length > 0 ? (deniedClaims.length / monthClaims.length) * 100 : 0,
+          monthClaims.length > 0 ? (everDeniedClaims.length / monthClaims.length) * 100 : 0,
         dollarsDenied,
         dollarsAtRisk,
         appealCount: monthAppeals.length,
         appealRate:
-          deniedClaims.length > 0 ? (monthAppeals.length / deniedClaims.length) * 100 : 0,
+          everDeniedClaims.length > 0 ? (monthAppeals.length / everDeniedClaims.length) * 100 : 0,
       })
     }
   }
@@ -1146,36 +1154,32 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         })
       }
 
-      // Link policies to denied lines (include 'appealed' — originally denied)
-      if ((claim.status === 'denied' || claim.status === 'appealed') && claim.policyIds.length > 0 && lineItemIds.length > 0) {
+      // Link policies to denied/overturned lines
+      // Overturned claims (status='appealed') had line items changed to 'approved',
+      // but they were originally denied and should still link to the triggering policy
+      const isEverDenied = claim.status === 'denied' || claim.status === 'appealed'
+      if (isEverDenied && claim.policyIds.length > 0 && lineItemIds.length > 0) {
         claim.policyIds.forEach((policyId, idx) => {
           const lineItemId = lineItemIds[idx % lineItemIds.length]
-          const lineItem = claim.lineItems[idx % claim.lineItems.length]
-          if (lineItem && lineItem.status === 'denied') {
-            insertClaimLinePolicy.run(
-              lineItemId,
-              policyId,
-              1,
-              lineItem.billedAmount,
-              claim.denialReason || null
-            )
-          }
+          insertClaimLinePolicy.run(
+            lineItemId,
+            policyId,
+            1,
+            claim.lineItems[idx % claim.lineItems.length]?.billedAmount ?? 0,
+            claim.denialReason || null
+          )
         })
       }
 
-      // Link patterns to denied lines (include 'appealed' — these were originally denied
-      // but had their status changed by generateAppeals before DB write)
-      if ((claim.status === 'denied' || claim.status === 'appealed') && claim.patternId && lineItemIds.length > 0) {
+      // Link patterns to denied/overturned lines
+      if (isEverDenied && claim.patternId && lineItemIds.length > 0) {
         lineItemIds.forEach((lineItemId, idx) => {
-          const lineItem = claim.lineItems[idx]
-          if (lineItem && lineItem.status === 'denied') {
-            insertPatternClaimLine.run(
-              claim.patternId,
-              lineItemId,
-              lineItem.billedAmount,
-              claim.dateOfService
-            )
-          }
+          insertPatternClaimLine.run(
+            claim.patternId,
+            lineItemId,
+            claim.lineItems[idx]?.billedAmount ?? 0,
+            claim.dateOfService
+          )
         })
       }
     }
