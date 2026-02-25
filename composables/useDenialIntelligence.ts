@@ -33,6 +33,8 @@ export function useDenialIntelligence() {
       tier: 'all',
       status: 'all',
       recoveryStatus: 'all',
+      appealRate: 'all',
+      overturnRate: 'all',
     },
   })
 
@@ -49,6 +51,8 @@ export function useDenialIntelligence() {
   const filterTier = ref('all')
   const filterStatus = ref('all')
   const filterRecoveryStatus = ref('all')
+  const filterAppealRate = ref('all')
+  const filterOverturnRate = ref('all')
 
   // View mode (card/table)
   const viewMode = computed<'card' | 'table'>(() => {
@@ -132,6 +136,8 @@ export function useDenialIntelligence() {
     filterTier.value = normalizedParams.value.tier || 'all'
     filterStatus.value = normalizedParams.value.status || 'all'
     filterRecoveryStatus.value = normalizedParams.value.recoveryStatus || 'all'
+    filterAppealRate.value = normalizedParams.value.appealRate || 'all'
+    filterOverturnRate.value = normalizedParams.value.overturnRate || 'all'
   }
 
   watch(() => route.query, syncFromUrl, { immediate: true })
@@ -143,6 +149,16 @@ export function useDenialIntelligence() {
   watch(filterTier, (val) => setUrlParam('tier', val === 'all' ? null : val))
   watch(filterStatus, (val) => setUrlParam('status', val === 'all' ? null : val))
   watch(filterRecoveryStatus, (val) => setUrlParam('recoveryStatus', val === 'all' ? null : val))
+  watch(filterAppealRate, (val) => setUrlParam('appealRate', val === 'all' ? null : val))
+  watch(filterOverturnRate, (val) => setUrlParam('overturnRate', val === 'all' ? null : val))
+
+  // Helper: check if a rate value matches a range filter
+  const matchesRateRange = (rate: number, range: string): boolean => {
+    if (range === 'all') return true
+    if (range === '0') return rate === 0
+    const [minStr, maxStr] = range.split('-')
+    return rate >= Number(minStr) && rate <= Number(maxStr)
+  }
 
   // Build active items from patterns
   const activeItems = computed<ActiveDenialItem[]>(() => {
@@ -224,12 +240,27 @@ export function useDenialIntelligence() {
       items = items.filter(i => i.pattern.recoveryStatus === filterRecoveryStatus.value)
     }
 
+    if (filterAppealRate.value !== 'all') {
+      items = items.filter(i => matchesRateRange(i.pattern.appealRate || 0, filterAppealRate.value))
+    }
+
+    if (filterOverturnRate.value !== 'all') {
+      items = items.filter(i => {
+        const appealCount = i.pattern.appealCount || 0
+        const overturnedCount = i.pattern.overturnedCount || 0
+        const overturnRate = appealCount > 0 ? (overturnedCount / appealCount) * 100 : 0
+        return matchesRateRange(overturnRate, filterOverturnRate.value)
+      })
+    }
+
     return items
   })
 
-  // Filtered inactive items
+  // Filtered inactive items — hide when appeal/overturn filters are active
   const filteredInactiveItems = computed(() => {
     if (!showInactive.value) return []
+    // Inactive policies lack appeal/overturn metrics; hide them when those filters are active
+    if (filterAppealRate.value !== 'all' || filterOverturnRate.value !== 'all') return []
 
     let items = [...inactiveItems.value]
 
@@ -324,6 +355,8 @@ export function useDenialIntelligence() {
     filterTier.value = 'all'
     filterStatus.value = 'all'
     filterRecoveryStatus.value = 'all'
+    filterAppealRate.value = 'all'
+    filterOverturnRate.value = 'all'
     clearUrlParams()
   }
 
@@ -346,6 +379,8 @@ export function useDenialIntelligence() {
     filterTier,
     filterStatus,
     filterRecoveryStatus,
+    filterAppealRate,
+    filterOverturnRate,
     uniqueTopics,
     uniqueSources,
     hasActiveFilters,

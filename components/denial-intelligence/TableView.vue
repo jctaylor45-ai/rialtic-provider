@@ -10,13 +10,13 @@
               class="text-left px-6 py-3 text-xs font-semibold text-neutral-700 uppercase tracking-wider select-none"
               :class="{
                 'cursor-pointer hover:bg-neutral-100': header.column.getCanSort(),
-                'text-right': ['impact', 'denialRate', 'frequency'].includes(header.column.id),
+                'text-right': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(header.column.id),
               }"
               @click="header.column.getToggleSortingHandler()?.($event)"
             >
               <div
                 class="flex items-center gap-1"
-                :class="{ 'justify-end': ['impact', 'denialRate', 'frequency'].includes(header.column.id) }"
+                :class="{ 'justify-end': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(header.column.id) }"
               >
                 <FlexRender
                   v-if="!header.isPlaceholder"
@@ -44,7 +44,7 @@
               v-for="cell in row.getVisibleCells()"
               :key="cell.id"
               class="px-6 py-4"
-              :class="{ 'text-right': ['impact', 'denialRate', 'frequency'].includes(cell.column.id) }"
+              :class="{ 'text-right': ['impact', 'denialRate', 'frequency', 'appealRate', 'overturnRate'].includes(cell.column.id) }"
             >
               <FlexRender
                 :render="cell.column.columnDef.cell"
@@ -238,6 +238,37 @@ const columns: ColumnDef<DenialIntelligenceItem>[] = [
         : (row.original.policy.impact || 0)
       if (!val) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
       return h('span', { class: 'text-sm font-semibold text-neutral-900' }, formatCurrency(val))
+    },
+  },
+  {
+    id: 'appealRate',
+    header: 'Appeal Rate',
+    size: 100,
+    accessorFn: (row) => row.type === 'active' ? (row.pattern.appealRate || 0) : 0,
+    cell: ({ row }) => {
+      if (row.original.type === 'inactive') return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+      const rate = row.original.pattern.appealRate
+      if (!rate) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+      return h('span', { class: 'text-sm text-neutral-900' }, `${rate.toFixed(1)}%`)
+    },
+  },
+  {
+    id: 'overturnRate',
+    header: 'Overturn Rate',
+    size: 110,
+    accessorFn: (row) => {
+      if (row.type !== 'active') return 0
+      const appealCount = row.pattern.appealCount || 0
+      const overturnedCount = row.pattern.overturnedCount || 0
+      return appealCount > 0 ? (overturnedCount / appealCount) * 100 : 0
+    },
+    cell: ({ row }) => {
+      if (row.original.type === 'inactive') return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+      const appealCount = row.original.pattern.appealCount || 0
+      const overturnedCount = row.original.pattern.overturnedCount || 0
+      if (appealCount === 0) return h('span', { class: 'text-sm text-neutral-400' }, '\u2014')
+      const rate = (overturnedCount / appealCount) * 100
+      return h('span', { class: 'text-sm text-neutral-900' }, `${rate.toFixed(1)}%`)
     },
   },
   {

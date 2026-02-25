@@ -37,6 +37,8 @@
         :filter-tier="filterTier"
         :filter-status="filterStatus"
         :filter-recovery-status="filterRecoveryStatus"
+        :filter-appeal-rate="filterAppealRate"
+        :filter-overturn-rate="filterOverturnRate"
         :show-inactive="showInactive"
         :has-practice-selected="!!appStore.selectedPracticeId"
         :has-active-filters="hasActiveFilters"
@@ -49,6 +51,8 @@
         @update:filter-tier="filterTier = $event"
         @update:filter-status="filterStatus = $event"
         @update:filter-recovery-status="filterRecoveryStatus = $event"
+        @update:filter-appeal-rate="filterAppealRate = $event"
+        @update:filter-overturn-rate="filterOverturnRate = $event"
         @update:show-inactive="setShowInactive($event)"
         @clear-filters="handleClearFilters"
       />
@@ -193,6 +197,8 @@ const {
   filterTier,
   filterStatus,
   filterRecoveryStatus,
+  filterAppealRate,
+  filterOverturnRate,
   uniqueTopics,
   uniqueSources,
   hasActiveFilters,
