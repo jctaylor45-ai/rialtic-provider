@@ -1221,15 +1221,13 @@ const recoveredRevenue = computed(() => {
 })
 
 // Practice-level appeals avoided: pre-window avg vs active-window avg monthly appeal counts
+// Requires at least 3 baseline months before the active window for a reliable comparison
 const practiceAppealsAvoided = computed(() => {
   const months = practiceMonthlySnapshots.value
-  if (months.length < 2) return 0
-  const splitIdx = practiceActiveStartIndex.value
-  // If entire range is active (splitIdx === 0), fall back to midpoint split
-  const boundary = splitIdx > 0 ? splitIdx : Math.floor(months.length / 2)
+  const boundary = practiceActiveStartIndex.value
+  if (boundary < 3 || boundary >= months.length) return 0
   const preWindow = months.slice(0, boundary)
   const activeWindow = months.slice(boundary)
-  if (preWindow.length === 0 || activeWindow.length === 0) return 0
   const preAvg = preWindow.reduce((s, m) => s + m.appealCount, 0) / preWindow.length
   const activeAvg = activeWindow.reduce((s, m) => s + m.appealCount, 0) / activeWindow.length
   return Math.round((preAvg - activeAvg) * activeWindow.length)
@@ -1435,15 +1433,17 @@ const patternPerformance = computed(() => {
     const appealRateChange = latestSnapshotAppealRate - firstSnapshotAppealRate
 
     // Appeals avoided: pre-window avg vs active-window avg monthly appeals
+    // Requires at least 3 baseline months before the active window
     const snapshotMonthsList = sortedSnapshots.map(s => s.month || '')
-    const patternSplitIdx = getActiveStartIndex(snapshotMonthsList, false)
-    // If entire range is active (splitIdx === 0), fall back to midpoint split
-    const patternBoundary = patternSplitIdx > 0 ? patternSplitIdx : Math.floor(sortedSnapshots.length / 2)
-    const preWindow = sortedSnapshots.slice(0, patternBoundary)
-    const activeWindow = sortedSnapshots.slice(patternBoundary)
-    const preAvg = preWindow.length > 0 ? preWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / preWindow.length : 0
-    const activeAvg = activeWindow.length > 0 ? activeWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / activeWindow.length : 0
-    const appealsAvoided = Math.round((preAvg - activeAvg) * activeWindow.length)
+    const patternBoundary = getActiveStartIndex(snapshotMonthsList, false)
+    let appealsAvoided = 0
+    if (patternBoundary >= 3 && patternBoundary < sortedSnapshots.length) {
+      const preWindow = sortedSnapshots.slice(0, patternBoundary)
+      const activeWindow = sortedSnapshots.slice(patternBoundary)
+      const preAvg = preWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / preWindow.length
+      const activeAvg = activeWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / activeWindow.length
+      appealsAvoided = Math.round((preAvg - activeAvg) * activeWindow.length)
+    }
 
     // Find first improvement date from pattern improvements
     const firstImprovement = pattern.improvements?.[0]
