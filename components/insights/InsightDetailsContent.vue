@@ -22,7 +22,7 @@ const patternsStore = usePatternsStore()
 const eventsStore = useEventsStore()
 
 // Composables
-const { formatCurrency } = useAnalytics()
+const { formatCurrency, formatPercentage } = useAnalytics()
 const { getActionTypeLabel, getActionTypeIcon } = useActions()
 const {
   getPatternTierColor,
@@ -130,6 +130,68 @@ const getConfidenceClass = (confidence: string): string => {
   }
   return classes[confidence] || 'bg-neutral-100 text-neutral-600'
 }
+
+// Policy metrics for related policies
+interface PolicyMetrics {
+  policyId: string
+  policyName?: string
+  denialRate: number
+  appealRate: number
+  overturnRate: number
+  totalClaims: number
+  deniedClaims: number
+}
+
+const policyMetrics = ref<PolicyMetrics[]>([])
+const isLoadingMetrics = ref(false)
+
+async function fetchPolicyMetrics() {
+  const p = pattern.value
+  if (!p || p.relatedPolicies.length === 0) {
+    policyMetrics.value = []
+    return
+  }
+
+  isLoadingMetrics.value = true
+  try {
+    const results = await Promise.all(
+      p.relatedPolicies.map(async (policyId) => {
+        try {
+          const m = await $fetch<{
+            policyId: string
+            totalClaims: number
+            deniedClaims: number
+            denialRate: number
+            appealRate: number
+            overturnRate: number
+          }>(`/api/v1/policies/${policyId}/metrics`)
+          // Look up the policy name from store
+          const appStore = useAppStore()
+          const policy = appStore.getPolicyById(policyId)
+          return {
+            policyId: m.policyId,
+            policyName: policy?.name,
+            denialRate: m.denialRate,
+            appealRate: m.appealRate ?? 0,
+            overturnRate: m.overturnRate ?? 0,
+            totalClaims: m.totalClaims,
+            deniedClaims: m.deniedClaims,
+          }
+        } catch {
+          return null
+        }
+      })
+    )
+    policyMetrics.value = results.filter(r => r !== null) as PolicyMetrics[]
+  } finally {
+    isLoadingMetrics.value = false
+  }
+}
+
+// Fetch metrics when pattern changes
+watch(() => props.patternId, () => {
+  fetchPolicyMetrics()
+}, { immediate: true })
 
 // Methods
 const formatDate = (dateString: string) => {
@@ -275,6 +337,41 @@ onMounted(() => {
         <p class="text-sm text-neutral-600 mt-3">
           {{ pattern.description }}
         </p>
+      </section>
+
+      <!-- Policy Performance Metrics -->
+      <section v-if="policyMetrics.length > 0" class="mb-6">
+        <h3 class="text-sm font-semibold text-neutral-900 mb-3">Policy Performance</h3>
+        <div
+          v-for="pm in policyMetrics"
+          :key="pm.policyId"
+          class="mb-3 last:mb-0"
+        >
+          <div v-if="policyMetrics.length > 1" class="text-xs text-neutral-500 mb-2 font-mono">
+            {{ pm.policyName || pm.policyId }}
+          </div>
+          <div class="grid grid-cols-4 gap-3">
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Hit Rate</div>
+              <div class="text-lg font-semibold text-neutral-900">
+                {{ pm.totalClaims > 0 ? pm.totalClaims.toLocaleString() : '–' }}
+                <span class="text-xs font-normal text-neutral-500">claims</span>
+              </div>
+            </div>
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Denial Rate</div>
+              <div class="text-lg font-semibold text-error-700">{{ formatPercentage(pm.denialRate) }}</div>
+            </div>
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Appeal Rate</div>
+              <div class="text-lg font-semibold text-warning-700">{{ formatPercentage(pm.appealRate) }}</div>
+            </div>
+            <div class="bg-neutral-50 rounded-lg p-3">
+              <div class="text-xs text-neutral-600 mb-1">Overturn Rate</div>
+              <div class="text-lg font-semibold text-success-700">{{ formatPercentage(pm.overturnRate) }}</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- What's Causing This? -->

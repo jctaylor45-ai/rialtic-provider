@@ -362,14 +362,55 @@ export const usePatternsStore = defineStore('patterns', () => {
     const patternActionCategory = (dbPattern.actionCategory || 'coding_knowledge') as ActionCategory
     const patternRecoveryStatus = (dbPattern.recoveryStatus || 'recoverable') as RecoveryStatus
 
+    // Compute trend, velocity, recency, and denial rate from snapshots
+    const snapshots = dbPattern.snapshots || []
+    let liveTrend: 'up' | 'down' | 'stable' = 'stable'
+    let liveVelocity = 0
+    let liveRecency = 0
+    let liveDenialRate = 0
+
+    if (snapshots.length >= 2) {
+      // Snapshots are ordered ASC by date from API — take the last 3
+      const recent = snapshots.slice(-3)
+      const latest = recent[recent.length - 1]!
+      const earliest = recent[0]!
+      const latestRate = latest.denialRate ?? 0
+      const earliestRate = earliest.denialRate ?? 0
+      const rateDiff = latestRate - earliestRate
+
+      // Denial rate: use the most recent snapshot's rate
+      liveDenialRate = Math.round(latestRate * 100) / 100
+
+      // Trend: ±0.5 percentage points threshold for "stable"
+      if (rateDiff > 0.5) {
+        liveTrend = 'up'
+      } else if (rateDiff < -0.5) {
+        liveTrend = 'down'
+      }
+
+      // Velocity: rate of change in pp/month
+      const monthSpan = recent.length - 1
+      liveVelocity = monthSpan > 0 ? Math.round((rateDiff / monthSpan) * 100) / 100 : 0
+
+      // Recency: days since the most recent snapshot
+      if (latest.month) {
+        const snapshotDate = new Date(latest.month)
+        const now = new Date()
+        liveRecency = Math.max(0, Math.round((now.getTime() - snapshotDate.getTime()) / (1000 * 60 * 60 * 24)))
+      }
+    } else if (snapshots.length === 1) {
+      // Single snapshot: use its rate, can't compute trend
+      liveDenialRate = Math.round((snapshots[0]!.denialRate ?? 0) * 100) / 100
+    }
+
     // Compute score with live data, then derive tier from it
     const score = {
       frequency: dbPattern.liveLineCount || 0,
       impact: liveTotalAtRisk,
-      trend: (dbPattern.scoreTrend as 'up' | 'down' | 'stable') || 'stable',
-      velocity: dbPattern.scoreVelocity || 0,
+      trend: liveTrend,
+      velocity: liveVelocity,
       confidence: dbPattern.scoreConfidence || 0,
-      recency: dbPattern.scoreRecency || 0,
+      recency: liveRecency,
     }
     const tier = calculatePatternTier(score, dbPattern.avgDenialAmount || 0)
 
@@ -384,7 +425,7 @@ export const usePatternsStore = defineStore('patterns', () => {
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
       totalAtRisk: liveTotalAtRisk,
       baselineDenialRate: dbPattern.baselineDenialRate,
-      currentDenialRate: dbPattern.currentDenialRate,
+      currentDenialRate: liveDenialRate,
       currentDollarsDenied: dbPattern.currentDollarsDenied,
       appealCount: dbPattern.appealCount || 0,
       overturnedCount: dbPattern.overturnedCount || 0,
