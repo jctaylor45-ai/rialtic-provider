@@ -93,27 +93,31 @@
               {{ formatPercentage(currentMetrics.denialRate) }}
             </div>
             <!-- Sparkline -->
-            <div class="h-10 mb-3">
+            <div class="h-10 mb-1">
               <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
                 <defs>
                   <linearGradient :id="'sparklineGradient-denial'" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" :stop-color="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
                     <stop offset="100%" :stop-color="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
                   </linearGradient>
+                  <clipPath id="activeWindow-denial">
+                    <rect :x="practiceWindowBoundaryX" y="0" :width="120 - practiceWindowBoundaryX" height="40" />
+                  </clipPath>
                 </defs>
-                <path
-                  :d="denialRateSparklineFill"
-                  :fill="`url(#sparklineGradient-denial)`"
-                />
-                <path
-                  :d="denialRateSparklinePath"
-                  fill="none"
-                  :stroke="denialRateTrend.isImproving ? '#10B981' : '#EF4444'"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
+                <g opacity="0.25">
+                  <path :d="denialRateSparklineFill" :fill="`url(#sparklineGradient-denial)`" />
+                  <path :d="denialRateSparklinePath" fill="none" :stroke="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <g clip-path="url(#activeWindow-denial)">
+                  <path :d="denialRateSparklineFill" :fill="`url(#sparklineGradient-denial)`" />
+                  <path :d="denialRateSparklinePath" fill="none" :stroke="denialRateTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <line v-if="practiceActiveStartIndex > 0" :x1="practiceWindowBoundaryX" y1="0" :x2="practiceWindowBoundaryX" y2="40" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
               </svg>
+            </div>
+            <div class="flex justify-between text-[10px] text-neutral-400 mb-2">
+              <span>{{ practiceSparklineLabels.first }}</span>
+              <span>{{ practiceSparklineLabels.last }}</span>
             </div>
             <!-- Trend Info -->
             <div class="space-y-1">
@@ -150,27 +154,31 @@
                 {{ formatPercentage(currentMetrics.appealRate) }}
               </div>
               <!-- Sparkline -->
-              <div class="h-10 mb-3">
+              <div class="h-10 mb-1">
                 <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
                   <defs>
                     <linearGradient :id="'sparklineGradient-appeal'" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" :stop-color="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
                       <stop offset="100%" :stop-color="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
                     </linearGradient>
+                    <clipPath id="activeWindow-appeal">
+                      <rect :x="practiceWindowBoundaryX" y="0" :width="120 - practiceWindowBoundaryX" height="40" />
+                    </clipPath>
                   </defs>
-                  <path
-                    :d="appealRateSparklineFill"
-                    :fill="`url(#sparklineGradient-appeal)`"
-                  />
-                  <path
-                    :d="appealRateSparklinePath"
-                    fill="none"
-                    :stroke="appealRateTrend.isImproving ? '#10B981' : '#EF4444'"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
+                  <g opacity="0.25">
+                    <path :d="appealRateSparklineFill" :fill="`url(#sparklineGradient-appeal)`" />
+                    <path :d="appealRateSparklinePath" fill="none" :stroke="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </g>
+                  <g clip-path="url(#activeWindow-appeal)">
+                    <path :d="appealRateSparklineFill" :fill="`url(#sparklineGradient-appeal)`" />
+                    <path :d="appealRateSparklinePath" fill="none" :stroke="appealRateTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </g>
+                  <line v-if="practiceActiveStartIndex > 0" :x1="practiceWindowBoundaryX" y1="0" :x2="practiceWindowBoundaryX" y2="40" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
                 </svg>
+              </div>
+              <div class="flex justify-between text-[10px] text-neutral-400 mb-2">
+                <span>{{ practiceSparklineLabels.first }}</span>
+                <span>{{ practiceSparklineLabels.last }}</span>
               </div>
               <!-- Trend Info -->
               <div class="space-y-1">
@@ -213,27 +221,31 @@
               {{ formatCurrency(currentMetrics.deniedDollars) }}
             </div>
             <!-- Sparkline -->
-            <div class="h-10 mb-3">
+            <div class="h-10 mb-1">
               <svg viewBox="0 0 120 40" class="w-full h-full" preserveAspectRatio="none">
                 <defs>
                   <linearGradient :id="'sparklineGradient-dollars'" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" :stop-color="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0.3" />
                     <stop offset="100%" :stop-color="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stop-opacity="0" />
                   </linearGradient>
+                  <clipPath id="activeWindow-dollars">
+                    <rect :x="practiceWindowBoundaryX" y="0" :width="120 - practiceWindowBoundaryX" height="40" />
+                  </clipPath>
                 </defs>
-                <path
-                  :d="deniedDollarsSparklineFill"
-                  :fill="`url(#sparklineGradient-dollars)`"
-                />
-                <path
-                  :d="deniedDollarsSparklinePath"
-                  fill="none"
-                  :stroke="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
+                <g opacity="0.25">
+                  <path :d="deniedDollarsSparklineFill" :fill="`url(#sparklineGradient-dollars)`" />
+                  <path :d="deniedDollarsSparklinePath" fill="none" :stroke="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <g clip-path="url(#activeWindow-dollars)">
+                  <path :d="deniedDollarsSparklineFill" :fill="`url(#sparklineGradient-dollars)`" />
+                  <path :d="deniedDollarsSparklinePath" fill="none" :stroke="deniedDollarsTrend.isImproving ? '#10B981' : '#EF4444'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <line v-if="practiceActiveStartIndex > 0" :x1="practiceWindowBoundaryX" y1="0" :x2="practiceWindowBoundaryX" y2="40" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
               </svg>
+            </div>
+            <div class="flex justify-between text-[10px] text-neutral-400 mb-2">
+              <span>{{ practiceSparklineLabels.first }}</span>
+              <span>{{ practiceSparklineLabels.last }}</span>
             </div>
             <!-- Trend Info -->
             <div class="space-y-1">
@@ -477,15 +489,21 @@
                           </div>
                           <div class="h-16">
                             <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
-                              <path
-                                :d="generatePatternTrendPath(pattern.trendData?.denialRate || [])"
-                                fill="none"
-                                :stroke="pattern.current.denialRate < pattern.baseline.denialRate ? '#10B981' : '#EF4444'"
-                                stroke-width="2"
-                              />
+                              <defs>
+                                <clipPath :id="'patternWindow-' + pattern.id + '-denial'">
+                                  <rect :x="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.denialRate || []).length)" y="0" :width="200 - patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.denialRate || []).length)" height="60" />
+                                </clipPath>
+                              </defs>
+                              <path :d="generatePatternTrendPath(pattern.trendData?.denialRate || [])" fill="none" :stroke="pattern.current.denialRate < pattern.baseline.denialRate ? '#10B981' : '#EF4444'" stroke-width="2" opacity="0.25" />
+                              <path :d="generatePatternTrendPath(pattern.trendData?.denialRate || [])" fill="none" :stroke="pattern.current.denialRate < pattern.baseline.denialRate ? '#10B981' : '#EF4444'" stroke-width="2" :clip-path="'url(#patternWindow-' + pattern.id + '-denial)'" />
+                              <line v-if="getActiveStartIndex(pattern.snapshotMonths, true) > 0" :x1="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.denialRate || []).length)" y1="0" :x2="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.denialRate || []).length)" y2="60" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
                             </svg>
                           </div>
-                          <div class="text-xs text-neutral-500 mt-2">over {{ appStore.selectedTimeRange }} days</div>
+                          <div class="flex justify-between text-[10px] text-neutral-400 mt-1">
+                            <span>Baseline</span>
+                            <span>{{ patternLastLabel(pattern.snapshotMonths) }}</span>
+                          </div>
+                          <div class="text-xs text-neutral-500 mt-1">over {{ appStore.selectedTimeRange }} days</div>
                         </div>
 
                         <div class="bg-white rounded-lg border border-neutral-200 p-4">
@@ -496,13 +514,19 @@
                             </div>
                             <div class="h-16">
                               <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
-                                <path
-                                  :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])"
-                                  fill="none"
-                                  :stroke="capRate(pattern.current.appealRate) < capRate(pattern.baseline.appealRate) ? '#10B981' : '#EF4444'"
-                                  stroke-width="2"
-                                />
+                                <defs>
+                                  <clipPath :id="'patternWindow-' + pattern.id + '-appeal'">
+                                    <rect :x="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.appealRate || []).length)" y="0" :width="200 - patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.appealRate || []).length)" height="60" />
+                                  </clipPath>
+                                </defs>
+                                <path :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])" fill="none" :stroke="capRate(pattern.current.appealRate) < capRate(pattern.baseline.appealRate) ? '#10B981' : '#EF4444'" stroke-width="2" opacity="0.25" />
+                                <path :d="generatePatternTrendPath(pattern.trendData?.appealRate || [])" fill="none" :stroke="capRate(pattern.current.appealRate) < capRate(pattern.baseline.appealRate) ? '#10B981' : '#EF4444'" stroke-width="2" :clip-path="'url(#patternWindow-' + pattern.id + '-appeal)'" />
+                                <line v-if="getActiveStartIndex(pattern.snapshotMonths, true) > 0" :x1="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.appealRate || []).length)" y1="0" :x2="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.appealRate || []).length)" y2="60" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
                               </svg>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-neutral-400 mt-1">
+                              <span>Baseline</span>
+                              <span>{{ patternLastLabel(pattern.snapshotMonths) }}</span>
                             </div>
                             <div class="flex items-center gap-4 text-sm text-neutral-600 mt-2">
                               <span>{{ pattern.snapshotAppealCount }} filed</span>
@@ -525,13 +549,19 @@
                           </div>
                           <div class="h-16">
                             <svg viewBox="0 0 200 60" class="w-full h-full" preserveAspectRatio="none">
-                              <path
-                                :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])"
-                                fill="none"
-                                :stroke="pattern.current.deniedDollars < pattern.baseline.deniedDollars ? '#10B981' : '#EF4444'"
-                                stroke-width="2"
-                              />
+                              <defs>
+                                <clipPath :id="'patternWindow-' + pattern.id + '-dollars'">
+                                  <rect :x="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.deniedDollars || []).length)" y="0" :width="200 - patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.deniedDollars || []).length)" height="60" />
+                                </clipPath>
+                              </defs>
+                              <path :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])" fill="none" :stroke="pattern.current.deniedDollars < pattern.baseline.deniedDollars ? '#10B981' : '#EF4444'" stroke-width="2" opacity="0.25" />
+                              <path :d="generatePatternTrendPath(pattern.trendData?.deniedDollars || [])" fill="none" :stroke="pattern.current.deniedDollars < pattern.baseline.deniedDollars ? '#10B981' : '#EF4444'" stroke-width="2" :clip-path="'url(#patternWindow-' + pattern.id + '-dollars)'" />
+                              <line v-if="getActiveStartIndex(pattern.snapshotMonths, true) > 0" :x1="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.deniedDollars || []).length)" y1="0" :x2="patternWindowBoundaryX(pattern.snapshotMonths, (pattern.trendData?.deniedDollars || []).length)" y2="60" stroke="#D1D5DB" stroke-width="0.5" stroke-dasharray="2,2" />
                             </svg>
+                          </div>
+                          <div class="flex justify-between text-[10px] text-neutral-400 mt-1">
+                            <span>Baseline</span>
+                            <span>{{ patternLastLabel(pattern.snapshotMonths) }}</span>
                           </div>
                           <div class="text-xs text-neutral-500 mt-2">
                             Total Pattern Impact: {{ formatCurrency(pattern.current.totalAtRisk) }}
@@ -1190,16 +1220,19 @@ const recoveredRevenue = computed(() => {
   return baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
 })
 
-// Practice-level appeals avoided: first-half vs second-half average monthly appeal counts
+// Practice-level appeals avoided: pre-window avg vs active-window avg monthly appeal counts
 const practiceAppealsAvoided = computed(() => {
   const months = practiceMonthlySnapshots.value
   if (months.length < 2) return 0
-  const midpoint = Math.floor(months.length / 2)
-  const firstHalf = months.slice(0, midpoint)
-  const secondHalf = months.slice(midpoint)
-  const firstHalfAvg = firstHalf.reduce((s, m) => s + m.appealCount, 0) / firstHalf.length
-  const secondHalfAvg = secondHalf.reduce((s, m) => s + m.appealCount, 0) / secondHalf.length
-  return Math.round((firstHalfAvg - secondHalfAvg) * secondHalf.length)
+  const splitIdx = practiceActiveStartIndex.value
+  // If entire range is active (splitIdx === 0), fall back to midpoint split
+  const boundary = splitIdx > 0 ? splitIdx : Math.floor(months.length / 2)
+  const preWindow = months.slice(0, boundary)
+  const activeWindow = months.slice(boundary)
+  if (preWindow.length === 0 || activeWindow.length === 0) return 0
+  const preAvg = preWindow.reduce((s, m) => s + m.appealCount, 0) / preWindow.length
+  const activeAvg = activeWindow.reduce((s, m) => s + m.appealCount, 0) / activeWindow.length
+  return Math.round((preAvg - activeAvg) * activeWindow.length)
 })
 
 // Whether any appeal data exists in snapshots (to decide if banner should show)
@@ -1228,13 +1261,62 @@ const practiceMonthlySnapshots = computed(() => {
 
   return [...byMonth.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, data]) => ({
+    .map(([month, data]) => ({
+      month,
       denialRate: data.totalClaims > 0 ? (data.totalDenied / data.totalClaims) * 100 : 0,
       deniedDollars: data.totalDollarsDenied,
       appealRate: data.totalDenied > 0 ? (data.totalAppeals / data.totalDenied) * 100 : 0,
       appealCount: data.totalAppeals,
     }))
 })
+
+// Time-window highlight: find the first data point index within the selected time range
+function getActiveStartIndex(snapshotMonths: string[], hasPrependedBaseline: boolean): number {
+  const cutoffDate = new Date()
+  cutoffDate.setDate(cutoffDate.getDate() - appStore.selectedTimeRange)
+  const offset = hasPrependedBaseline ? 1 : 0
+  const idx = snapshotMonths.findIndex(m => new Date(m) >= cutoffDate)
+  if (idx === -1) return 0 // all months before cutoff — show everything
+  return idx + offset
+}
+
+// Practice sparkline: boundary index and x-coordinate (viewBox 120×40, padding 2)
+const practiceActiveStartIndex = computed(() => {
+  const months = practiceMonthlySnapshots.value.map(m => m.month)
+  return getActiveStartIndex(months, false)
+})
+const practiceWindowBoundaryX = computed(() => {
+  const count = practiceMonthlySnapshots.value.length
+  if (count < 2) return 2
+  return 2 + (practiceActiveStartIndex.value / (count - 1)) * 116
+})
+
+// Practice sparkline: date labels
+const practiceSparklineLabels = computed(() => {
+  const months = practiceMonthlySnapshots.value
+  if (months.length === 0) return { first: '', last: '' }
+  const fmt = (dateStr: string) => {
+    const d = new Date(dateStr)
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`
+  }
+  return { first: fmt(months[0]!.month), last: fmt(months[months.length - 1]!.month) }
+})
+
+// Pattern sparkline: boundary x-coordinate (viewBox 200×60, padding 5)
+function patternWindowBoundaryX(snapshotMonths: string[], dataLength: number): number {
+  const idx = getActiveStartIndex(snapshotMonths, true)
+  if (dataLength < 2) return 5
+  return 5 + (idx / (dataLength - 1)) * 190
+}
+
+// Pattern sparkline: date label for last snapshot
+function patternLastLabel(snapshotMonths: string[]): string {
+  if (snapshotMonths.length === 0) return ''
+  const d = new Date(snapshotMonths[snapshotMonths.length - 1]!)
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${monthNames[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`
+}
 
 // Convert data to SVG path
 function dataToSparklinePath(data: number[]): string {
@@ -1352,14 +1434,16 @@ const patternPerformance = computed(() => {
     const deniedDollarsChangePercent = baselineDeniedDollars > 0 ? Math.abs(deniedDollarsChange) / baselineDeniedDollars : 0
     const appealRateChange = latestSnapshotAppealRate - firstSnapshotAppealRate
 
-    // Appeals avoided: compare first-half vs second-half average monthly appeals
-    const midpoint = Math.floor(sortedSnapshots.length / 2)
-    const firstHalf = sortedSnapshots.slice(0, midpoint)
-    const secondHalf = sortedSnapshots.slice(midpoint)
-    const firstHalfAvg = firstHalf.length > 0 ? firstHalf.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / firstHalf.length : 0
-    const secondHalfAvg = secondHalf.length > 0 ? secondHalf.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / secondHalf.length : 0
-    const appealsAvoidedPerMonth = firstHalfAvg - secondHalfAvg
-    const appealsAvoided = Math.round(appealsAvoidedPerMonth * secondHalf.length)
+    // Appeals avoided: pre-window avg vs active-window avg monthly appeals
+    const snapshotMonthsList = sortedSnapshots.map(s => s.month || '')
+    const patternSplitIdx = getActiveStartIndex(snapshotMonthsList, false)
+    // If entire range is active (splitIdx === 0), fall back to midpoint split
+    const patternBoundary = patternSplitIdx > 0 ? patternSplitIdx : Math.floor(sortedSnapshots.length / 2)
+    const preWindow = sortedSnapshots.slice(0, patternBoundary)
+    const activeWindow = sortedSnapshots.slice(patternBoundary)
+    const preAvg = preWindow.length > 0 ? preWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / preWindow.length : 0
+    const activeAvg = activeWindow.length > 0 ? activeWindow.reduce((s, snap) => s + (snap.appealCount ?? 0), 0) / activeWindow.length : 0
+    const appealsAvoided = Math.round((preAvg - activeAvg) * activeWindow.length)
 
     // Find first improvement date from pattern improvements
     const firstImprovement = pattern.improvements?.[0]
@@ -1399,6 +1483,7 @@ const patternPerformance = computed(() => {
       overturnedCount: pattern.overturnedCount ?? 0,
       appealsAvoided,
       firstImprovementDate,
+      snapshotMonths: sortedSnapshots.map(s => s.month || ''),
       trendData: {
         // Prepend baseline as first point so sparkline starts at the label's "from" value
         denialRate: [baselineDenialRate, ...sortedSnapshots.map(s => s.denialRate ?? 0)],
