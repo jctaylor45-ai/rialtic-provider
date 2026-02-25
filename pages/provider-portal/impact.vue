@@ -1208,8 +1208,8 @@ const patternPerformance = computed(() => {
 
   return patterns.map(pattern => {
     // Use DB values directly: baseline and current denial rates from pipeline import
-    const baselineDenialRate = (pattern.baselineDenialRate ?? 0) * 100
-    const currentDenialRate = (pattern.currentDenialRate ?? 0) * 100
+    const baselineDenialRate = pattern.baselineDenialRate ?? 0
+    const currentDenialRate = pattern.currentDenialRate ?? 0
 
     // Denied dollars: totalAtRisk is live-computed from pattern_claim_lines (absolute current value)
     const currentDeniedDollars = pattern.totalAtRisk

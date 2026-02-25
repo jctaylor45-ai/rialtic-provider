@@ -208,7 +208,7 @@
                 <div>
                   <div class="font-medium text-error-900">{{ pattern.title }}</div>
                   <div class="text-xs text-error-700">
-                    {{ pattern.score.frequency }} occurrences • {{ formatCurrency(pattern.totalAtRisk) }} at risk
+                    {{ pattern.affectedClaims.length }} claims • {{ formatCurrency(pattern.totalAtRisk) }} at risk
                   </div>
                 </div>
               </div>

@@ -431,7 +431,7 @@ export const usePatternsStore = defineStore('patterns', () => {
       score,
       avgDenialAmount: dbPattern.avgDenialAmount || 0,
       totalAtRisk: liveTotalAtRisk,
-      baselineDenialRate: dbPattern.baselineDenialRate,
+      baselineDenialRate: (dbPattern.baselineDenialRate ?? 0) * 100,
       currentDenialRate: liveDenialRate,
       currentDollarsDenied: dbPattern.currentDollarsDenied,
       appealCount: dbPattern.appealCount || 0,

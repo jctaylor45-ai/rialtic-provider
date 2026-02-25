@@ -195,7 +195,7 @@ const primaryPattern = computed(() => {
 
 // Total risk from all matching patterns
 const totalPatternRisk = computed(() => {
-  return matchingPatterns.value.reduce((sum, p) => sum + p.avgDenialAmount, 0)
+  return matchingPatterns.value.reduce((sum, p) => sum + p.totalAtRisk, 0)
 })
 
 // Get related policy for this claim
