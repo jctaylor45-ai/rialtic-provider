@@ -65,7 +65,7 @@ const isSkeletonActive = computed(() => {
     >
       <aside
         v-if="isOpen"
-        class="fixed top-0 right-0 bottom-0 z-50 flex h-screen w-full flex-col border-l border-neutral-200 bg-white shadow-xl transform-gpu md:w-auto"
+        class="fixed top-9 right-0 bottom-0 z-50 flex h-[calc(100vh-2.25rem)] w-full flex-col border-l border-neutral-200 bg-white shadow-xl transform-gpu md:w-auto"
         :style="{ maxWidth: width }"
         aria-label="details-drawer"
         data-component="details_drawer"

@@ -133,7 +133,7 @@
     <Transition name="slide">
       <div
         v-if="isDrawerOpen && openDrawerItem"
-        class="fixed top-0 right-0 h-full w-[800px] bg-white shadow-2xl border-l border-neutral-200 z-40 flex flex-col"
+        class="fixed top-9 right-0 h-[calc(100vh-2.25rem)] w-[800px] bg-white shadow-2xl border-l border-neutral-200 z-40 flex flex-col"
       >
         <DenialIntelligenceDrawerContent
           :item="openDrawerItem"
