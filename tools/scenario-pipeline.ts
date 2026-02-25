@@ -849,6 +849,13 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
     for (const pattern of scenario.patterns) {
+      // Use actual generated snapshot data for baseline/current instead of scenario JSON estimates
+      const patternSnaps = patternSnapshots
+        .filter(s => s.patternId === pattern.id)
+        .sort((a, b) => a.snapshotDate.localeCompare(b.snapshotDate))
+      const firstSnap = patternSnaps[0]
+      const lastSnap = patternSnaps[patternSnaps.length - 1]
+
       // Derive score columns from trajectory data
       const baseRate = pattern.trajectory.baseline.denialRate
       const currRate = pattern.trajectory.current.denialRate
@@ -904,14 +911,14 @@ function writeToDatabase(ctx: GenerationContext, db: BetterSqlite3.Database): vo
         pattern.trajectory.baseline.periodEnd,
         pattern.trajectory.baseline.claimCount,
         pattern.trajectory.baseline.deniedCount,
-        pattern.trajectory.baseline.denialRate,
-        pattern.trajectory.baseline.dollarsDenied,
+        firstSnap ? firstSnap.denialRate : pattern.trajectory.baseline.denialRate * 100,
+        firstSnap ? firstSnap.dollarsDenied : pattern.trajectory.baseline.dollarsDenied,
         pattern.trajectory.current.periodStart,
         pattern.trajectory.current.periodEnd,
         pattern.trajectory.current.claimCount,
         pattern.trajectory.current.deniedCount,
-        pattern.trajectory.current.denialRate,
-        pattern.trajectory.current.dollarsDenied,
+        lastSnap ? lastSnap.denialRate : pattern.trajectory.current.denialRate * 100,
+        lastSnap ? lastSnap.dollarsDenied : pattern.trajectory.current.dollarsDenied,
         pattern.denialReason || null,
         pattern.remediation?.shortTerm?.description || null,
         pattern.remediation?.shortTerm?.canResubmit ? 1 : 0,
