@@ -73,6 +73,18 @@
           {{ practice.name }}
         </option>
       </select>
+      <!-- Time Range Selector -->
+      <select
+        :value="appStore.selectedTimeRange"
+        class="w-full mt-2 px-3 py-2 bg-neutral-800 border border-neutral-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary-500 text-sm"
+        @change="onTimeRangeChange"
+      >
+        <option :value="30">Last 30 days</option>
+        <option :value="60">Last 60 days</option>
+        <option :value="90">Last 90 days</option>
+        <option :value="180">Last 180 days</option>
+        <option :value="365">Last 365 days</option>
+      </select>
     </div>
 
     <!-- Navigation -->
@@ -127,6 +139,12 @@ const dropdownRef = ref<HTMLElement | null>(null)
 async function onPracticeChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   await appStore.setSelectedPractice(value || null)
+  await patternsStore.loadPatterns()
+}
+
+async function onTimeRangeChange(event: Event) {
+  const value = Number((event.target as HTMLSelectElement).value)
+  await appStore.setTimeRange(value)
   await patternsStore.loadPatterns()
 }
 

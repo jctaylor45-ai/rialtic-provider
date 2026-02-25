@@ -92,6 +92,9 @@ export const useAppStore = defineStore('app', {
     practices: [] as Practice[],
     selectedPracticeId: null as string | null,
 
+    // Global time range (days)
+    selectedTimeRange: 90 as number,
+
     // Loading states
     isLoading: false,
     claimsLoading: false,
@@ -143,10 +146,12 @@ export const useAppStore = defineStore('app', {
     async initialize() {
       this.isLoading = true
       this.error = null
-      // Restore practice selection from localStorage
+      // Restore selections from localStorage
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('selectedPracticeId')
         if (saved) this.selectedPracticeId = saved
+        const savedTimeRange = localStorage.getItem('selectedTimeRange')
+        if (savedTimeRange) this.selectedTimeRange = Number(savedTimeRange) || 90
       }
       try {
         if (this.useDatabase) {
@@ -190,7 +195,7 @@ export const useAppStore = defineStore('app', {
       // Fetch policies (all), summary, first page of claims, and practices in parallel
       const [policiesResponse, summaryResponse, claimsResponse, practicesResponse] = await Promise.all([
         $fetch<PoliciesApiResponse>('/api/v1/policies', { params: { limit: 0, ...scenarioParams } }),
-        $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary', { params: scenarioParams }),
+        $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary', { params: { ...scenarioParams, days: this.selectedTimeRange, includePrevious: 'true' } }),
         $fetch<ClaimsApiResponse>('/api/v1/claims', { params: { limit: PAGE_SIZE, offset: 0, ...scenarioParams } }),
         this.practices.length === 0 ? $fetch<Practice[]>('/api/v1/practices') : Promise.resolve(null),
       ])
@@ -346,6 +351,22 @@ export const useAppStore = defineStore('app', {
       }
       // Re-fetch all data for the new practice
       await this.initializeFromDatabase()
+    },
+
+    async setTimeRange(days: number) {
+      this.selectedTimeRange = days
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('selectedTimeRange', String(days))
+      }
+      await this.refreshSummary()
+    },
+
+    async refreshSummary() {
+      const params: Record<string, string | number> = { days: this.selectedTimeRange, includePrevious: 'true' }
+      if (this.selectedPracticeId) {
+        params.scenario_id = this.selectedPracticeId
+      }
+      this.claimsSummary = await $fetch<ClaimsSummaryResponse>('/api/v1/claims/summary', { params })
     },
 
     setUseDatabase(value: boolean) {

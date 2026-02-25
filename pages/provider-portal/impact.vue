@@ -32,17 +32,6 @@
           </button>
         </div>
 
-        <!-- Time Period Selector -->
-        <select
-          v-model="selectedPeriod"
-          class="px-4 py-2 border border-neutral-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        >
-          <option value="30d">Last 30 days</option>
-          <option value="60d">Last 60 days</option>
-          <option value="90d">Last 90 days</option>
-          <option value="180d">Last 180 days</option>
-          <option value="360d">Last 360 days</option>
-        </select>
       </div>
     </div>
 
@@ -424,7 +413,7 @@
                               />
                             </svg>
                           </div>
-                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                          <div class="text-xs text-neutral-500 mt-2">over {{ appStore.selectedTimeRange }} days</div>
                         </div>
 
                         <div class="bg-white rounded-lg border border-neutral-200 p-4">
@@ -458,7 +447,7 @@
                               />
                             </svg>
                           </div>
-                          <div class="text-xs text-neutral-500 mt-2">over {{ periodLabel }}</div>
+                          <div class="text-xs text-neutral-500 mt-2">over {{ appStore.selectedTimeRange }} days</div>
                         </div>
                       </div>
 
@@ -948,7 +937,6 @@ const eventsStore = useEventsStore()
 
 // State
 const activeView = ref<'trend' | 'network'>('trend')
-const selectedPeriod = ref('90d')
 const showSettings = ref(false)
 const adminCostPerAppeal = ref(400)
 const expandedPatternId = ref<string | null>(null)
@@ -970,26 +958,11 @@ function setView(view: 'trend' | 'network') {
   trackEvent('impact-view-change', { view })
 }
 
-// Period days mapping
-const periodDays = computed(() => {
-  const map: Record<string, number> = {
-    '30d': 30,
-    '60d': 60,
-    '90d': 90,
-    '180d': 180,
-    '360d': 360,
-  }
-  return map[selectedPeriod.value] || 90
-})
-
-const periodLabel = computed(() => {
-  return `${periodDays.value} days`
-})
-
-// Watch period changes — refetch server-side metrics
-watch(selectedPeriod, (newPeriod) => {
-  trackEvent('impact-period-change', { period: newPeriod })
-  fetchImpactSummary(periodDays.value)
+// Re-fetch when global time range changes
+watch(() => appStore.selectedTimeRange, (days) => {
+  trackEvent('impact-period-change', { period: String(days) })
+  fetchImpactSummary(days)
+  fetchProviderMetrics(days)
 })
 
 // =============================================================================
@@ -1033,7 +1006,7 @@ async function fetchImpactSummary(days: number) {
 
 // Fetch on mount
 onMounted(() => {
-  fetchImpactSummary(periodDays.value)
+  fetchImpactSummary(appStore.selectedTimeRange)
 })
 
 // Derived metrics from server response (current period)
@@ -1124,7 +1097,7 @@ function generateSparklineData(
   baselineVal: number,
   currentVal: number
 ): number[] {
-  const weeks = Math.ceil(periodDays.value / 7)
+  const weeks = Math.ceil(appStore.selectedTimeRange / 7)
   const numPoints = Math.max(Math.min(weeks, 12), 5)
   const range = Math.abs(baselineVal - currentVal)
 
@@ -1144,7 +1117,7 @@ function generatePatternSparklineData(
   baselineVal: number,
   currentVal: number
 ): number[] {
-  const weeks = Math.ceil(periodDays.value / 7)
+  const weeks = Math.ceil(appStore.selectedTimeRange / 7)
   const numPoints = Math.max(Math.min(weeks, 12), 5)
   const range = Math.abs(baselineVal - currentVal)
 
@@ -1367,9 +1340,8 @@ async function fetchProviderMetrics(days: number) {
   }
 }
 
-// Fetch on mount and when period changes
-watch(selectedPeriod, () => { fetchProviderMetrics(periodDays.value) })
-onMounted(() => { fetchProviderMetrics(periodDays.value) })
+// Fetch on mount
+onMounted(() => { fetchProviderMetrics(appStore.selectedTimeRange) })
 
 // Providers list from server data
 const providers = computed<Provider[]>(() => {
@@ -1576,7 +1548,7 @@ function formatDate(dateString: string): string {
 onMounted(() => {
   trackEvent('impact-page-view', {
     view: activeView.value,
-    period: selectedPeriod.value,
+    period: String(appStore.selectedTimeRange),
   })
 })
 </script>

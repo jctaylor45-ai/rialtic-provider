@@ -23,6 +23,12 @@ export default defineEventHandler(async (event) => {
     const status = query.status as string | undefined
     const tier = query.tier as string | undefined
     const scenarioId = query.scenario_id as string | undefined
+    const days = parseInt(query.days as string) || 90
+
+    // Compute date cutoff for time range filtering
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - days)
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]
 
     // Build where conditions
     const whereConditions: ReturnType<typeof eq>[] = []
@@ -102,17 +108,19 @@ export default defineEventHandler(async (event) => {
     // IMPORTANT: Only count DENIED lines - patterns should only show lines that failed the logic check
     const patternsWithLiveCounts = await Promise.all(
       patternsList.map(async (pattern) => {
-        // Count only denied lines linked to this pattern
+        // Count only denied lines linked to this pattern (within time range)
         const [deniedLineCountResult] = await db
           .select({ count: count() })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .where(and(
             eq(patternClaimLines.patternId, pattern.id),
-            eq(claimLineItems.status, 'denied')
+            eq(claimLineItems.status, 'denied'),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
           ))
 
-        // Calculate totalAtRisk from DENIED line amounts only
+        // Calculate totalAtRisk from DENIED line amounts only (within time range)
         const [impactResult] = await db
           .select({
             totalAtRisk: sql<number>`COALESCE(SUM(${patternClaimLines.deniedAmount}), 0)`,
@@ -120,9 +128,11 @@ export default defineEventHandler(async (event) => {
           })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .where(and(
             eq(patternClaimLines.patternId, pattern.id),
-            eq(claimLineItems.status, 'denied')
+            eq(claimLineItems.status, 'denied'),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
           ))
 
         // Get related policies via claim lines chain (only from denied lines):
@@ -139,23 +149,27 @@ export default defineEventHandler(async (event) => {
           })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .innerJoin(claimLinePolicies, eq(claimLineItems.id, claimLinePolicies.lineItemId))
           .innerJoin(policies, eq(claimLinePolicies.policyId, policies.id))
           .where(and(
             eq(patternClaimLines.patternId, pattern.id),
-            eq(claimLineItems.status, 'denied')
+            eq(claimLineItems.status, 'denied'),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
           ))
 
-        // Get affected claim IDs (only claims with DENIED lines)
+        // Get affected claim IDs (only claims with DENIED lines within time range)
         const affectedClaimsResult = await db
           .selectDistinct({
             claimId: claimLineItems.claimId,
           })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .where(and(
             eq(patternClaimLines.patternId, pattern.id),
-            eq(claimLineItems.status, 'denied')
+            eq(claimLineItems.status, 'denied'),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
           ))
 
         const affectedClaims = affectedClaimsResult.map(r => r.claimId)
@@ -173,7 +187,10 @@ export default defineEventHandler(async (event) => {
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
           .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .leftJoin(claimAppeals, eq(claims.id, claimAppeals.claimId))
-          .where(eq(patternClaimLines.patternId, pattern.id))
+          .where(and(
+            eq(patternClaimLines.patternId, pattern.id),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
+          ))
 
         const appealCount = Number(appealResult?.appealCount) || 0
         const overturnedCount = Number(appealResult?.overturnedCount) || 0
@@ -197,7 +214,7 @@ export default defineEventHandler(async (event) => {
           .where(eq(patternActions.patternId, pattern.id))
           .orderBy(desc(patternActions.timestamp))
 
-        // Fix 3: Evidence from denied claim lines (sample of 10)
+        // Fix 3: Evidence from denied claim lines (sample of 10, within time range)
         const evidence = await db
           .select({
             claimId: claimLineItems.claimId,
@@ -207,9 +224,11 @@ export default defineEventHandler(async (event) => {
           })
           .from(patternClaimLines)
           .innerJoin(claimLineItems, eq(patternClaimLines.lineItemId, claimLineItems.id))
+          .innerJoin(claims, eq(claimLineItems.claimId, claims.id))
           .where(and(
             eq(patternClaimLines.patternId, pattern.id),
-            eq(claimLineItems.status, 'denied')
+            eq(claimLineItems.status, 'denied'),
+            sql`${claims.dateOfService} >= ${cutoffDateStr}`
           ))
           .limit(10)
 

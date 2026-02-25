@@ -7,25 +7,8 @@
           {{ greeting }}, Jay.
         </h1>
         <p class="text-sm text-neutral-500 mt-1">
-          Showing data for the last {{ selectedTimeRange }} days
+          Showing data for the last {{ appStore.selectedTimeRange }} days
         </p>
-      </div>
-      <div class="flex items-center gap-4">
-        <!-- Time Range Filter -->
-        <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-          <button
-            v-for="range in timeRanges"
-            :key="range.value"
-            @click="selectedTimeRange = range.value"
-            class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors"
-            :class="{
-              'bg-white text-neutral-900 shadow-sm': selectedTimeRange === range.value,
-              'text-neutral-600 hover:text-neutral-900': selectedTimeRange !== range.value
-            }"
-          >
-            {{ range.label }}
-          </button>
-        </div>
       </div>
     </div>
 
@@ -40,7 +23,7 @@
           <div>
             <div class="text-sm text-neutral-600 mb-1">Claims Submitted</div>
             <div class="text-2xl font-semibold text-neutral-900">{{ formatNumber(dashboardSummary?.totalClaims ?? 0) }}</div>
-            <div class="text-xs text-neutral-500 mt-1">Last {{ selectedTimeRange }} days</div>
+            <div class="text-xs text-neutral-500 mt-1">Last {{ appStore.selectedTimeRange }} days</div>
           </div>
           <Icon name="heroicons:chart-bar" class="w-8 h-8 text-secondary-500" />
         </div>
@@ -133,7 +116,7 @@
         </div>
         <div>
           <h2 class="text-xl font-semibold text-neutral-900">Your Improvement</h2>
-          <p class="text-sm text-neutral-600">Last {{ selectedTimeRange }} days vs previous {{ selectedTimeRange }} days</p>
+          <p class="text-sm text-neutral-600">Last {{ appStore.selectedTimeRange }} days vs previous {{ appStore.selectedTimeRange }} days</p>
         </div>
       </div>
 
@@ -353,7 +336,7 @@ const greeting = computed(() => getGreeting())
 // Track page exposure on mount
 onMounted(() => {
   eventsStore.trackEvent('dashboard-viewed', 'dashboard', {})
-  fetchDashboardSummary(selectedTimeRange.value)
+  fetchDashboardSummary()
 })
 
 // Click handlers with tracking
@@ -376,7 +359,7 @@ const handleClaimClick = (claim: ProcessedClaim) => {
   eventsStore.trackEvent('dashboard-click', 'dashboard', {
     claimId: claim.id,
   })
-  navigateTo(`/provider-portal/claims?claim=${claim.id}&dateRange=${selectedTimeRange.value}`)
+  navigateTo(`/provider-portal/claims?claim=${claim.id}&dateRange=${appStore.selectedTimeRange}`)
 }
 
 const handleIssueClick = (pattern: Pattern) => {
@@ -393,7 +376,7 @@ const handleIssueClick = (pattern: Pattern) => {
 const drillDown = (page: string, status?: string) => {
   if (page === 'claims') {
     const query: Record<string, string> = {
-      dateRange: selectedTimeRange.value.toString()
+      dateRange: appStore.selectedTimeRange.toString()
     }
     if (status && status !== 'all') {
       query.status = status
@@ -405,17 +388,6 @@ const drillDown = (page: string, status?: string) => {
     navigateTo('/provider-portal/impact')
   }
 }
-
-// =============================================================================
-// Time Range Filter
-// =============================================================================
-
-const timeRanges = [
-  { value: 30, label: '30d' },
-  { value: 60, label: '60d' },
-  { value: 90, label: '90d' },
-]
-const selectedTimeRange = ref(30)
 
 // =============================================================================
 // Server-Side Dashboard Summary
@@ -434,9 +406,10 @@ const dashboardSummary = ref<SummaryPeriod | null>(null)
 const previousSummary = ref<SummaryPeriod | null>(null)
 const summaryLoading = ref(false)
 
-async function fetchDashboardSummary(days: number) {
+async function fetchDashboardSummary() {
   summaryLoading.value = true
   try {
+    const days = appStore.selectedTimeRange
     const params: Record<string, string | number> = { days, includePrevious: 'true' }
     if (appStore.selectedPracticeId) {
       params.scenario_id = appStore.selectedPracticeId
@@ -454,9 +427,9 @@ async function fetchDashboardSummary(days: number) {
   }
 }
 
-// Re-fetch when time range changes
-watch(selectedTimeRange, (days) => {
-  fetchDashboardSummary(days)
+// Re-fetch when global time range changes
+watch(() => appStore.selectedTimeRange, () => {
+  fetchDashboardSummary()
 })
 
 // =============================================================================

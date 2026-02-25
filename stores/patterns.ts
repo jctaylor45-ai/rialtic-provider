@@ -298,6 +298,7 @@ export const usePatternsStore = defineStore('patterns', () => {
     if (appStore.selectedPracticeId) {
       params.scenario_id = appStore.selectedPracticeId
     }
+    params.days = appStore.selectedTimeRange
     const response = await $fetch<PatternApiResponse>('/api/v1/patterns', { params })
     // Transform database patterns to match the frontend Pattern type
     const transformed = response.data.map(transformDbPattern)
@@ -551,11 +552,12 @@ export const usePatternsStore = defineStore('patterns', () => {
   async function refreshPatterns(apiFilters?: { category?: string; status?: string; tier?: string }) {
     isLoading.value = true
     try {
-      const params: Record<string, string | undefined> = { ...apiFilters }
+      const params: Record<string, string | number | undefined> = { ...apiFilters }
       const appStore = useAppStore()
       if (appStore.selectedPracticeId) {
         params.scenario_id = appStore.selectedPracticeId
       }
+      params.days = appStore.selectedTimeRange
       const response = await $fetch<PatternApiResponse>('/api/v1/patterns', {
         params,
       })
