@@ -404,12 +404,37 @@ function generatePatternClaims(ctx: GenerationContext): void {
     // Flat-rate patterns (100%→100%) deny everything, so volume variation = denial variation.
     // Use perfectly even distribution (dampening=0) to eliminate noise entirely.
     const volumeDampening = direction === 'flat' ? 0 : 1.0
-    const claimsPerMonth = distributeClaimsAcrossMonths(
-      pattern.claimDistribution.total,
-      months,
-      scenario.volume.monthlyVariation,
-      volumeDampening
-    )
+
+    // For flat-rate patterns with declining snapshot dollars (e.g. PPC-PTN-004 resolved via
+    // system fix), the dollar trajectory encodes a volume decline. Use snapshot dollarsDenied
+    // as per-month weights to distribute claims proportionally.
+    const snaps = pattern.trajectory.snapshots
+    const hasVolumeDecline = direction === 'flat'
+      && snaps.length >= 2
+      && snaps[snaps.length - 1]!.dollarsDenied < snaps[0]!.dollarsDenied * 0.5
+
+    let claimsPerMonth: number[]
+    if (hasVolumeDecline) {
+      // Map snapshot dollar amounts to generated months as volume weights.
+      // Snapshots use 'YYYY-MM' keys; months use MonthRange with .key in same format.
+      const snapByKey = new Map(snaps.map(s => [s.month, s.dollarsDenied]))
+      const monthWeights = months.map(m => snapByKey.get(m.key) ?? snaps[0]!.dollarsDenied)
+      const totalWeight = monthWeights.reduce((s, w) => s + w, 0)
+      let remaining = pattern.claimDistribution.total
+      claimsPerMonth = monthWeights.map((w, i) => {
+        if (i === monthWeights.length - 1) return Math.max(remaining, 0)
+        const count = Math.round((w / totalWeight) * pattern.claimDistribution.total)
+        remaining -= count
+        return count
+      })
+    } else {
+      claimsPerMonth = distributeClaimsAcrossMonths(
+        pattern.claimDistribution.total,
+        months,
+        scenario.volume.monthlyVariation,
+        volumeDampening
+      )
+    }
 
     // Pre-compute denied counts per month; enforce monotonic decrease for improving patterns
     const patternDeniedCounts = claimsPerMonth.map((monthCount, idx) => {
@@ -430,7 +455,12 @@ function generatePatternClaims(ctx: GenerationContext): void {
 
       const count = claimsPerMonth[monthIdx] ?? 0
       const deniedCount = patternDeniedCounts[monthIdx] ?? 0
-      const patMedMid = (scenario.volume.claimValueRanges.medium.min + scenario.volume.claimValueRanges.medium.max) / 2
+      // PT procedure codes (97xxx) bill $100-250/visit, not $1,500-2,500.
+      // Use a PT-specific midpoint when all pattern codes are therapy codes.
+      const isPTPattern = pattern.procedureCodes.length > 0 && pattern.procedureCodes.every(c => c.startsWith('97'))
+      const patMedMid = isPTPattern
+        ? 175 // PT visit midpoint: $100-250 range
+        : (scenario.volume.claimValueRanges.medium.min + scenario.volume.claimValueRanges.medium.max) / 2
       for (let i = 0; i < count; i++) {
         const forcedRate = i < deniedCount ? 1.0 : 0.0
         const stableAmt = i < deniedCount ? roundToDecimal(patMedMid * randomFloat(0.9, 1.1), 2) : undefined
@@ -607,7 +637,7 @@ function generateSingleClaim(
 function generateAppeals(ctx: GenerationContext): void {
   _verbose('Generating appeals...')
 
-  const { scenario, claimDetails } = ctx
+  const { scenario, months, claimDetails } = ctx
 
   for (const pattern of scenario.patterns) {
     const patternClaims = claimDetails.filter(
@@ -616,13 +646,57 @@ function generateAppeals(ctx: GenerationContext): void {
     const appealsToFile = pattern.claimDistribution.appealsFiled
     const overturnsNeeded = pattern.claimDistribution.appealsOverturned
 
-    const claimsToAppeal = randomChoices(patternClaims, appealsToFile)
+    // Detect churn patterns: high overturn rate + improving denial rate.
+    // These should have declining appeal rates over time (providers learn).
+    const overturnRate = appealsToFile > 0 ? overturnsNeeded / appealsToFile : 0
+    const baselineRate = normalizeDenialRate(pattern.trajectory.baseline.denialRate)
+    const currentRate = normalizeDenialRate(pattern.trajectory.current.denialRate)
+    const isChurnImproving = overturnRate >= 0.6 && baselineRate > currentRate + 0.05
 
+    let claimsToAppeal: typeof patternClaims
+    if (isChurnImproving && months.length >= 3) {
+      // Weight appeals toward earlier months: appeal probability declines from ~90% to ~25%
+      // over the timeline. This creates a natural-looking declining appeal rate trajectory.
+      const monthKeys = months.map(m => m.key)
+      const claimsByMonth: Map<string, typeof patternClaims> = new Map()
+      for (const c of patternClaims) {
+        const key = c.dateOfService.substring(0, 7) // 'YYYY-MM'
+        if (!claimsByMonth.has(key)) claimsByMonth.set(key, [])
+        claimsByMonth.get(key)!.push(c)
+      }
+
+      // Compute per-month appeal probability: linear decline from 0.9 to 0.25
+      const selectedClaims: typeof patternClaims = []
+      let appealsRemaining = appealsToFile
+      for (let mi = 0; mi < monthKeys.length && appealsRemaining > 0; mi++) {
+        const key = monthKeys[mi]!
+        const monthClaims = claimsByMonth.get(key) || []
+        if (monthClaims.length === 0) continue
+
+        const t = months.length > 1 ? mi / (months.length - 1) : 0 // 0 to 1
+        const appealProb = 0.9 - 0.65 * t // 0.9 → 0.25
+        const monthAppeals = Math.round(monthClaims.length * appealProb)
+        const capped = Math.min(monthAppeals, appealsRemaining, monthClaims.length)
+
+        const chosen = randomChoices(monthClaims, capped)
+        selectedClaims.push(...chosen)
+        appealsRemaining -= chosen.length
+      }
+      claimsToAppeal = selectedClaims.slice(0, appealsToFile)
+    } else {
+      claimsToAppeal = randomChoices(patternClaims, appealsToFile)
+    }
+
+    // For churn patterns, distribute overturns toward earlier appeals too
+    let overturnsRemaining = overturnsNeeded
     for (let i = 0; i < claimsToAppeal.length; i++) {
       const claim = claimsToAppeal[i]
       if (!claim) continue
 
-      const isOverturned = i < overturnsNeeded
+      const isOverturned = isChurnImproving
+        ? overturnsRemaining > 0
+        : i < overturnsNeeded
+      if (isOverturned) overturnsRemaining--
 
       const appealDate = addDays(new Date(claim.processingDate), randomInt(7, 30))
       const outcomeDate = addDays(appealDate, randomInt(14, 60))
