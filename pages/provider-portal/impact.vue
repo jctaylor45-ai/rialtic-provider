@@ -289,7 +289,7 @@
                   Recovered Revenue
                 </h3>
                 <p class="text-sm" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
-                  Additional approved revenue vs. baseline
+                  Total denied dollars reduction during active period vs. baseline
                 </p>
               </div>
               <div class="text-right">
@@ -301,8 +301,8 @@
                 </div>
                 <p class="text-sm mt-1" :class="recoveredRevenue >= 0 ? 'text-success-600' : 'text-error-600'">
                   {{ recoveredRevenue >= 0
-                    ? "This is money you're now collecting that was previously denied."
-                    : "Denied dollars have increased compared to baseline."
+                    ? "Total reduction in denied dollars during the active window vs. baseline average."
+                    : "Denied dollars have increased during the active window vs. baseline average."
                   }}
                 </p>
               </div>
@@ -1089,88 +1089,63 @@ function setView(view: 'trend' | 'network') {
   trackEvent('impact-view-change', { view })
 }
 
-// Re-fetch when global time range changes
+// Re-fetch provider metrics when global time range changes
 watch(() => appStore.selectedTimeRange, (days) => {
   trackEvent('impact-period-change', { period: String(days) })
-  fetchImpactSummary(days)
   fetchProviderMetrics(days)
 })
 
 // =============================================================================
-// Server-Side Impact Metrics
+// Snapshot-Derived Impact Metrics (single data source for header cards + sparklines)
 // =============================================================================
 
-interface SummaryPeriod {
-  totalClaims: number
-  statusBreakdown: { approved: number; denied: number; pending: number; appealed: number }
-  denialRate: number
-  financial: { billedAmount: number; paidAmount: number; deniedAmount: number; collectionRate: number }
-  appeals: { total: number; overturned: number; successRate: number }
-  period: { days: number; startDate: string; endDate: string }
-}
+const metricsDefaults = { totalLines: 0, deniedCount: 0, denialRate: 0, deniedDollars: 0, appealsFiled: 0, appealRate: 0, hasAppealData: false }
 
-const impactSummary = ref<SummaryPeriod | null>(null)
-const impactPreviousSummary = ref<SummaryPeriod | null>(null)
-const impactLoading = ref(false)
-
-async function fetchImpactSummary(days: number) {
-  impactLoading.value = true
-  try {
-    const params: Record<string, string | number> = { days, includePrevious: 'true' }
-    if (appStore.selectedPracticeId) {
-      params.scenario_id = appStore.selectedPracticeId
-    }
-    const response = await $fetch<SummaryPeriod & { previousPeriod?: SummaryPeriod }>(
-      '/api/v1/claims/summary',
-      { params }
-    )
-    impactSummary.value = response
-    impactPreviousSummary.value = response.previousPeriod || null
-  } catch (err) {
-    console.error('Failed to fetch impact summary:', err)
-  } finally {
-    impactLoading.value = false
+function aggregateMonths(months: typeof practiceMonthlySnapshots.value) {
+  const totalClaims = months.reduce((s, m) => s + m.totalClaims, 0)
+  const totalDenied = months.reduce((s, m) => s + m.totalDenied, 0)
+  const totalDeniedDollars = months.reduce((s, m) => s + m.deniedDollars, 0)
+  const totalAppeals = months.reduce((s, m) => s + m.appealCount, 0)
+  return {
+    totalLines: totalClaims,
+    deniedCount: totalDenied,
+    denialRate: totalClaims > 0 ? (totalDenied / totalClaims) * 100 : 0,
+    deniedDollars: months.length > 0 ? totalDeniedDollars / months.length : 0,
+    appealsFiled: totalAppeals,
+    appealRate: totalDenied > 0 ? (totalAppeals / totalDenied) * 100 : 0,
+    hasAppealData: totalAppeals > 0,
   }
 }
 
-// Fetch on mount
-onMounted(() => {
-  fetchImpactSummary(appStore.selectedTimeRange)
-})
-
-// Derived metrics from server response (current period)
+// Current metrics: active window months (after boundary)
 const currentMetrics = computed(() => {
-  const s = impactSummary.value
-  if (!s) return { totalLines: 0, deniedCount: 0, denialRate: 0, deniedDollars: 0, appealsFiled: 0, appealRate: 0, hasAppealData: false }
-  return {
-    totalLines: s.totalClaims,
-    deniedCount: s.statusBreakdown.denied,
-    denialRate: s.denialRate,
-    deniedDollars: s.financial.deniedAmount,
-    appealsFiled: s.appeals.total,
-    appealRate: (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0)) > 0 ? (s.appeals.total / (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0))) * 100 : 0,
-    hasAppealData: s.appeals.total > 0,
-  }
+  const months = practiceMonthlySnapshots.value
+  if (months.length === 0) return metricsDefaults
+  const boundary = practiceActiveStartIndex.value
+  // 365-day edge case: boundary=0 means all months active — use months[1..end] as current
+  const activeMonths = boundary === 0 && months.length > 1
+    ? months.slice(1)
+    : months.slice(boundary)
+  if (activeMonths.length === 0) return metricsDefaults
+  return aggregateMonths(activeMonths)
 })
 
-// Derived metrics from server response (previous/baseline period)
+// Baseline metrics: pre-window months (before boundary)
 const baselineMetrics = computed(() => {
-  const s = impactPreviousSummary.value
-  if (!s) return { totalLines: 0, deniedCount: 0, denialRate: 0, deniedDollars: 0, appealsFiled: 0, appealRate: 0, hasAppealData: false }
-  return {
-    totalLines: s.totalClaims,
-    deniedCount: s.statusBreakdown.denied,
-    denialRate: s.denialRate,
-    deniedDollars: s.financial.deniedAmount,
-    appealsFiled: s.appeals.total,
-    appealRate: (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0)) > 0 ? (s.appeals.total / (s.statusBreakdown.denied + (s.statusBreakdown.appealed || 0))) * 100 : 0,
-    hasAppealData: s.appeals.total > 0,
-  }
+  const months = practiceMonthlySnapshots.value
+  if (months.length === 0) return metricsDefaults
+  const boundary = practiceActiveStartIndex.value
+  // 365-day edge case: boundary=0 means no baseline — use first month as single-point baseline
+  const baselineMonths = boundary === 0 && months.length > 1
+    ? months.slice(0, 1)
+    : months.slice(0, boundary)
+  if (baselineMonths.length === 0) return metricsDefaults
+  return aggregateMonths(baselineMonths)
 })
 
-// Check if we have claims data (server-side — no longer limited to 100 in-memory claims)
+// Check if we have pattern snapshot data
 const hasClaimsData = computed(() => {
-  return impactSummary.value !== null && impactSummary.value.totalClaims > 0
+  return practiceMonthlySnapshots.value.length > 0
 })
 
 // Check if we have appeal data
@@ -1215,9 +1190,16 @@ const deniedDollarsTrend = computed(() => {
   }
 })
 
-// Recovered revenue = Baseline Denied $ - Current Denied $
+// Recovered revenue: monthly average delta × number of active window months
+// baselineMetrics.deniedDollars and currentMetrics.deniedDollars are already monthly averages
 const recoveredRevenue = computed(() => {
-  return baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
+  const months = practiceMonthlySnapshots.value
+  const boundary = practiceActiveStartIndex.value
+  const activeCount = boundary === 0 && months.length > 1
+    ? months.length - 1
+    : months.length - boundary
+  const monthlyDelta = baselineMetrics.value.deniedDollars - currentMetrics.value.deniedDollars
+  return monthlyDelta * Math.max(activeCount, 1)
 })
 
 // Practice-level appeals avoided: pre-window avg vs active-window avg monthly appeal counts
@@ -1261,6 +1243,8 @@ const practiceMonthlySnapshots = computed(() => {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, data]) => ({
       month,
+      totalClaims: data.totalClaims,
+      totalDenied: data.totalDenied,
       denialRate: data.totalClaims > 0 ? (data.totalDenied / data.totalClaims) * 100 : 0,
       deniedDollars: data.totalDollarsDenied,
       appealRate: data.totalDenied > 0 ? (data.totalAppeals / data.totalDenied) * 100 : 0,
